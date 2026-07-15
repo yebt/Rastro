@@ -1,17 +1,34 @@
 ---
+import { Font } from 'astro:assets';
+import App from '../components/App.vue';
+import '../styles/app.css';
 
+// @vite-pwa/astro generates sw.js / manifest.webmanifest / registerSW.js but
+// (on Astro 7) does not inject the head tags itself, so we wire them here.
+// Only in production, where those files exist — avoids 404s during `astro dev`.
+const isProd = import.meta.env.PROD;
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="theme-color" content="#15181A" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Rastro — GPS + Dominadas</title>
+    {isProd && <link rel="manifest" href="/manifest.webmanifest" />}
+    <Font cssVariable="--font-inter" preload />
+    <Font cssVariable="--font-barlow" preload />
+  </head>
+  <body>
+    <App client:only="vue" />
+    {isProd && <script is:inline src="/registerSW.js"></script>}
+  </body>
 </html>

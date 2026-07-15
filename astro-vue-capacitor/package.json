@@ -7,6 +7,7 @@
   },
   "scripts": {
     "dev": "astro dev",
+    "dev:mobile": "MOBILE=1 astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
@@ -15,27 +16,36 @@
     "test:cov": "vitest run --coverage",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
-    "format": "oxfmt src",
-    "format:check": "oxfmt --check src",
+    "format": "oxfmt src/lib src/stores src/persistence",
+    "format:check": "oxfmt --check src/lib src/stores src/persistence",
     "check": "astro check && oxlint"
   },
   "dependencies": {
     "@astrojs/vue": "^7.0.1",
     "@nanostores/vue": "^1.1.0",
     "astro": "^7.0.9",
+    "idb": "^8.0.3",
     "leaflet": "^1.9.4",
     "nanostores": "^1.4.0",
     "vue": "^3.5.39"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "@iconify-json/lucide": "^1.2.117",
     "@types/leaflet": "^1.9.21",
+    "@types/qrcode-terminal": "^0.12.2",
     "@vite-pwa/astro": "^1.2.0",
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
     "@vitejs/plugin-vue": "^6.0.8",
     "@vitest/coverage-v8": "^4.1.10",
     "@vue/test-utils": "^2.4.11",
+    "fake-indexeddb": "^6.2.5",
     "happy-dom": "^20.10.6",
     "oxfmt": "^0.59.0",
     "oxlint": "^1.74.0",
+    "qrcode-terminal": "^0.12.0",
+    "typescript": "^6",
+    "unplugin-icons": "^23.0.1",
     "vitest": "^4.1.10"
   }
 }

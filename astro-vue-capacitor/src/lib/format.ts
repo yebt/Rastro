@@ -1,7 +1,7 @@
 /** Number/time formatting helpers (SPECS §11). Pure. */
 
 export function pad(n: number): string {
-  return n < 10 ? '0' + n : String(n);
+  return n < 10 ? "0" + n : String(n);
 }
 
 /** Format a duration in seconds as `h:mm:ss` (or `m:ss` under an hour). */
@@ -18,7 +18,7 @@ export function fmtTime(sec: number): string {
  * Returns an em dash for invalid, zero, or absurdly slow paces (> 1h/km).
  */
 export function fmtPace(secPerKm: number): string {
-  if (!Number.isFinite(secPerKm) || secPerKm <= 0 || secPerKm > 3600) return '—';
+  if (!Number.isFinite(secPerKm) || secPerKm <= 0 || secPerKm > 3600) return "—";
   let m = Math.floor(secPerKm / 60);
   let s = Math.round(secPerKm % 60);
   if (s === 60) {

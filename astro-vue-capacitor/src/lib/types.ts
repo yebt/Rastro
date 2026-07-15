@@ -3,8 +3,8 @@
  * Local-first: these shapes are what we persist and export/import as JSON.
  */
 
-export type GpsType = 'Caminata' | 'Trote' | 'Carrera';
-export type ActivityKind = 'gps' | 'dominadas';
+export type GpsType = "Caminata" | "Trote" | "Carrera";
+export type ActivityKind = "gps" | "dominadas";
 
 /** A raw GPS reading captured while tracking (in-memory, main thread). */
 export interface RoutePoint {
@@ -33,7 +33,7 @@ export interface Sample {
 
 export interface GpsActivity {
   id: string;
-  kind: 'gps';
+  kind: "gps";
   type: GpsType;
   /** epoch ms, activity start */
   date: number;
@@ -49,14 +49,14 @@ export interface GpsActivity {
   /** provenance of the data */
   source?: {
     gps?: boolean;
-    pedometer?: 'hardware' | 'accelerometer' | null;
+    pedometer?: "hardware" | "accelerometer" | null;
   };
 }
 
 export interface DominadasSession {
   id: string;
-  kind: 'dominadas';
-  type: 'dominadas';
+  kind: "dominadas";
+  type: "dominadas";
   date: number;
   sets: number[];
   total: number;
@@ -86,9 +86,9 @@ export interface Database {
 }
 
 export function isGps(a: Activity): a is GpsActivity {
-  return a.kind === 'gps';
+  return a.kind === "gps";
 }
 
 export function isDominadas(a: Activity): a is DominadasSession {
-  return a.kind === 'dominadas';
+  return a.kind === "dominadas";
 }

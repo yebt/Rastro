@@ -4,8 +4,8 @@
  * without a real geolocation feed.
  */
 
-import { haversine, type LatLng } from './geo';
-import type { RoutePoint } from './types';
+import { haversine, type LatLng } from "./geo";
+import type { RoutePoint } from "./types";
 
 /** Discard readings with worse accuracy than this (meters). */
 export const MAX_ACCURACY_M = 40;
@@ -16,15 +16,15 @@ export const MAX_JUMP_M = 60;
 
 export type PointDecision =
   /** Accuracy too poor: ignore entirely for distance (UI may still recenter the map). */
-  | { kind: 'reject-accuracy' }
+  | { kind: "reject-accuracy" }
   /** First fix of the track: record the point, no distance yet. */
-  | { kind: 'first' }
+  | { kind: "first" }
   /** Below the jitter threshold: ignore. */
-  | { kind: 'jitter' }
+  | { kind: "jitter" }
   /** Unrealistic jump: record the point but do not add its distance. */
-  | { kind: 'jump'; meters: number }
+  | { kind: "jump"; meters: number }
   /** Valid movement: add distance and update instantaneous speed. */
-  | { kind: 'move'; meters: number; speedKmh: number };
+  | { kind: "move"; meters: number; speedKmh: number };
 
 /**
  * Decide what to do with a new GPS reading given the previous accepted point.
@@ -35,14 +35,14 @@ export function evaluatePoint(
   next: RoutePoint,
   accuracy: number,
 ): PointDecision {
-  if (accuracy > MAX_ACCURACY_M) return { kind: 'reject-accuracy' };
-  if (!last) return { kind: 'first' };
+  if (accuracy > MAX_ACCURACY_M) return { kind: "reject-accuracy" };
+  if (!last) return { kind: "first" };
 
   const meters = haversine(last as LatLng, next as LatLng);
-  if (meters < MIN_SEGMENT_M) return { kind: 'jitter' };
-  if (meters > MAX_JUMP_M) return { kind: 'jump', meters };
+  if (meters < MIN_SEGMENT_M) return { kind: "jitter" };
+  if (meters > MAX_JUMP_M) return { kind: "jump", meters };
 
   const dt = (next.t - last.t) / 1000;
   const speedKmh = dt > 0 ? (meters / dt) * 3.6 : 0;
-  return { kind: 'move', meters, speedKmh };
+  return { kind: "move", meters, speedKmh };
 }

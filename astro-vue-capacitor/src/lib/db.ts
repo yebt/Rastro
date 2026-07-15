@@ -4,9 +4,9 @@
  * SPECS §4.4 / §13: never lose data on a malformed import; validate before writing.
  */
 
-import { isDominadas, isGps, type Activity, type Database } from './types';
+import { isDominadas, isGps, type Activity, type Database } from "./types";
 
-export type ImportMode = 'merge' | 'replace';
+export type ImportMode = "merge" | "replace";
 
 export interface MergeResult {
   activities: Activity[];
@@ -20,10 +20,10 @@ export interface MergeResult {
  */
 export function extractActivities(data: unknown): Activity[] {
   const incoming =
-    data && typeof data === 'object' && 'activities' in data
+    data && typeof data === "object" && "activities" in data
       ? (data as { activities: unknown }).activities
       : data;
-  if (!Array.isArray(incoming)) throw new Error('invalid import format');
+  if (!Array.isArray(incoming)) throw new Error("invalid import format");
   return incoming as Activity[];
 }
 
@@ -37,7 +37,7 @@ export function mergeActivities(
   incoming: Activity[],
   mode: ImportMode,
 ): MergeResult {
-  const base = mode === 'replace' ? [] : current.slice();
+  const base = mode === "replace" ? [] : current.slice();
   const seen = new Set(base.map((a) => a.id));
   let added = 0;
   for (const a of incoming) {

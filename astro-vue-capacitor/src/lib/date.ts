@@ -1,6 +1,6 @@
 /** Date helpers. `dayKey` is pure; `relDate` renders Spanish relative dates (UI language). */
 
-import { pad } from './format';
+import { pad } from "./format";
 
 /** Local calendar-day key `YYYY-MM-DD` for grouping (e.g. "today"). */
 export function dayKey(ts: number): string {
@@ -9,8 +9,18 @@ export function dayKey(ts: number): string {
 }
 
 const MONTHS_ES = [
-  'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-  'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+  "ene",
+  "feb",
+  "mar",
+  "abr",
+  "may",
+  "jun",
+  "jul",
+  "ago",
+  "sep",
+  "oct",
+  "nov",
+  "dic",
 ];
 
 /**
@@ -28,6 +38,6 @@ export function relDate(ts: number, now: number = Date.now()): string {
   const hm = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   if (days === 0) return `Hoy ${hm}`;
   if (days === 1) return `Ayer ${hm}`;
-  const year = d.getFullYear() !== nowD.getFullYear() ? ` ${d.getFullYear()}` : '';
+  const year = d.getFullYear() !== nowD.getFullYear() ? ` ${d.getFullYear()}` : "";
   return `${d.getDate()} ${MONTHS_ES[d.getMonth()]}${year} · ${hm}`;
 }

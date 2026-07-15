@@ -1,7 +1,7 @@
 /** Pull-up (dominadas) aggregations (SPECS §4.2). Pure. */
 
-import { dayKey } from './date';
-import type { DominadasSession } from './types';
+import { dayKey } from "./date";
+import type { DominadasSession } from "./types";
 
 export interface PullStats {
   /** all-time total reps */
