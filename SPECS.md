@@ -1,0 +1,263 @@
+# Rastro — Especificación del producto
+
+**App personal de seguimiento de ejercicio: GPS (caminar / trotar / correr) + dominadas, con reportes.**
+Local-first, sin cuenta, datos en el dispositivo.
+
+Versión del documento: 1.0 · Estado del producto: v1 en uso (app web) → objetivo v2 (app nativa con Capacitor).
+
+---
+
+## 1. Visión
+
+Una sola app para registrar lo que camino/troto/corro y las dominadas que hago, que además me **enseñe cómo mejoro**: no solo cuántos km hice, sino a qué ritmo, con qué cadencia de pasos y cuál es mi zancada eficiente. Todo sin depender de una cuenta ni de la nube.
+
+## 2. Principios y restricciones (no negociables)
+
+- **Sin cuenta.** Nada de login, correo ni registro.
+- **Local-first.** Los datos viven en el dispositivo. No hay servidor propio.
+- **El usuario es dueño de sus datos.** Exportar/importar siempre disponible; borrado total siempre disponible.
+- **Privacidad.** La ubicación nunca sale del dispositivo salvo que el usuario exporte a propósito.
+- **Métrico.** Kilómetros, metros, min/km.
+- **Español** como idioma de interfaz.
+- **Funciona sin internet** para registrar (el mapa base es lo único que pide red).
+
+## 3. Estrategia de plataforma
+
+| Fase | Empaque | Persistencia | GPS con pantalla apagada | Podómetro real |
+|------|---------|--------------|--------------------------|----------------|
+| **v1 (hoy)** | App web, 1 archivo HTML | `localStorage` | No (el navegador congela la pestaña) | No (solo aproximado por acelerómetro) |
+| **v2 (objetivo)** | Nativa vía **Capacitor** (mismo HTML/JS envuelto) | SQLite / almacenamiento nativo + export | **Sí** (geolocalización en segundo plano + servicio en primer plano) | **Sí** (sensor de pasos por hardware) |
+
+Capacitor toma el código web actual y lo convierte en app instalable (Android/iOS) sin reescribir la lógica; lo nuevo entra como *plugins*. Esto confirma que nada de lo hecho se tira.
+
+---
+
+## 4. Estado actual — v1 (implementado y en uso)
+
+App web en un solo archivo (`Rastro.html`). Navegación inferior de 4 pestañas: Registrar · Dominadas · Historial · Datos.
+
+### 4.1 Registrar (GPS)
+- Selección de tipo antes de iniciar: **Caminata / Trote / Carrera**.
+- Controles: **Iniciar → Pausar/Reanudar → Finalizar**.
+- Mapa en vivo (Leaflet + OpenStreetMap) con la ruta dibujada y el punto actual.
+- Lectura en vivo estilo reloj GPS: **distancia (km)**, **tiempo**, **ritmo (min/km)**, **velocidad (km/h)**.
+- Filtrado de ruido de GPS: descarta puntos con baja precisión (>40 m), micro-movimientos (<2 m) y saltos irreales (>60 m no suman distancia).
+- Al finalizar guarda la actividad automáticamente (descarta si fue demasiado corta).
+
+### 4.2 Dominadas
+- Contador de reps por serie con stepper (− / +).
+- "Agregar serie" acumula series; total de la sesión en vivo; se pueden quitar series antes de guardar.
+- Al guardar la sesión, tarjeta de resumen: **total histórico**, **hoy**, **mejor sesión**, **mejor serie**.
+
+### 4.3 Historial
+- Lista unificada de salidas y sesiones, ordenada por fecha, con filtros por tipo.
+- Cada ítem muestra métricas clave (km/tiempo/ritmo o total/series/mejor serie) y permite **eliminar**.
+
+### 4.4 Datos
+- **Exportar** a `.json` (todo el historial).
+- **Importar** desde `.json` (combinar o reemplazar).
+- **Borrar todo** (con doble confirmación).
+- Resumen: nº de actividades, km totales, dominadas totales.
+
+### 4.5 Limitaciones conocidas de v1
+- No trackea con pantalla apagada ni en segundo plano (límite del navegador).
+- Sin podómetro real ni cadencia.
+- Reportes limitados a totales; sin gráficas ni análisis de ritmo.
+- Precisión de distancia ~1–3% (GPS de teléfono).
+
+---
+
+## 5. A dónde vamos — features objetivo
+
+Ordenadas por fase. Cada una detallada en §7–§9.
+
+### Fase 1.1 — Mejoras rápidas en web (sin cambiar de plataforma)
+- **F1. Wake Lock:** la pantalla no se apaga sola mientras registrás.
+- **F2. Cadencia aproximada por acelerómetro** (captura de pasos/seg mientras la pantalla está encendida).
+- **F3. Serie de tiempo por actividad:** guardar muestras (tiempo, velocidad, cadencia) para poder graficar después.
+- **F4. Reportes básicos:** gráfica de ritmo por km (splits) y ritmo en el tiempo.
+
+### Fase 2 — App nativa (Capacitor)
+- **F5. GPS en segundo plano** con pantalla apagada (servicio en primer plano + notificación “registrando”).
+- **F6. Podómetro real por sensor de hardware** (pasos y cadencia precisos, también en segundo plano).
+- **F7. Almacenamiento nativo** (SQLite) manteniendo export/import.
+
+### Fase 3 — Análisis y reportes avanzados
+- **F8. Motor de zancada y cadencia óptima** (la idea central del usuario, §8).
+- **F9. Reportes e histogramas** (§9).
+- **F10. Récords (PR) automáticos** y **metas** (diaria de dominadas, semanal de km).
+- **F11. Calorías estimadas** y **progreso semanal**.
+
+---
+
+## 6. Modelo de datos
+
+### 6.1 Actividad GPS (extendida para soportar análisis)
+```json
+{
+  "id": "a1720000000000",
+  "kind": "gps",
+  "type": "Trote",                // Caminata | Trote | Carrera
+  "date": 1720000000000,          // epoch ms, inicio
+  "distance": 5230,               // metros
+  "duration": 1740,               // segundos (sin pausas)
+  "route": [[lat, lng], ...],     // ruta simplificada
+  "samples": [                    // NUEVO: serie de tiempo (Fase 1.1+)
+    { "t": 5, "d": 12, "v": 2.4, "cad": 168, "acc": 8 }
+    // t=seg desde inicio, d=metros acumulados, v=m/s, cad=pasos/min, acc=precisión m
+  ],
+  "steps": 4820,                  // NUEVO: total de pasos (Fase 2)
+  "source": { "gps": true, "pedometer": "hardware" } // procedencia de los datos
+}
+```
+
+### 6.2 Sesión de dominadas
+```json
+{
+  "id": "p1720000000000",
+  "kind": "dominadas",
+  "type": "dominadas",
+  "date": 1720000000000,
+  "sets": [8, 7, 6, 5],
+  "total": 26,
+  "notes": ""                     // opcional
+}
+```
+
+### 6.3 Récords / metas (Fase 3)
+```json
+{
+  "goals": { "pullupsDaily": 30, "kmWeekly": 20 },
+  "prs": { "fastest1k": 285, "fastest5k": 1620, "longestRun": 12400,
+           "bestPullSession": 42, "bestPullSet": 12 }
+}
+```
+Los PR se recalculan al guardar cada actividad; no se editan a mano.
+
+---
+
+## 7. Especificación de features nuevas
+
+### F1 · Wake Lock (Fase 1.1)
+- Al iniciar registro, solicitar `navigator.wakeLock` para mantener la pantalla encendida.
+- Reintentar el lock cuando la app vuelve a foco (el lock se pierde al minimizar).
+- Liberar al finalizar/pausar. Indicador visual de que la pantalla se mantendrá activa.
+- Fallback silencioso si el navegador no lo soporta.
+
+### F5 · GPS en segundo plano (Fase 2, Capacitor)
+- Permiso de **ubicación “Siempre”** (background).
+- **Android:** servicio en primer plano con notificación persistente “Rastro está registrando”. Sin esto el sistema mata el rastreo.
+- **iOS:** modo de fondo de ubicación habilitado; requiere permiso “Siempre” y avisa que aun así conviene probar en el equipo real.
+- Requiere un plugin de *background geolocation* de Capacitor. **Nota:** el plugin concreto y su versión mantenida deben verificarse al momento de construir (no fijar de memoria).
+
+### F6 · Podómetro y cadencia (Fases 1.1 y 2)
+- **Web (aprox., F2):** leer `DeviceMotion`/acelerómetro, detectar picos de aceleración como pasos, suavizar y calcular cadencia. Funciona solo con pantalla encendida; menos preciso.
+- **Nativo (F6):** usar el **sensor de conteo de pasos por hardware** (Android: step counter/detector; iOS: podómetro nativo). Cuenta en segundo plano, gasta muy poca batería. Da pasos y cadencia fiables. El plugin concreto se verifica al construir.
+- Cadencia se guarda por muestra en `samples[].cad` para el análisis.
+
+---
+
+## 8. Motor de zancada y “cadencia óptima” (F8, la idea central)
+
+**Objetivo:** entender si acelerar viene de dar más pasos, de pasos más largos, o ambos — y encontrar la cadencia donde el usuario avanza más por cada paso.
+
+### 8.1 Variable correcta a analizar
+La comparación limpia **no es cadencia vs distancia total**, sino cadencia vs **velocidad** y **longitud de zancada**, porque:
+
+```
+velocidad (m/s) = longitud_de_zancada (m) × cadencia (pasos/s)
+longitud_de_zancada = velocidad / cadencia
+```
+
+Interpretación (coincide con la intuición del usuario):
+- Más pasos/seg **y** más rápido → la zancada se mantuvo → **aceleraste bien.**
+- Más pasos/seg **pero** más lento → la zancada se acortó (patalear sin avanzar, típico de fatiga) → **menos eficiente.**
+
+### 8.2 Cómo se calcula
+1. Trabajar sobre `samples` (ventanas de ~3–5 s) de cada actividad.
+2. Por ventana: velocidad `v`, cadencia `cad`, zancada `stride = v / (cad/60)`.
+3. Agrupar por rangos de cadencia (bins) y promediar velocidad y zancada.
+4. **Cadencia óptima** = el rango donde la **zancada sigue alta y la velocidad aún sube**; a partir de ahí, si más cadencia ya no da más velocidad, es zona de rendimiento decreciente.
+
+### 8.3 Insight que se le muestra al usuario
+- “Tu zancada más eficiente fue a ~X pasos/min (≈ Y m por paso).”
+- “Por encima de Z pasos/min dejaste de ganar velocidad → estabas acortando el paso.”
+
+---
+
+## 9. Reportes e histogramas (F9)
+
+### 9.1 Por actividad
+- **Mapa de la ruta.**
+- **Splits por km:** tabla con ritmo de cada kilómetro.
+- **Ritmo en el tiempo:** línea de ritmo (o velocidad) a lo largo de la salida.
+- **Cadencia en el tiempo:** línea de pasos/min.
+- **Zancada vs cadencia (dispersión/histograma):** el gráfico clave del §8, resalta la zona óptima.
+- **Velocidad vs cadencia:** para ver dónde acelerar deja de rendir.
+
+### 9.2 Tendencias (varias actividades)
+- **Distancia por semana** (barras).
+- **Ritmo promedio en el tiempo** (línea, para ver si mejora).
+- **Cadencia promedio en el tiempo.**
+- **Récords:** 1 km más rápido, 5 km más rápido, salida más larga.
+
+### 9.3 Dominadas
+- **Reps por semana** (barras).
+- **Mejor serie en el tiempo** (línea) y **mejor sesión.**
+- **Total acumulado.**
+
+### 9.4 Notas de implementación
+- Las gráficas se generan **en el dispositivo** con los datos locales (sin nube).
+- Deben degradar bien: si una actividad vieja no tiene `samples`/cadencia, se muestran solo los reportes posibles (distancia/ritmo) sin romperse.
+
+---
+
+## 10. Otras features de Fase 3
+
+- **F10 · PR y metas:** detección automática de récords al guardar; meta diaria de dominadas y semanal de km, con barra de progreso.
+- **F11 · Calorías estimadas:** cálculo aproximado por tipo de actividad, distancia/tiempo y peso del usuario (dato opcional que el usuario ingresa una vez; se guarda local). Siempre etiquetado como *estimado*.
+
+---
+
+## 11. Fórmulas de referencia
+
+| Métrica | Fórmula |
+|---|---|
+| Distancia | Suma de Haversine entre puntos GPS válidos |
+| Ritmo (min/km) | `duración_s / distancia_km`, formateado `mm:ss` |
+| Velocidad (km/h) | `distancia_km / (duración_s / 3600)` |
+| Velocidad instantánea | `Δdistancia_segmento / Δtiempo_segmento` |
+| Cadencia (pasos/min) | `pasos / (duración_s / 60)` |
+| Longitud de zancada (m) | `velocidad_m_s / (cadencia_pasos_min / 60)` |
+| Relación clave | `velocidad = zancada × (cadencia/60)` |
+| Calorías (estimado) | Aprox. por MET del tipo de actividad × peso × tiempo |
+
+---
+
+## 12. Permisos y notas por plataforma
+
+- **Ubicación “Siempre”**: obligatoria para el rastreo en segundo plano (Fase 2).
+- **Actividad física / sensor de pasos**: para el podómetro nativo.
+- **Notificaciones**: para el servicio en primer plano de Android.
+- **Android** permite rastreo de fondo confiable con el servicio en primer plano.
+- **iOS** es más estricto: requiere permiso “Siempre”, modos de fondo declarados, y probar en el equipo real antes de confiar.
+
+## 13. Requisitos no funcionales
+
+- **Batería:** preferir sensores de hardware (bajo consumo) y muestreo de GPS razonable (p. ej. cada 1–3 s).
+- **Precisión:** filtrar ruido de GPS (ya hecho en v1); marcar la distancia como aproximada (~1–3%).
+- **Offline:** registrar debe funcionar sin red; solo el mapa base pide internet.
+- **Robustez de datos:** import/export versionado; nunca perder datos por un import mal formado (validar antes de escribir).
+- **Compatibilidad hacia atrás:** actividades viejas sin `samples` deben seguir mostrándose.
+
+## 14. Decisiones abiertas (para confirmar antes de construir)
+
+1. ¿Pasamos ya a **Capacitor** (Fase 2) o exprimimos primero la web (Wake Lock + cadencia aproximada)?
+2. **Android primero** y luego iOS, ¿o ambos desde el inicio?
+3. ¿Guardás el **peso** para estimar calorías, o dejamos calorías para después?
+4. Nivel de detalle de `samples`: cada cuántos segundos guardar (afecta tamaño de datos y detalle de los reportes).
+5. Plugins concretos de *background geolocation* y *podómetro*: **verificar la opción mantenida al día** al momento de construir, no fijarlos ahora.
+
+---
+
+*Fin del documento. Las secciones §7–§10 son la hoja de ruta; §4 es lo ya entregado.*
