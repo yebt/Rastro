@@ -4,6 +4,7 @@ import { useStore } from '@nanostores/vue';
 import L from 'leaflet';
 import IconLocate from '~icons/lucide/locate-fixed';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { geo } from '../geolocation';
 import { fmtPace, fmtTime, paceSecPerKm } from '../lib/format';
 import type { GpsType } from '../lib/types';
 import { $activeTab } from '../stores/ui';
@@ -70,33 +71,31 @@ function meIcon(): L.DivIcon {
   });
 }
 
-function locateOnce(): void {
-  if (!('geolocation' in navigator)) return;
-  navigator.geolocation.getCurrentPosition(
-    (p) => {
-      const ll: L.LatLngTuple = [p.coords.latitude, p.coords.longitude];
-      if (!meMarker) meMarker = L.marker(ll, { icon: meIcon() }).addTo(map!);
-      else meMarker.setLatLng(ll);
-      if ($trackState.get() !== 'running') map!.setView(ll, 16);
-    },
-    () => {},
-    { enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 },
-  );
+async function locateOnce(): Promise<void> {
+  try {
+    const fix = await geo.getCurrent({ enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 });
+    if (!map) return;
+    const ll: L.LatLngTuple = [fix.lat, fix.lng];
+    if (!meMarker) meMarker = L.marker(ll, { icon: meIcon() }).addTo(map);
+    else meMarker.setLatLng(ll);
+    if ($trackState.get() !== 'running') map.setView(ll, 16);
+  } catch {
+    // no fix available — leave the default view
+  }
 }
 
 /** Recenter the map on the user's current position (locate-me button). */
-function recenter(): void {
-  if (!('geolocation' in navigator) || !map) return;
-  navigator.geolocation.getCurrentPosition(
-    (p) => {
-      const ll: L.LatLngTuple = [p.coords.latitude, p.coords.longitude];
-      if (!meMarker) meMarker = L.marker(ll, { icon: meIcon() }).addTo(map!);
-      else meMarker.setLatLng(ll);
-      map!.setView(ll, 16);
-    },
-    () => {},
-    { enableHighAccuracy: true, timeout: 8000, maximumAge: 5000 },
-  );
+async function recenter(): Promise<void> {
+  if (!map) return;
+  try {
+    const fix = await geo.getCurrent({ enableHighAccuracy: true, timeout: 8000, maximumAge: 5000 });
+    const ll: L.LatLngTuple = [fix.lat, fix.lng];
+    if (!meMarker) meMarker = L.marker(ll, { icon: meIcon() }).addTo(map);
+    else meMarker.setLatLng(ll);
+    map.setView(ll, 16);
+  } catch {
+    // ignore — no fix available
+  }
 }
 
 onMounted(() => {
@@ -108,7 +107,7 @@ onMounted(() => {
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
   L.control.attribution({ prefix: false, position: 'bottomright' }).addAttribution('© OpenStreetMap').addTo(map);
   routeLine = L.polyline([], { color: '#1B4DFF', weight: 5, opacity: 0.9, lineJoin: 'round' }).addTo(map);
-  locateOnce();
+  void locateOnce();
 });
 
 onBeforeUnmount(() => {

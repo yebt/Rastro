@@ -5,7 +5,9 @@
     "**/*"
   ],
   "exclude": [
-    "dist"
+    "dist",
+    "android",
+    "ios"
   ],
   "compilerOptions": {
     "jsx": "preserve"

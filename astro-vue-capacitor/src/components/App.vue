@@ -15,6 +15,10 @@ const tab = useStore($activeTab);
 
 onMounted(() => {
   void loadActivities();
+  if (import.meta.env.DEV) {
+    // Dev-only tracking diagnostics (heartbeat + suspension detector) in eruda.
+    void import('../debug/trackerDiagnostics').then((m) => m.initTrackerDiagnostics());
+  }
 });
 </script>
 

@@ -11,6 +11,8 @@ import qrcode from 'qrcode-terminal';
 // `MOBILE=1` (via `bun run dev:mobile`) serves the LAN over HTTPS + prints a QR,
 // so the phone loads in a SECURE context and GPS / service worker actually work.
 const mobile = process.env.MOBILE === '1';
+// Expose the dev server on the LAN over HTTP (for Capacitor live reload).
+const lan = mobile || process.env.LAN === '1';
 
 /** First non-internal IPv4 address, so the QR points at the LAN, not localhost. */
 function lanIp() {
@@ -45,7 +47,7 @@ function mobileQr() {
 
 // https://astro.build/config
 export default defineConfig({
-  server: mobile ? { host: true } : {},
+  server: lan ? { host: true } : {},
 
   integrations: [
     vue(),

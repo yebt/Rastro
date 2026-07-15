@@ -14,6 +14,7 @@ import { atom } from "nanostores";
 import { genId } from "../lib/id";
 import { evaluatePoint, shouldSample } from "../lib/track";
 import type { GpsActivity, GpsType, RoutePoint, Sample } from "../lib/types";
+import { geo, type GeoError, type GeoFix, type GeoWatch } from "../geolocation";
 import { addActivity } from "./activities";
 import { showToast } from "./ui";
 
@@ -37,7 +38,7 @@ export const $wakeLockActive = atom<boolean>(false);
 let route: RoutePoint[] = [];
 let samples: Sample[] = []; // F3 time-series
 let lastSampleT = -Infinity;
-let watchId: number | null = null;
+let geoWatch: GeoWatch | null = null;
 let tick: ReturnType<typeof setInterval> | null = null;
 let startTs = 0; // start of the current running segment
 let originalStart = 0; // activity start (survives pause/resume)
@@ -87,9 +88,9 @@ function onVisibility(): void {
   }
 }
 
-export function start(): void {
-  if (!("geolocation" in navigator)) {
-    showToast("Este dispositivo no tiene GPS disponible");
+export async function start(): Promise<void> {
+  if (!(await geo.ensurePermissions())) {
+    showToast("Permití el acceso a la ubicación para registrar");
     return;
   }
   route = [];
@@ -106,7 +107,7 @@ export function start(): void {
   $trackState.set("running");
   void requestWakeLock();
   document.addEventListener("visibilitychange", onVisibility);
-  watchId = navigator.geolocation.watchPosition(onPos, onPosErr, {
+  geoWatch = geo.watch(onFix, onGeoError, {
     enableHighAccuracy: true,
     maximumAge: 1000,
     timeout: 15000,
@@ -114,17 +115,17 @@ export function start(): void {
   tick = setInterval(() => $elapsed.set(elapsedSec()), 250);
 }
 
-function onPosErr(err: GeolocationPositionError): void {
-  if (err.code === err.PERMISSION_DENIED) {
+function onGeoError(err: GeoError): void {
+  if (err.permissionDenied) {
     showToast("Permití el acceso a la ubicación para registrar");
   }
 }
 
-function onPos(p: GeolocationPosition): void {
+function onFix(fix: GeoFix): void {
   if ($trackState.get() !== "running") return;
-  const next: RoutePoint = { lat: p.coords.latitude, lng: p.coords.longitude, t: Date.now() };
+  const next: RoutePoint = { lat: fix.lat, lng: fix.lng, t: Date.now() };
   $rawPos.set({ lat: next.lat, lng: next.lng }); // marker follows always
-  const accuracy = p.coords.accuracy ?? 999;
+  const accuracy = fix.accuracy;
   const last = route.length ? route[route.length - 1]! : null;
   const decision = evaluatePoint(last, next, accuracy);
 
@@ -181,9 +182,9 @@ export async function stop(): Promise<void> {
   const km = meters / 1000;
   const type = $curType.get();
 
-  if (watchId !== null) {
-    navigator.geolocation.clearWatch(watchId);
-    watchId = null;
+  if (geoWatch) {
+    geoWatch.clear();
+    geoWatch = null;
   }
   if (tick) {
     clearInterval(tick);
