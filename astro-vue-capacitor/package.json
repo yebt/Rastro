@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@astrojs/vue": "^7.0.1",
+    "@capacitor-community/background-geolocation": "^1.2.26",
     "@capacitor/android": "^8.4.2",
     "@capacitor/core": "^8.4.2",
     "@capacitor/geolocation": "^8.2.0",

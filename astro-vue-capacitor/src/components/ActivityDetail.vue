@@ -153,7 +153,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 2px 10px;
+  padding: calc(14px + var(--safe-t)) 2px 10px;
   position: sticky;
   top: 0;
   background: var(--paper);

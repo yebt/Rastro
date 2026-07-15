@@ -15,6 +15,7 @@
   --soft: #f0f1ec;
   --nav-h: 64px;
   --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
   --sans: var(--font-inter, system-ui, -apple-system, sans-serif);
   --cond: var(--font-barlow, 'Barlow Condensed', sans-serif);
 }
@@ -71,7 +72,7 @@ input {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 18px 10px;
+  padding: calc(14px + var(--safe-t)) 18px 10px;
   position: sticky;
   top: 0;
   background: var(--paper);
