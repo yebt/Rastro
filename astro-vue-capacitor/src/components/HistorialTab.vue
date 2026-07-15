@@ -9,6 +9,7 @@ import { relDate } from '../lib/date';
 import { TYPE_COLOR, TYPE_LABEL } from '../lib/labels';
 import { isDominadas, type Activity } from '../lib/types';
 import { $activities, removeActivity } from '../stores/activities';
+import { openDetail } from '../stores/ui';
 
 type Filter = 'all' | 'Caminata' | 'Trote' | 'Carrera' | 'dominadas';
 
@@ -62,7 +63,14 @@ async function confirmDelete(id: string): Promise<void> {
     </div>
 
     <div v-else>
-      <div v-for="a in items" :key="a.id" class="actitem">
+      <div
+        v-for="a in items"
+        :key="a.id"
+        class="actitem"
+        role="button"
+        tabindex="0"
+        @click="openDetail(a.id)"
+      >
         <div class="head">
           <div class="badge" :style="{ background: TYPE_COLOR[a.type] || '#15181A' }">
             <IconDumbbell v-if="a.kind === 'dominadas'" />
@@ -72,7 +80,7 @@ async function confirmDelete(id: string): Promise<void> {
             <div class="ttl">{{ TYPE_LABEL[a.type] }}</div>
             <div class="date">{{ relDate(a.date) }}</div>
           </div>
-          <button class="del" @click="confirmDelete(a.id)">Eliminar</button>
+          <button class="del" @click.stop="confirmDelete(a.id)">Eliminar</button>
         </div>
 
         <div v-if="a.kind === 'dominadas'" class="mets">

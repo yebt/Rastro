@@ -13,6 +13,11 @@ export const MAX_ACCURACY_M = 40;
 export const MIN_SEGMENT_M = 2;
 /** Segments longer than this (meters) are unrealistic jumps: keep point, drop distance. */
 export const MAX_JUMP_M = 60;
+/**
+ * A move must exceed `accuracy × this` to count as real distance (drift gate).
+ * Kills phantom distance from GPS jitter, which is bad indoors. Tunable.
+ */
+export const ACCURACY_FACTOR = 0.5;
 
 /** Minimum spacing between recorded samples, in seconds (SPECS §14.4 — tunable). */
 export const SAMPLE_INTERVAL_S = 3;
@@ -54,8 +59,13 @@ export function evaluatePoint(
   if (!last) return { kind: "first" };
 
   const meters = haversine(last as LatLng, next as LatLng);
-  if (meters < MIN_SEGMENT_M) return { kind: "jitter" };
   if (meters > MAX_JUMP_M) return { kind: "jump", meters };
+  // Accuracy-aware jitter gate: the move must clear the position noise floor,
+  // otherwise GPS drift (common indoors) gets counted as real distance. On a
+  // reject we keep `last` unchanged, so sustained movement still accumulates
+  // across several fixes and is eventually counted — only true drift is dropped.
+  const noiseFloor = Math.max(MIN_SEGMENT_M, accuracy * ACCURACY_FACTOR);
+  if (meters < noiseFloor) return { kind: "jitter" };
 
   const dt = (next.t - last.t) / 1000;
   const speedKmh = dt > 0 ? (meters / dt) * 3.6 : 0;

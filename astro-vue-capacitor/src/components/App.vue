@@ -3,7 +3,8 @@ import { useStore } from '@nanostores/vue';
 import IconMapPin from '~icons/lucide/map-pin';
 import { onMounted } from 'vue';
 import { loadActivities } from '../stores/activities';
-import { $activeTab } from '../stores/ui';
+import { $activeTab, $detailId } from '../stores/ui';
+import ActivityDetail from './ActivityDetail.vue';
 import BottomNav from './BottomNav.vue';
 import DatosTab from './DatosTab.vue';
 import DominadasTab from './DominadasTab.vue';
@@ -12,6 +13,7 @@ import Toast from './Toast.vue';
 import TrackerTab from './TrackerTab.vue';
 
 const tab = useStore($activeTab);
+const detailId = useStore($detailId);
 
 onMounted(() => {
   void loadActivities();
@@ -42,4 +44,6 @@ onMounted(() => {
 
   <BottomNav />
   <Toast />
+
+  <ActivityDetail v-if="detailId" :id="detailId" />
 </template>

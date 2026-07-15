@@ -10,6 +10,17 @@ export function setTab(tab: Tab): void {
   $activeTab.set(tab);
 }
 
+/** Id of the activity shown in the detail overlay, or null when closed. */
+export const $detailId = atom<string | null>(null);
+
+export function openDetail(id: string): void {
+  $detailId.set(id);
+}
+
+export function closeDetail(): void {
+  $detailId.set(null);
+}
+
 export const $toast = atom<string>("");
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null;
