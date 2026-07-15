@@ -14,6 +14,21 @@ export const MIN_SEGMENT_M = 2;
 /** Segments longer than this (meters) are unrealistic jumps: keep point, drop distance. */
 export const MAX_JUMP_M = 60;
 
+/** Minimum spacing between recorded samples, in seconds (SPECS §14.4 — tunable). */
+export const SAMPLE_INTERVAL_S = 3;
+
+/**
+ * Whether to record a time-series sample now (F3), throttled by SAMPLE_INTERVAL_S.
+ * Keeps the samples array manageable on long activities.
+ */
+export function shouldSample(
+  nowSec: number,
+  lastSampleSec: number,
+  intervalSec: number = SAMPLE_INTERVAL_S,
+): boolean {
+  return nowSec - lastSampleSec >= intervalSec;
+}
+
 export type PointDecision =
   /** Accuracy too poor: ignore entirely for distance (UI may still recenter the map). */
   | { kind: "reject-accuracy" }

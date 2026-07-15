@@ -6,14 +6,14 @@
  * is a persistent shell and not an MPA. Components only read these atoms and
  * call the actions; Leaflet objects live in the component.
  *
- * Parity scope: mirrors v1 exactly. Wake Lock (F1), samples/cadence (F2/F3)
- * come AFTER parity, as separate layers.
+ * Adds F1 (Wake Lock) and F3 (time-series samples) on top of v1 parity, as
+ * separate layers. Cadence (F2) and native background (F5) come later.
  */
 
 import { atom } from "nanostores";
 import { genId } from "../lib/id";
-import { evaluatePoint } from "../lib/track";
-import type { GpsActivity, GpsType, RoutePoint } from "../lib/types";
+import { evaluatePoint, shouldSample } from "../lib/track";
+import type { GpsActivity, GpsType, RoutePoint, Sample } from "../lib/types";
 import { addActivity } from "./activities";
 import { showToast } from "./ui";
 
@@ -31,13 +31,18 @@ export const $lastPoint = atom<RoutePoint | null>(null);
 export const $rawPos = atom<{ lat: number; lng: number } | null>(null);
 /** Bumped on each new session start — component clears the polyline. */
 export const $sessionStart = atom<number>(0);
+/** Whether the screen Wake Lock is held (F1) — drives a UI indicator. */
+export const $wakeLockActive = atom<boolean>(false);
 
 let route: RoutePoint[] = [];
+let samples: Sample[] = []; // F3 time-series
+let lastSampleT = -Infinity;
 let watchId: number | null = null;
 let tick: ReturnType<typeof setInterval> | null = null;
 let startTs = 0; // start of the current running segment
 let originalStart = 0; // activity start (survives pause/resume)
 let accMs = 0; // accumulated ms across previous segments
+let wakeLock: WakeLockSentinel | null = null;
 
 function elapsedSec(): number {
   const state = $trackState.get();
@@ -51,12 +56,45 @@ export function setType(type: GpsType): void {
   $curType.set(type);
 }
 
+// --- Wake Lock (F1): keep the screen awake so the browser doesn't suspend the
+// timers / geolocation watch. Foreground-only; real background = Capacitor (F5).
+async function requestWakeLock(): Promise<void> {
+  try {
+    if ("wakeLock" in navigator) {
+      wakeLock = await navigator.wakeLock.request("screen");
+      $wakeLockActive.set(true);
+      wakeLock.addEventListener("release", () => $wakeLockActive.set(false));
+    }
+  } catch {
+    $wakeLockActive.set(false); // silent fallback if denied/unsupported
+  }
+}
+
+async function releaseWakeLock(): Promise<void> {
+  try {
+    await wakeLock?.release();
+  } catch {
+    // ignore
+  }
+  wakeLock = null;
+  $wakeLockActive.set(false);
+}
+
+// The lock drops when the tab is hidden; re-acquire on return if still running.
+function onVisibility(): void {
+  if (document.visibilityState === "visible" && $trackState.get() === "running") {
+    void requestWakeLock();
+  }
+}
+
 export function start(): void {
   if (!("geolocation" in navigator)) {
     showToast("Este dispositivo no tiene GPS disponible");
     return;
   }
   route = [];
+  samples = [];
+  lastSampleT = -Infinity;
   accMs = 0;
   startTs = Date.now();
   originalStart = startTs;
@@ -66,6 +104,8 @@ export function start(): void {
   $lastPoint.set(null);
   $sessionStart.set(startTs);
   $trackState.set("running");
+  void requestWakeLock();
+  document.addEventListener("visibilitychange", onVisibility);
   watchId = navigator.geolocation.watchPosition(onPos, onPosErr, {
     enableHighAccuracy: true,
     maximumAge: 1000,
@@ -97,13 +137,24 @@ function onPos(p: GeolocationPosition): void {
       route.push(next);
       $lastPoint.set(next);
       return;
-    case "move":
+    case "move": {
       $distance.set($distance.get() + decision.meters);
       $speed.set(decision.speedKmh);
       route.push(next);
       $lastPoint.set(next);
-      $elapsed.set(elapsedSec());
+      const t = elapsedSec();
+      $elapsed.set(t);
+      if (shouldSample(t, lastSampleT)) {
+        samples.push({
+          t: Math.round(t),
+          d: Math.round($distance.get()),
+          v: Number((decision.speedKmh / 3.6).toFixed(2)), // m/s
+          acc: Math.round(accuracy),
+        });
+        lastSampleT = t;
+      }
       return;
+    }
   }
 }
 
@@ -113,12 +164,14 @@ export function pause(): void {
   $trackState.set("paused");
   $speed.set(0);
   $elapsed.set(elapsedSec());
+  void releaseWakeLock(); // SPECS F1: release on pause
 }
 
 export function resume(): void {
   if ($trackState.get() !== "paused") return;
   startTs = Date.now();
   $trackState.set("running");
+  void requestWakeLock();
 }
 
 export async function stop(): Promise<void> {
@@ -136,6 +189,8 @@ export async function stop(): Promise<void> {
     clearInterval(tick);
     tick = null;
   }
+  void releaseWakeLock();
+  document.removeEventListener("visibilitychange", onVisibility);
   $trackState.set("idle");
 
   if (km < 0.01 && sec < 10) {
@@ -152,6 +207,7 @@ export async function stop(): Promise<void> {
     distance: Math.round(meters),
     duration: Math.round(sec),
     route: route.map((pt) => [Number(pt.lat.toFixed(5)), Number(pt.lng.toFixed(5))]),
+    samples: samples.length ? samples : undefined,
     source: { gps: true },
   };
   await addActivity(activity);
@@ -161,6 +217,8 @@ export async function stop(): Promise<void> {
 
 function reset(): void {
   route = [];
+  samples = [];
+  lastSampleT = -Infinity;
   $distance.set(0);
   $speed.set(0);
   $elapsed.set(0);

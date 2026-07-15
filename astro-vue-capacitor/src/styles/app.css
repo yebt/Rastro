@@ -135,6 +135,10 @@ input {
 }
 
 /* ---- Tracker ---- */
+.map-wrap {
+  position: relative;
+}
+
 #map {
   height: 260px;
   border-radius: 18px;
@@ -142,6 +146,36 @@ input {
   background: #dfe3dd;
   border: 1px solid var(--line);
   z-index: 1;
+}
+
+.locate-btn {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 500;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
+}
+
+.locate-btn:active {
+  background: var(--soft);
+}
+
+.locate-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+.wl-on {
+  color: var(--green);
+  font-weight: 600;
 }
 
 .leaflet-container {

@@ -2,6 +2,7 @@
 import 'leaflet/dist/leaflet.css';
 import { useStore } from '@nanostores/vue';
 import L from 'leaflet';
+import IconLocate from '~icons/lucide/locate-fixed';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { fmtPace, fmtTime, paceSecPerKm } from '../lib/format';
 import type { GpsType } from '../lib/types';
@@ -15,6 +16,7 @@ import {
   $sessionStart,
   $speed,
   $trackState,
+  $wakeLockActive,
   pause,
   resume,
   setType,
@@ -39,6 +41,7 @@ const rawPos = useStore($rawPos);
 const lastPoint = useStore($lastPoint);
 const sessionStart = useStore($sessionStart);
 const activeTab = useStore($activeTab);
+const wakeLockActive = useStore($wakeLockActive);
 
 const km = computed(() => distance.value / 1000);
 const distText = computed(() => km.value.toFixed(2));
@@ -78,6 +81,21 @@ function locateOnce(): void {
     },
     () => {},
     { enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 },
+  );
+}
+
+/** Recenter the map on the user's current position (locate-me button). */
+function recenter(): void {
+  if (!('geolocation' in navigator) || !map) return;
+  navigator.geolocation.getCurrentPosition(
+    (p) => {
+      const ll: L.LatLngTuple = [p.coords.latitude, p.coords.longitude];
+      if (!meMarker) meMarker = L.marker(ll, { icon: meIcon() }).addTo(map!);
+      else meMarker.setLatLng(ll);
+      map!.setView(ll, 16);
+    },
+    () => {},
+    { enableHighAccuracy: true, timeout: 8000, maximumAge: 5000 },
   );
 }
 
@@ -125,7 +143,17 @@ watch(activeTab, (tab) => {
 
 <template>
   <section class="screen" :class="{ active }">
-    <div id="map" ref="mapEl"></div>
+    <div class="map-wrap">
+      <div id="map" ref="mapEl"></div>
+      <button
+        class="locate-btn"
+        type="button"
+        aria-label="Centrar en mi ubicación"
+        @click="recenter"
+      >
+        <IconLocate />
+      </button>
+    </div>
 
     <div class="seg" :style="{ opacity: state === 'idle' ? 1 : 0.5 }">
       <button
@@ -164,6 +192,9 @@ watch(activeTab, (tab) => {
       </template>
     </div>
 
-    <div class="hint">{{ hint }}</div>
+    <div class="hint">
+      {{ hint }}
+      <span v-if="wakeLockActive" class="wl-on"> · pantalla activa</span>
+    </div>
   </section>
 </template>
