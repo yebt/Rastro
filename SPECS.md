@@ -87,6 +87,7 @@ Ordenadas por fase. Cada una detallada en §7–§9.
 - **F9. Reportes e histogramas** (§9).
 - **F10. Récords (PR) automáticos** y **metas** (diaria de dominadas, semanal de km).
 - **F11. Calorías estimadas** y **progreso semanal**.
+- **F12. Vista de ruta y tarjeta para compartir** (§9.5). La vista de detalle de la ruta no depende de datos nuevos (el campo `route` existe desde v1), por lo que puede adelantarse; la tarjeta compartible es la parte nueva.
 
 ---
 
@@ -206,9 +207,17 @@ Interpretación (coincide con la intuición del usuario):
 - **Mejor serie en el tiempo** (línea) y **mejor sesión.**
 - **Total acumulado.**
 
-### 9.4 Notas de implementación
+### 9.5 Vista de ruta y tarjeta para compartir (F12)
+- **Vista de detalle de la actividad.** Al abrir una salida GPS desde el Historial, pantalla de detalle con el mapa de la ruta completa dibujada (polyline) y el encuadre ajustado a los límites del trazado (`fitBounds`). Usa el campo `route` que ya existe desde v1.
+- **Tarjeta compartible ("share card").** Imagen generada **en el dispositivo** con el trazado de la ruta + métricas clave (tipo, distancia, tiempo, ritmo, fecha). Estética consistente con la marca Rastro.
+- **Compartir como imagen (PNG).** En web, usar la API **Web Share** (`navigator.share` / `canShare` con archivos) cuando esté disponible; en nativo (Capacitor), usar el plugin **Share**. Fallback: descargar la imagen.
+- **Generación 100% local.** La tarjeta se compone en `canvas` con la ruta dibujada; no depende de un servicio externo para la imagen final. Si no hay tiles disponibles offline, degradar a **solo-stats** (ruta sobre fondo liso + métricas) sin romperse.
+- **Privacidad.** Compartir es **siempre una acción explícita** del usuario; nunca automática. La ubicación no sale del dispositivo salvo que el usuario comparta a propósito (coherente con §2).
+
+### 9.6 Notas de implementación
 - Las gráficas se generan **en el dispositivo** con los datos locales (sin nube).
 - Deben degradar bien: si una actividad vieja no tiene `samples`/cadencia, se muestran solo los reportes posibles (distancia/ritmo) sin romperse.
+- El cálculo pesado (motor de zancada §8, agregación para gráficas) se recomienda en un **Web Worker** para no bloquear la UI; el tracking GPS y los sensores (`geolocation`, `DeviceMotion`) permanecen en el hilo principal porque no están disponibles en workers.
 
 ---
 
@@ -216,6 +225,7 @@ Interpretación (coincide con la intuición del usuario):
 
 - **F10 · PR y metas:** detección automática de récords al guardar; meta diaria de dominadas y semanal de km, con barra de progreso.
 - **F11 · Calorías estimadas:** cálculo aproximado por tipo de actividad, distancia/tiempo y peso del usuario (dato opcional que el usuario ingresa una vez; se guarda local). Siempre etiquetado como *estimado*.
+- **F12 · Vista de ruta y tarjeta para compartir:** detalle de la actividad con el mapa de la ruta y una tarjeta compartible (imagen con trazado + stats), generada localmente y compartida solo por acción explícita del usuario. Detalle en §9.5.
 
 ---
 
