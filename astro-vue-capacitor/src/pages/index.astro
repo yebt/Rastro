@@ -30,5 +30,12 @@ const isProd = import.meta.env.PROD;
   <body>
     <App client:only="vue" />
     {isProd && <script is:inline src="/registerSW.js"></script>}
+
+    {/* Mobile console (eruda) — dev only. Vite strips this whole block from prod. */}
+    <script>
+      if (import.meta.env.DEV) {
+        import('eruda').then((m) => m.default.init());
+      }
+    </script>
   </body>
 </html>
