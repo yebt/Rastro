@@ -70,24 +70,27 @@ App web en un solo archivo (`Rastro.html`). Navegación inferior de 4 pestañas:
 ## 5. A dónde vamos — features objetivo
 
 Ordenadas por fase. Cada una detallada en §7–§9.
+**Estado:** ✅ hecho · 🔧 implementado, falta pulir/validar en dispositivo · ⏳ pendiente.
+
+> **Migración base (no numerada, hecha):** app reescrita a **Astro + Vue 3 (Composition API + TS) + nanostores**, **PWA** (vite-pwa, offline + caché de tiles OSM), **Capacitor Android** (shell nativo + live reload), **puerto de geolocalización** hexagonal (adaptadores web/Capacitor/background), **puerto de persistencia** (IndexedDB/SQLite/memoria), filtro de GPS consciente de precisión (anti-drift), íconos Lucide, ícono de app branded, tooling (Vitest + oxlint/oxfmt). Ver §14 y el código.
 
 ### Fase 1.1 — Mejoras rápidas en web (sin cambiar de plataforma)
-- **F1. Wake Lock:** la pantalla no se apaga sola mientras registrás.
-- **F2. Cadencia aproximada por acelerómetro** (captura de pasos/seg mientras la pantalla está encendida).
-- **F3. Serie de tiempo por actividad:** guardar muestras (tiempo, velocidad, cadencia) para poder graficar después.
-- **F4. Reportes básicos:** gráfica de ritmo por km (splits) y ritmo en el tiempo.
+- ✅ **F1. Wake Lock:** la pantalla no se apaga sola mientras registrás. *(implementado; indicador "pantalla activa")*
+- 🔧 **F2. Cadencia aproximada por acelerómetro** (`@capacitor/motion`). *Implementado (detector de pasos + cadencia, guardados en `samples.cad` y `activity.steps`). Falta: mostrar pasos/cadencia en el detalle, y validar que el acelerómetro dispare en el WebView del dispositivo (si no, cae a F6).* 
+- ✅ **F3. Serie de tiempo por actividad:** muestras (t, distancia, velocidad, cadencia) cada ~3s. *(implementado)*
+- 🔧 **F4. Reportes básicos:** splits por km + ritmo/velocidad en el tiempo (gráficas SVG). *Falta: tooltip táctil interactivo, gráfica de cadencia en el tiempo, marcadores de inicio/fin en el mapa.*
 
 ### Fase 2 — App nativa (Capacitor)
-- **F5. GPS en segundo plano** con pantalla apagada (servicio en primer plano + notificación “registrando”).
-- **F6. Podómetro real por sensor de hardware** (pasos y cadencia precisos, también en segundo plano).
-- **F7. Almacenamiento nativo** (SQLite) manteniendo export/import.
+- 🔧 **F5. GPS en segundo plano** (`@capacitor-community/background-geolocation`, servicio en primer plano + notificación). *Implementado; validar pantalla apagada en dispositivo.*
+- ⏳ **F6. Podómetro real por sensor de hardware** (pasos y cadencia precisos, también en segundo plano). *Pendiente. Relevante si el acelerómetro (F2) no dispara en el WebView.*
+- ✅ **F7. Almacenamiento nativo** (SQLite vía `@capacitor-community/sqlite`, adaptador del puerto de persistencia). *Implementado en nativo; web sigue con IndexedDB. Falta migración IndexedDB→SQLite (opcional).*
 
 ### Fase 3 — Análisis y reportes avanzados
-- **F8. Motor de zancada y cadencia óptima** (la idea central del usuario, §8).
-- **F9. Reportes e histogramas** (§9).
-- **F10. Récords (PR) automáticos** y **metas** (diaria de dominadas, semanal de km).
-- **F11. Calorías estimadas** y **progreso semanal**.
-- **F12. Vista de ruta y tarjeta para compartir** (§9.5). La vista de detalle de la ruta no depende de datos nuevos (el campo `route` existe desde v1), por lo que puede adelantarse; la tarjeta compartible es la parte nueva.
+- ⏳ **F8. Motor de zancada y cadencia óptima** (la idea central del usuario, §8). *Pendiente. Ya se recolecta la cadencia que necesita.*
+- ⏳ **F9. Reportes e histogramas** (§9). *Parcial: los reportes por-actividad (F4) están; faltan las tendencias entre actividades (§9.2/§9.3) y la cadencia/zancada en el tiempo.*
+- ⏳ **F10. Récords (PR) automáticos** y **metas** (diaria de dominadas, semanal de km).
+- ⏳ **F11. Calorías estimadas** y **progreso semanal**.
+- ⏳ **F12. Vista de ruta y tarjeta para compartir** (§9.5). *Parcial: la vista de detalle con mapa + stats + gráficas ya existe. Falta: marcadores inicio/fin, tarjeta compartible con selección de tema, y la acción de compartir (Web Share / plugin Share).*
 
 ---
 

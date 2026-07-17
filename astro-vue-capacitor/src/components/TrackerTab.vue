@@ -64,6 +64,8 @@ const mapEl = ref<HTMLDivElement | null>(null);
 let map: L.Map | null = null;
 let meMarker: L.Marker | null = null;
 let routeLine: L.Polyline | null = null;
+let startMarker: L.Marker | null = null;
+let needStart = false;
 
 function meIcon(): L.DivIcon {
   return L.divIcon({
@@ -71,6 +73,15 @@ function meIcon(): L.DivIcon {
     html: '<div class="me-dot"></div>',
     iconSize: [18, 18],
     iconAnchor: [9, 9],
+  });
+}
+
+function startIcon(): L.DivIcon {
+  return L.divIcon({
+    className: '',
+    html: '<div class="endpoint start"></div>',
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
   });
 }
 
@@ -127,14 +138,22 @@ watch(rawPos, (pos) => {
   map.setView(ll);
 });
 
-// Draw only accepted points on the route line.
+// Draw only accepted points on the route line; drop a start marker on the first.
 watch(lastPoint, (pt) => {
-  if (pt && routeLine) routeLine.addLatLng([pt.lat, pt.lng]);
+  if (!pt || !routeLine) return;
+  routeLine.addLatLng([pt.lat, pt.lng]);
+  if (needStart && map) {
+    startMarker = L.marker([pt.lat, pt.lng], { icon: startIcon() }).addTo(map);
+    needStart = false;
+  }
 });
 
-// Clear the route when a new session starts.
+// Clear the route + start marker when a new session starts.
 watch(sessionStart, () => {
   routeLine?.setLatLngs([]);
+  startMarker?.remove();
+  startMarker = null;
+  needStart = true;
 });
 
 // Leaflet needs a size refresh when the map becomes visible again.

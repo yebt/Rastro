@@ -7,7 +7,14 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { relDate } from '../lib/date';
 import { fmtPace, fmtTime, paceSecPerKm, speedKmh } from '../lib/format';
 import { TYPE_LABEL } from '../lib/labels';
-import { hasSamples, paceSeriesSecPerKm, speedSeriesKmh, splitsPerKm } from '../lib/reports';
+import {
+  avgCadence,
+  cadenceSeriesSpm,
+  hasSamples,
+  paceSeriesSecPerKm,
+  speedSeriesKmh,
+  splitsPerKm,
+} from '../lib/reports';
 import { isGps } from '../lib/types';
 import { $activities } from '../stores/activities';
 import { closeDetail } from '../stores/ui';
@@ -44,14 +51,27 @@ const splits = computed(() => (gps.value ? splitsPerKm(gps.value) : []));
 const paceSeries = computed(() => (gps.value ? paceSeriesSecPerKm(gps.value) : []));
 const speedSeries = computed(() => (gps.value ? speedSeriesKmh(gps.value) : []));
 const samplesOk = computed(() => (gps.value ? hasSamples(gps.value) : false));
+const avgCad = computed(() => (gps.value ? avgCadence(gps.value) : 0));
+const stepCount = computed(() => gps.value?.steps ?? 0);
+const cadenceSeries = computed(() => (gps.value ? cadenceSeriesSpm(gps.value) : []));
 
 const domSets = computed(() => dom.value?.sets ?? []);
 const domBest = computed(() => (dom.value ? Math.max(0, ...dom.value.sets) : 0));
 
 const speedFmt = (v: number) => v.toFixed(1);
+const cadFmt = (v: number) => String(Math.round(v));
 
 const mapEl = ref<HTMLDivElement | null>(null);
 let map: L.Map | null = null;
+
+function endpointIcon(kind: 'start' | 'end'): L.DivIcon {
+  return L.divIcon({
+    className: '',
+    html: `<div class="endpoint ${kind}"></div>`,
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
+  });
+}
 
 onMounted(() => {
   const a = gps.value;
@@ -64,7 +84,12 @@ onMounted(() => {
     .addTo(map);
   const latlngs = a.route.map((p) => [p[0], p[1]] as L.LatLngTuple);
   const routeLine = L.polyline(latlngs, { color: '#1B4DFF', weight: 5, opacity: 0.9 }).addTo(map);
-  map.fitBounds(routeLine.getBounds(), { padding: [20, 20] });
+  map.fitBounds(routeLine.getBounds(), { padding: [24, 24] });
+
+  const start = latlngs[0];
+  const end = latlngs[latlngs.length - 1];
+  if (start) L.marker(start, { icon: endpointIcon('start') }).addTo(map);
+  if (end && latlngs.length > 1) L.marker(end, { icon: endpointIcon('end') }).addTo(map);
 });
 
 onBeforeUnmount(() => {
@@ -96,6 +121,11 @@ onBeforeUnmount(() => {
           <div class="stat"><div class="k">Ritmo /km</div><div class="v num">{{ avgPaceText }}</div></div>
           <div class="stat"><div class="k">Velocidad</div><div class="v num">{{ avgSpeedText }}<small>km/h</small></div></div>
         </div>
+        <div v-if="avgCad || stepCount" class="cadence-line">
+          <span v-if="avgCad">Cadencia <b class="num">{{ avgCad }}</b> pasos/min</span>
+          <span v-if="avgCad && stepCount"> · </span>
+          <span v-if="stepCount"><b class="num">{{ stepCount }}</b> pasos</span>
+        </div>
       </div>
 
       <template v-if="samplesOk">
@@ -110,6 +140,10 @@ onBeforeUnmount(() => {
         <div class="card">
           <h3>Velocidad en el tiempo</h3>
           <LineChart :points="speedSeries" color="#FF5A1F" :format="speedFmt" />
+        </div>
+        <div v-if="cadenceSeries.length" class="card">
+          <h3>Cadencia en el tiempo</h3>
+          <LineChart :points="cadenceSeries" color="#12A150" :format="cadFmt" />
         </div>
       </template>
       <p v-else class="hint" style="margin-top: 16px">
@@ -193,5 +227,17 @@ onBeforeUnmount(() => {
 }
 .card :deep(h3) {
   margin-bottom: 10px;
+}
+.cadence-line {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+.cadence-line b {
+  color: var(--ink);
+  font-size: 16px;
 }
 </style>

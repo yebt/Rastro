@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  avgCadence,
+  cadenceSeriesSpm,
   fastestSplit,
   hasSamples,
   paceSeriesSecPerKm,
@@ -64,6 +66,24 @@ describe("series", () => {
     const series = paceSeriesSecPerKm(withStop);
     expect(series).toHaveLength(1);
     expect(series[0]!.v).toBeCloseTo(400, 5); // 1000 / 2.5
+  });
+});
+
+describe("cadence", () => {
+  const withCad = activity([
+    { t: 0, d: 0, v: 2.5, cad: 150 },
+    { t: 5, d: 12, v: 2.5, cad: 160 },
+    { t: 10, d: 25, v: 2.5 }, // no cadence captured here
+  ]);
+  it("averages captured cadence", () => {
+    expect(avgCadence(withCad)).toBe(155);
+    expect(avgCadence(activity(samples))).toBe(0); // samples have no cad
+  });
+  it("builds a cadence series dropping empty samples", () => {
+    expect(cadenceSeriesSpm(withCad)).toEqual([
+      { t: 0, v: 150 },
+      { t: 5, v: 160 },
+    ]);
   });
 });
 

@@ -192,6 +192,21 @@ input {
   box-shadow: 0 0 0 4px rgba(27, 77, 255, 0.25);
 }
 
+/* Route start/end markers (Leaflet divIcons — must be global, not scoped). */
+.endpoint {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.18);
+}
+.endpoint.start {
+  background: var(--green);
+}
+.endpoint.end {
+  background: var(--ink);
+}
+
 .seg {
   display: flex;
   background: var(--soft);

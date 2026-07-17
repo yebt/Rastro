@@ -97,3 +97,19 @@ export function fastestSplit(splits: Split[]): number {
   }
   return best;
 }
+
+/** Average cadence (steps/min) across samples that captured it, 0 if none. */
+export function avgCadence(activity: GpsActivity): number {
+  const cads = (activity.samples ?? [])
+    .map((s) => s.cad)
+    .filter((c): c is number => typeof c === "number" && c > 0);
+  if (!cads.length) return 0;
+  return Math.round(cads.reduce((a, b) => a + b, 0) / cads.length);
+}
+
+/** Cadence over time (steps/min). Empty when no cadence was captured. */
+export function cadenceSeriesSpm(activity: GpsActivity): SeriesPoint[] {
+  return (activity.samples ?? [])
+    .filter((s) => typeof s.cad === "number" && s.cad > 0)
+    .map((s) => ({ t: s.t, v: s.cad as number }));
+}
