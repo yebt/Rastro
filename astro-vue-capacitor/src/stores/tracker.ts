@@ -15,6 +15,12 @@ import { genId } from "../lib/id";
 import { evaluatePoint, shouldSample } from "../lib/track";
 import type { GpsActivity, GpsType, RoutePoint, Sample } from "../lib/types";
 import { geo, type GeoError, type GeoFix, type GeoWatch } from "../geolocation";
+import {
+  currentCadence,
+  setPedometerPaused,
+  startPedometer,
+  stopPedometer,
+} from "../motion/pedometer";
 import { addActivity } from "./activities";
 import { showToast } from "./ui";
 
@@ -106,6 +112,7 @@ export async function start(): Promise<void> {
   $sessionStart.set(startTs);
   $trackState.set("running");
   void requestWakeLock();
+  void startPedometer(); // F2: cadence + steps
   document.addEventListener("visibilitychange", onVisibility);
   geoWatch = geo.watch(onFix, onGeoError, {
     enableHighAccuracy: true,
@@ -150,6 +157,7 @@ function onFix(fix: GeoFix): void {
           t: Math.round(t),
           d: Math.round($distance.get()),
           v: Number((decision.speedKmh / 3.6).toFixed(2)), // m/s
+          cad: currentCadence() || undefined, // F2 cadence (steps/min)
           acc: Math.round(accuracy),
         });
         lastSampleT = t;
@@ -165,6 +173,7 @@ export function pause(): void {
   $trackState.set("paused");
   $speed.set(0);
   $elapsed.set(elapsedSec());
+  setPedometerPaused(true);
   void releaseWakeLock(); // SPECS F1: release on pause
 }
 
@@ -172,6 +181,7 @@ export function resume(): void {
   if ($trackState.get() !== "paused") return;
   startTs = Date.now();
   $trackState.set("running");
+  setPedometerPaused(false);
   void requestWakeLock();
 }
 
@@ -192,6 +202,7 @@ export async function stop(): Promise<void> {
   }
   void releaseWakeLock();
   document.removeEventListener("visibilitychange", onVisibility);
+  const steps = await stopPedometer();
   $trackState.set("idle");
 
   if (km < 0.01 && sec < 10) {
@@ -209,7 +220,8 @@ export async function stop(): Promise<void> {
     duration: Math.round(sec),
     route: route.map((pt) => [Number(pt.lat.toFixed(5)), Number(pt.lng.toFixed(5))]),
     samples: samples.length ? samples : undefined,
-    source: { gps: true },
+    steps: steps > 0 ? steps : undefined,
+    source: { gps: true, pedometer: steps > 0 ? "accelerometer" : null },
   };
   await addActivity(activity);
   showToast(`¡Guardado! ${km.toFixed(2)} km`);

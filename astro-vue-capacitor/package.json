@@ -28,9 +28,11 @@
   "dependencies": {
     "@astrojs/vue": "^7.0.1",
     "@capacitor-community/background-geolocation": "^1.2.26",
+    "@capacitor-community/sqlite": "^8.1.0",
     "@capacitor/android": "^8.4.2",
     "@capacitor/core": "^8.4.2",
     "@capacitor/geolocation": "^8.2.0",
+    "@capacitor/motion": "^8.0.1",
     "@nanostores/vue": "^1.1.0",
     "astro": "^7.0.9",
     "eruda": "^3.4.3",

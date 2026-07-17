@@ -7,6 +7,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { geo } from '../geolocation';
 import { fmtPace, fmtTime, paceSecPerKm } from '../lib/format';
 import type { GpsType } from '../lib/types';
+import { $cadence, $steps } from '../motion/pedometer';
 import { $activeTab } from '../stores/ui';
 import {
   $curType,
@@ -43,6 +44,8 @@ const lastPoint = useStore($lastPoint);
 const sessionStart = useStore($sessionStart);
 const activeTab = useStore($activeTab);
 const wakeLockActive = useStore($wakeLockActive);
+const cadence = useStore($cadence);
+const steps = useStore($steps);
 
 const km = computed(() => distance.value / 1000);
 const distText = computed(() => km.value.toFixed(2));
@@ -175,6 +178,9 @@ watch(activeTab, (tab) => {
         <div class="stat"><div class="k">Ritmo /km</div><div class="v num">{{ paceText }}</div></div>
         <div class="stat"><div class="k">Velocidad</div><div class="v num">{{ speedText }}<small>km/h</small></div></div>
       </div>
+      <div v-if="state !== 'idle'" class="cadence-line">
+        Cadencia <b class="num">{{ cadence }}</b> pasos/min · <b class="num">{{ steps }}</b> pasos
+      </div>
     </div>
 
     <div class="controls">
@@ -197,3 +203,18 @@ watch(activeTab, (tab) => {
     </div>
   </section>
 </template>
+
+<style scoped>
+.cadence-line {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+.cadence-line b {
+  color: var(--ink);
+  font-size: 16px;
+}
+</style>
