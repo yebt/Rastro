@@ -2,7 +2,7 @@
 
 import { atom } from "nanostores";
 
-export type Tab = "track" | "pull" | "hist" | "data";
+export type Tab = "track" | "pull" | "hist" | "progress" | "data";
 
 export const $activeTab = atom<Tab>("track");
 

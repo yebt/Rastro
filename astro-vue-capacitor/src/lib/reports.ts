@@ -84,6 +84,81 @@ export function splitsPerKm(activity: GpsActivity): Split[] {
   return splits;
 }
 
+/** One fixed-distance stretch of the route with denoised average metrics. */
+export interface Segment {
+  startM: number;
+  endM: number;
+  meters: number;
+  seconds: number;
+  speedKmh: number;
+  paceSecPerKm: number;
+  avgCad: number;
+  /** true for the trailing stretch shorter than the chosen segment length */
+  partial: boolean;
+}
+
+/** Linear-interpolated elapsed time at an accumulated distance (samples: d↑, t↑). */
+function timeAtDistance(s: { t: number; d: number }[], target: number): number {
+  const first = s[0]!;
+  const last = s[s.length - 1]!;
+  if (target <= first.d) return first.t;
+  if (target >= last.d) return last.t;
+  for (let i = 1; i < s.length; i++) {
+    const a = s[i - 1]!;
+    const b = s[i]!;
+    if (a.d <= target && b.d >= target) {
+      const frac = b.d === a.d ? 0 : (target - a.d) / (b.d - a.d);
+      return a.t + frac * (b.t - a.t);
+    }
+  }
+  return last.t;
+}
+
+/** Pick a segment length that yields a readable number of bars (≤ ~24). */
+function pickSegmentMeters(totalM: number): number {
+  for (const step of [50, 100, 200, 250, 500, 1000]) {
+    if (totalM / step <= 24) return step;
+  }
+  return 2000;
+}
+
+/**
+ * Denoised performance profile along the route: split into fixed-distance
+ * segments and take each segment's average speed as distance/time (not the
+ * jittery per-sample GPS speed). This is what makes "I sped up at 300 m"
+ * actually visible. Segment length auto-scales to keep the chart readable.
+ */
+export function segmentProfile(activity: GpsActivity, segMeters?: number): Segment[] {
+  const s = activity.samples;
+  if (!s || s.length < 2) return [];
+  const totalM = s[s.length - 1]!.d;
+  if (totalM <= 0) return [];
+  const seg = segMeters ?? pickSegmentMeters(totalM);
+
+  const out: Segment[] = [];
+  for (let low = 0; low < totalM - 1; low += seg) {
+    const full = low + seg;
+    const high = Math.min(full, totalM);
+    const meters = high - low;
+    if (meters < 1) break;
+    const seconds = timeAtDistance(s, high) - timeAtDistance(s, low);
+    const cads = s
+      .filter((p) => p.d >= low && p.d < high && typeof p.cad === "number" && p.cad > 0)
+      .map((p) => p.cad as number);
+    out.push({
+      startM: low,
+      endM: high,
+      meters: Math.round(meters),
+      seconds,
+      speedKmh: seconds > 0 ? meters / 1000 / (seconds / 3600) : 0,
+      paceSecPerKm: seconds > 0 && meters > 0 ? seconds / (meters / 1000) : 0,
+      avgCad: cads.length ? Math.round(cads.reduce((a, b) => a + b, 0) / cads.length) : 0,
+      partial: high < full,
+    });
+  }
+  return out;
+}
+
 /** Drill-down metrics for a single kilometer, from its samples. */
 export interface KmSegment {
   km: number;

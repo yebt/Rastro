@@ -87,7 +87,7 @@ Ordenadas por fase. Cada una detallada en §7–§9.
 
 ### Fase 3 — Análisis y reportes avanzados
 - 🔧 **F8. Motor de zancada y cadencia óptima** (la idea central del usuario, §8). *Implementado: `src/lib/stride.ts` (puntos zancada=v/(cad/60), bins de cadencia, cadencia óptima + zona de rendimiento decreciente) con tests; gráfica scatter `StrideChart.vue` (zancada vs cadencia, zona óptima resaltada) + insight en lenguaje humano en el detalle. Falta: validar en dispositivo con cadencia real (depende de F2/F6).*
-- ⏳ **F9. Reportes e histogramas** (§9). *Parcial: los reportes por-actividad (F4) están; faltan las tendencias entre actividades (§9.2/§9.3) y la cadencia/zancada en el tiempo.*
+- 🔧 **F9. Reportes e histogramas** (§9). *Implementado: por-actividad (F4) + **perfil por tramo** (velocidad media denoised a lo largo del recorrido) + **pestaña Progreso** con récords (1k/5k más rápido, salida más larga, mejor sesión/serie), distancia por semana, ritmo y cadencia promedio por semana, dominadas por semana (`src/lib/trends.ts` con tests, `ProgresoTab.vue`, `WeekBars.vue`, `SegmentChart.vue`). Falta: histogramas dominadas §9.3 (mejor serie en el tiempo) y pulir con más datos reales.*
 - ⏳ **F10. Récords (PR) automáticos** y **metas** (diaria de dominadas, semanal de km).
 - ⏳ **F11. Calorías estimadas** y **progreso semanal**.
 - ⏳ **F13. Más tipos de ejercicio** (no solo dominadas). *Backlog: generalizar el modelo de "sesión sin GPS" para registrar otros ejercicios (flexiones, sentadillas, abdominales, plancha por tiempo, etc.) con series/reps o duración. Requiere: catálogo de ejercicios, UI de registro genérica, historial/reportes por tipo. Detalle en §10.*

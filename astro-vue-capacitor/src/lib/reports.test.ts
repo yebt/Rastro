@@ -6,6 +6,7 @@ import {
   hasSamples,
   kmSegment,
   paceSeriesSecPerKm,
+  segmentProfile,
   speedSeriesKmh,
   splitsPerKm,
 } from "./reports";
@@ -100,6 +101,41 @@ describe("cadence", () => {
       { t: 0, v: 150 },
       { t: 5, v: 160 },
     ]);
+  });
+});
+
+describe("segmentProfile", () => {
+  it("returns empty without samples", () => {
+    expect(segmentProfile(activity())).toEqual([]);
+  });
+
+  it("averages speed as distance/time per fixed segment, denoising GPS jitter", () => {
+    // Steady 5 m/s over 400 m; per-sample v is noisy but the segment average
+    // must recover the true 18 km/h. 100 m segments.
+    const noisy: Sample[] = [
+      { t: 0, d: 0, v: 9 },
+      { t: 20, d: 100, v: 2 }, // v jitter — ignored by the segment average
+      { t: 40, d: 200, v: 7 },
+      { t: 60, d: 300, v: 3 },
+      { t: 80, d: 400, v: 6 },
+    ];
+    const segs = segmentProfile(activity(noisy), 100);
+    expect(segs).toHaveLength(4);
+    expect(segs[0]).toMatchObject({ startM: 0, endM: 100, meters: 100, seconds: 20 });
+    expect(segs[0]!.speedKmh).toBeCloseTo(18, 5); // 100 m / 20 s = 5 m/s = 18 km/h
+    expect(segs.every((s) => Math.abs(s.speedKmh - 18) < 1e-6)).toBe(true);
+  });
+
+  it("flags a trailing partial segment", () => {
+    const segs = segmentProfile(
+      activity([
+        { t: 0, d: 0, v: 5 },
+        { t: 30, d: 150, v: 5 },
+      ]),
+      100,
+    );
+    expect(segs).toHaveLength(2);
+    expect(segs[1]).toMatchObject({ startM: 100, endM: 150, meters: 50, partial: true });
   });
 });
 

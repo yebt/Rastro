@@ -13,6 +13,7 @@ import {
   hasSamples,
   kmSegment,
   paceSeriesSecPerKm,
+  segmentProfile,
   speedSeriesKmh,
   splitsPerKm,
 } from '../lib/reports';
@@ -21,6 +22,7 @@ import { isGps } from '../lib/types';
 import { $activities } from '../stores/activities';
 import { closeDetail } from '../stores/ui';
 import LineChart from './charts/LineChart.vue';
+import SegmentChart from './charts/SegmentChart.vue';
 import SplitsChart from './charts/SplitsChart.vue';
 import StrideChart from './charts/StrideChart.vue';
 
@@ -67,6 +69,7 @@ const samplesOk = computed(() => (gps.value ? hasSamples(gps.value) : false));
 const avgCad = computed(() => (gps.value ? avgCadence(gps.value) : 0));
 const stepCount = computed(() => gps.value?.steps ?? 0);
 const cadenceSeries = computed(() => (gps.value ? cadenceSeriesSpm(gps.value, axis.value) : []));
+const segments = computed(() => (gps.value ? segmentProfile(gps.value) : []));
 const stride = computed(() => (gps.value ? analyzeStride(gps.value) : null));
 
 const domSets = computed(() => dom.value?.sets ?? []);
@@ -143,6 +146,11 @@ onBeforeUnmount(() => {
       </div>
 
       <template v-if="samplesOk">
+        <div v-if="segments.length > 1" class="card">
+          <h3>Rendimiento por tramo</h3>
+          <p class="sub">Velocidad media de cada tramo a lo largo del recorrido (sin el ruido del GPS). El más rápido, en verde.</p>
+          <SegmentChart :segments="segments" />
+        </div>
         <div class="axis-toggle">
           <button type="button" :class="{ on: axis === 'time' }" @click="axis = 'time'">Por tiempo</button>
           <button type="button" :class="{ on: axis === 'distance' }" @click="axis = 'distance'">Por distancia</button>

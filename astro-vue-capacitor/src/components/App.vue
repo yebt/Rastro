@@ -9,6 +9,7 @@ import BottomNav from './BottomNav.vue';
 import DatosTab from './DatosTab.vue';
 import DominadasTab from './DominadasTab.vue';
 import HistorialTab from './HistorialTab.vue';
+import ProgresoTab from './ProgresoTab.vue';
 import Toast from './Toast.vue';
 import TrackerTab from './TrackerTab.vue';
 
@@ -39,6 +40,7 @@ onMounted(() => {
     <TrackerTab :active="tab === 'track'" />
     <DominadasTab :active="tab === 'pull'" />
     <HistorialTab :active="tab === 'hist'" />
+    <ProgresoTab :active="tab === 'progress'" />
     <DatosTab :active="tab === 'data'" />
   </div>
 
