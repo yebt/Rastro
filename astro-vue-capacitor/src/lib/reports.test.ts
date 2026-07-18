@@ -4,6 +4,7 @@ import {
   cadenceSeriesSpm,
   fastestSplit,
   hasSamples,
+  kmSegment,
   paceSeriesSecPerKm,
   speedSeriesKmh,
   splitsPerKm,
@@ -58,6 +59,21 @@ describe("series", () => {
     const series = speedSeriesKmh(activity(samples));
     expect(series[0]).toEqual({ t: 0, v: 9 }); // 2.5 m/s → 9 km/h
   });
+  it("uses distance (meters) as the x axis when asked", () => {
+    const speed = speedSeriesKmh(activity(samples), "distance");
+    expect(speed[1]).toEqual({ t: 500, v: 9 }); // 2nd sample: d=500m → x=500
+    const cad = cadenceSeriesSpm(
+      activity([
+        { t: 0, d: 0, v: 2.5, cad: 150 },
+        { t: 5, d: 320, v: 2.5, cad: 165 },
+      ]),
+      "distance",
+    );
+    expect(cad).toEqual([
+      { t: 0, v: 150 },
+      { t: 320, v: 165 },
+    ]);
+  });
   it("maps pace to sec/km and drops near-stops", () => {
     const withStop = activity([
       { t: 0, d: 0, v: 0 },
@@ -84,6 +100,35 @@ describe("cadence", () => {
       { t: 0, v: 150 },
       { t: 5, v: 160 },
     ]);
+  });
+});
+
+describe("kmSegment", () => {
+  const withCad: Sample[] = [
+    { t: 0, d: 0, v: 2.5, cad: 150 },
+    { t: 200, d: 500, v: 2.5, cad: 160 },
+    { t: 400, d: 1000, v: 2.5, cad: 170 },
+    { t: 600, d: 1500, v: 3.0 },
+    { t: 700, d: 2000, v: 3.0 },
+  ];
+  it("returns null for out-of-range or uncovered kms", () => {
+    expect(kmSegment(activity(withCad), 0)).toBeNull();
+    expect(kmSegment(activity(), 1)).toBeNull();
+  });
+  it("builds km1 metrics and rebases series time to the segment", () => {
+    const seg = kmSegment(activity(withCad), 1);
+    expect(seg).not.toBeNull();
+    expect(seg!.meters).toBe(1000);
+    expect(seg!.seconds).toBe(400);
+    expect(seg!.avgSpeedKmh).toBeCloseTo(9, 5); // 2.5 m/s → 9 km/h
+    expect(seg!.avgCad).toBe(160); // mean of 150,160,170
+    expect(seg!.speedSeries[0]).toEqual({ t: 0, v: 9 });
+    expect(seg!.cadSeries).toHaveLength(3);
+  });
+  it("drops missing cadence inside the window", () => {
+    const seg = kmSegment(activity(withCad), 2); // samples at d 1000,1500,2000
+    expect(seg!.avgCad).toBe(170); // only the d=1000 sample has cad
+    expect(seg!.cadSeries).toHaveLength(1);
   });
 });
 

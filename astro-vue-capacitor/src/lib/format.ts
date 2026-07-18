@@ -38,3 +38,23 @@ export function paceSecPerKm(meters: number, seconds: number): number {
 export function speedKmh(meters: number, seconds: number): number {
   return seconds > 0 ? meters / 1000 / (seconds / 3600) : 0;
 }
+
+export interface Distance {
+  value: string;
+  unit: "m" | "km";
+}
+
+/**
+ * Distance for display: whole meters below 1 km, then km with 2 decimals.
+ * e.g. 0 → "0 m", 850 → "850 m", 1000 → "1.00 km", 5230 → "5.23 km".
+ */
+export function fmtDistance(meters: number): Distance {
+  if (meters < 1000) return { value: String(Math.round(meters)), unit: "m" };
+  return { value: (meters / 1000).toFixed(2), unit: "km" };
+}
+
+/** Compact distance label for axes/tooltips: "300 m", "1.24 km". */
+export function fmtDistanceLabel(meters: number): string {
+  const d = fmtDistance(meters);
+  return `${d.value} ${d.unit}`;
+}

@@ -1,5 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { fmtPace, fmtTime, pad, paceSecPerKm, speedKmh } from "./format";
+import { fmtDistance, fmtPace, fmtTime, pad, paceSecPerKm, speedKmh } from "./format";
+
+describe("fmtDistance", () => {
+  it("shows whole meters below 1 km", () => {
+    expect(fmtDistance(0)).toEqual({ value: "0", unit: "m" });
+    expect(fmtDistance(850.4)).toEqual({ value: "850", unit: "m" });
+    expect(fmtDistance(999)).toEqual({ value: "999", unit: "m" });
+  });
+  it("switches to km with 2 decimals at 1 km", () => {
+    expect(fmtDistance(1000)).toEqual({ value: "1.00", unit: "km" });
+    expect(fmtDistance(5230)).toEqual({ value: "5.23", unit: "km" });
+  });
+});
 
 describe("pad", () => {
   it("zero-pads single digits", () => {

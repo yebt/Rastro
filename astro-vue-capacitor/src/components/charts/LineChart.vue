@@ -9,10 +9,14 @@ const props = withDefaults(
     color?: string;
     /** formats a y value for the axis labels + tooltip */
     format?: (v: number) => string;
+    /** formats an x value (defaults to time mm:ss); pass a distance formatter for the distance axis */
+    xFormat?: (x: number) => string;
     height?: number;
   }>(),
   { color: '#1B4DFF', height: 120 },
 );
+
+const xFmt = (x: number): string => (props.xFormat ? props.xFormat(x) : fmtTime(x));
 
 const W = 320;
 const PAD_X = 10;
@@ -55,6 +59,7 @@ const view = computed(() => {
     avgY: y(avg),
     vTopLabel: Math.max(...vs),
     vBottomLabel: Math.min(...vs),
+    tMin,
     tMax,
   };
 });
@@ -116,14 +121,14 @@ const labelX = computed(() => {
 
     <text :x="12" :y="view.yTop + 10" class="yl">{{ fmt(view.vTopLabel) }}</text>
     <text :x="12" :y="view.yBottom - 4" class="yl">{{ fmt(view.vBottomLabel) }}</text>
-    <text :x="W - 12" :y="view.H - 4" class="xl" text-anchor="end">{{ fmtTime(view.tMax) }}</text>
-    <text :x="12" :y="view.H - 4" class="xl">0:00</text>
+    <text :x="W - 12" :y="view.H - 4" class="xl" text-anchor="end">{{ xFmt(view.tMax) }}</text>
+    <text :x="12" :y="view.H - 4" class="xl">{{ xFmt(view.tMin) }}</text>
 
     <g v-if="activePoint">
       <line :x1="activePoint.x" :x2="activePoint.x" :y1="view.yTop" :y2="view.yBottom" class="crosshair" />
       <circle :cx="activePoint.x" :cy="activePoint.y" r="4" :fill="color" class="cursor-dot" />
       <text :x="labelX" :y="11" class="tip" text-anchor="middle">
-        {{ fmt(activePoint.v) }} · {{ fmtTime(activePoint.t) }}
+        {{ fmt(activePoint.v) }} · {{ xFmt(activePoint.t) }}
       </text>
     </g>
   </svg>

@@ -5,21 +5,24 @@ import L from 'leaflet';
 import IconArrow from '~icons/lucide/arrow-left';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { relDate } from '../lib/date';
-import { fmtPace, fmtTime, paceSecPerKm, speedKmh } from '../lib/format';
+import { fmtDistance, fmtDistanceLabel, fmtPace, fmtTime, paceSecPerKm, speedKmh } from '../lib/format';
 import { TYPE_LABEL } from '../lib/labels';
 import {
   avgCadence,
   cadenceSeriesSpm,
   hasSamples,
+  kmSegment,
   paceSeriesSecPerKm,
   speedSeriesKmh,
   splitsPerKm,
 } from '../lib/reports';
+import { analyzeStride } from '../lib/stride';
 import { isGps } from '../lib/types';
 import { $activities } from '../stores/activities';
 import { closeDetail } from '../stores/ui';
 import LineChart from './charts/LineChart.vue';
 import SplitsChart from './charts/SplitsChart.vue';
+import StrideChart from './charts/StrideChart.vue';
 
 const props = defineProps<{ id: string }>();
 const activities = useStore($activities);
@@ -37,7 +40,7 @@ const dom = computed(() => {
 const title = computed(() => (act.value ? TYPE_LABEL[act.value.type] : ''));
 const dateText = computed(() => (act.value ? relDate(act.value.date) : ''));
 
-const distanceKm = computed(() => (gps.value ? gps.value.distance / 1000 : 0));
+const dist = computed(() => fmtDistance(gps.value ? gps.value.distance : 0));
 const durationText = computed(() => (gps.value ? fmtTime(gps.value.duration) : ''));
 const avgPaceText = computed(() =>
   gps.value ? fmtPace(paceSecPerKm(gps.value.distance, gps.value.duration)) : '',
@@ -48,12 +51,23 @@ const avgSpeedText = computed(() =>
 const hasRoute = computed(() => !!gps.value?.route.length);
 
 const splits = computed(() => (gps.value ? splitsPerKm(gps.value) : []));
-const paceSeries = computed(() => (gps.value ? paceSeriesSecPerKm(gps.value) : []));
-const speedSeries = computed(() => (gps.value ? speedSeriesKmh(gps.value) : []));
+const selectedKm = ref<number | null>(null);
+const selectedSplit = computed(() => splits.value.find((s) => s.km === selectedKm.value) ?? null);
+const kmDetail = computed(() =>
+  gps.value && selectedKm.value ? kmSegment(gps.value, selectedKm.value) : null,
+);
+function toggleKm(km: number): void {
+  selectedKm.value = selectedKm.value === km ? null : km;
+}
+const axis = ref<'time' | 'distance'>('time');
+const xFormat = computed(() => (axis.value === 'distance' ? fmtDistanceLabel : undefined));
+const paceSeries = computed(() => (gps.value ? paceSeriesSecPerKm(gps.value, axis.value) : []));
+const speedSeries = computed(() => (gps.value ? speedSeriesKmh(gps.value, axis.value) : []));
 const samplesOk = computed(() => (gps.value ? hasSamples(gps.value) : false));
 const avgCad = computed(() => (gps.value ? avgCadence(gps.value) : 0));
 const stepCount = computed(() => gps.value?.steps ?? 0);
-const cadenceSeries = computed(() => (gps.value ? cadenceSeriesSpm(gps.value) : []));
+const cadenceSeries = computed(() => (gps.value ? cadenceSeriesSpm(gps.value, axis.value) : []));
+const stride = computed(() => (gps.value ? analyzeStride(gps.value) : null));
 
 const domSets = computed(() => dom.value?.sets ?? []);
 const domBest = computed(() => (dom.value ? Math.max(0, ...dom.value.sets) : 0));
@@ -115,7 +129,7 @@ onBeforeUnmount(() => {
 
       <div class="readout">
         <div class="lbl">Distancia</div>
-        <div class="big"><span class="val num">{{ distanceKm.toFixed(2) }}</span><span class="unit num">km</span></div>
+        <div class="big"><span class="val num">{{ dist.value }}</span><span class="unit num">{{ dist.unit }}</span></div>
         <div class="grid3">
           <div class="stat"><div class="k">Tiempo</div><div class="v num">{{ durationText }}</div></div>
           <div class="stat"><div class="k">Ritmo /km</div><div class="v num">{{ avgPaceText }}</div></div>
@@ -129,21 +143,62 @@ onBeforeUnmount(() => {
       </div>
 
       <template v-if="samplesOk">
+        <div class="axis-toggle">
+          <button type="button" :class="{ on: axis === 'time' }" @click="axis = 'time'">Por tiempo</button>
+          <button type="button" :class="{ on: axis === 'distance' }" @click="axis = 'distance'">Por distancia</button>
+        </div>
         <div v-if="splits.length" class="card">
           <h3>Splits por km</h3>
-          <SplitsChart :splits="splits" />
+          <p class="sub">Tocá un kilómetro para ver su detalle.</p>
+          <SplitsChart :splits="splits" :selected="selectedKm" @select="toggleKm" />
+          <div v-if="kmDetail" class="km-panel">
+            <div class="km-head">
+              Kilómetro {{ kmDetail.km }}
+              <span v-if="selectedSplit?.partial" class="km-tag">parcial · {{ kmDetail.meters }} m</span>
+            </div>
+            <div class="grid3">
+              <div class="stat"><div class="k">Ritmo</div><div class="v num">{{ selectedSplit ? fmtPace(selectedSplit.paceSecPerKm) : '—' }}</div></div>
+              <div class="stat"><div class="k">Velocidad</div><div class="v num">{{ kmDetail.avgSpeedKmh.toFixed(1) }}<small>km/h</small></div></div>
+              <div class="stat"><div class="k">Cadencia</div><div class="v num">{{ kmDetail.avgCad || '—' }}<small v-if="kmDetail.avgCad">ppm</small></div></div>
+            </div>
+            <LineChart :points="kmDetail.speedSeries" color="#FF5A1F" :format="speedFmt" :height="90" />
+            <LineChart
+              v-if="kmDetail.cadSeries.length"
+              :points="kmDetail.cadSeries"
+              color="#12A150"
+              :format="cadFmt"
+              :height="90"
+            />
+          </div>
         </div>
         <div class="card">
-          <h3>Ritmo en el tiempo</h3>
-          <LineChart :points="paceSeries" color="#1B4DFF" :format="fmtPace" />
+          <h3>Ritmo {{ axis === 'distance' ? 'por distancia' : 'en el tiempo' }}</h3>
+          <LineChart :points="paceSeries" color="#1B4DFF" :format="fmtPace" :x-format="xFormat" />
         </div>
         <div class="card">
-          <h3>Velocidad en el tiempo</h3>
-          <LineChart :points="speedSeries" color="#FF5A1F" :format="speedFmt" />
+          <h3>Velocidad {{ axis === 'distance' ? 'por distancia' : 'en el tiempo' }}</h3>
+          <LineChart :points="speedSeries" color="#FF5A1F" :format="speedFmt" :x-format="xFormat" />
         </div>
         <div v-if="cadenceSeries.length" class="card">
-          <h3>Cadencia en el tiempo</h3>
-          <LineChart :points="cadenceSeries" color="#12A150" :format="cadFmt" />
+          <h3>Cadencia {{ axis === 'distance' ? 'por distancia' : 'en el tiempo' }}</h3>
+          <LineChart :points="cadenceSeries" color="#12A150" :format="cadFmt" :x-format="xFormat" />
+        </div>
+        <div v-if="stride" class="card">
+          <h3>Zancada vs cadencia</h3>
+          <StrideChart
+            :points="stride.points"
+            :bins="stride.bins"
+            :optimal-cadence="stride.optimalCadence"
+            :diminishing-cadence="stride.diminishingCadence"
+          />
+          <p class="insight">
+            Tu zancada más eficiente fue a <b class="num">{{ stride.optimalCadence }}</b> pasos/min
+            (≈ <b class="num">{{ stride.optimalStride.toFixed(2) }}</b> m por paso).
+          </p>
+          <p v-if="stride.diminishingCadence" class="insight muted">
+            Por encima de ~{{ stride.diminishingCadence }} pasos/min dejaste de ganar velocidad:
+            estabas acortando el paso.
+          </p>
         </div>
       </template>
       <p v-else class="hint" style="margin-top: 16px">
@@ -239,5 +294,73 @@ onBeforeUnmount(() => {
 .cadence-line b {
   color: var(--ink);
   font-size: 16px;
+}
+.insight {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.insight b {
+  color: #12a150;
+}
+.insight.muted {
+  margin-top: 4px;
+  color: var(--muted);
+}
+.insight.muted b {
+  color: var(--muted);
+}
+.sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin: -4px 0 12px;
+}
+.km-panel {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.km-head {
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.km-tag {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.km-panel .grid3 {
+  margin-bottom: 10px;
+}
+.axis-toggle {
+  display: flex;
+  gap: 6px;
+  margin-top: 16px;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.axis-toggle button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.axis-toggle button.on {
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 </style>

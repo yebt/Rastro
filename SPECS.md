@@ -76,7 +76,7 @@ Ordenadas por fase. Cada una detallada en §7–§9.
 
 ### Fase 1.1 — Mejoras rápidas en web (sin cambiar de plataforma)
 - ✅ **F1. Wake Lock:** la pantalla no se apaga sola mientras registrás. *(implementado; indicador "pantalla activa")*
-- 🔧 **F2. Cadencia aproximada por acelerómetro** (`@capacitor/motion`). *Implementado (detector de pasos + cadencia, guardados en `samples.cad` y `activity.steps`). Falta: mostrar pasos/cadencia en el detalle, y validar que el acelerómetro dispare en el WebView del dispositivo (si no, cae a F6).* 
+- ✅ **F2. Cadencia aproximada por acelerómetro** (`@capacitor/motion`). *Validado en dispositivo (dispara: ~125 ppm + conteo de pasos reales). Detector de pasos + cadencia guardados en `samples.cad` y `activity.steps`; mostrados en vivo y en el detalle. Habilita F8.*
 - ✅ **F3. Serie de tiempo por actividad:** muestras (t, distancia, velocidad, cadencia) cada ~3s. *(implementado)*
 - 🔧 **F4. Reportes básicos:** splits por km + ritmo/velocidad en el tiempo (gráficas SVG). *Falta: tooltip táctil interactivo, gráfica de cadencia en el tiempo, marcadores de inicio/fin en el mapa.*
 
@@ -86,10 +86,11 @@ Ordenadas por fase. Cada una detallada en §7–§9.
 - ✅ **F7. Almacenamiento nativo** (SQLite vía `@capacitor-community/sqlite`, adaptador del puerto de persistencia). *Implementado en nativo; web sigue con IndexedDB. Falta migración IndexedDB→SQLite (opcional).*
 
 ### Fase 3 — Análisis y reportes avanzados
-- ⏳ **F8. Motor de zancada y cadencia óptima** (la idea central del usuario, §8). *Pendiente. Ya se recolecta la cadencia que necesita.*
+- 🔧 **F8. Motor de zancada y cadencia óptima** (la idea central del usuario, §8). *Implementado: `src/lib/stride.ts` (puntos zancada=v/(cad/60), bins de cadencia, cadencia óptima + zona de rendimiento decreciente) con tests; gráfica scatter `StrideChart.vue` (zancada vs cadencia, zona óptima resaltada) + insight en lenguaje humano en el detalle. Falta: validar en dispositivo con cadencia real (depende de F2/F6).*
 - ⏳ **F9. Reportes e histogramas** (§9). *Parcial: los reportes por-actividad (F4) están; faltan las tendencias entre actividades (§9.2/§9.3) y la cadencia/zancada en el tiempo.*
 - ⏳ **F10. Récords (PR) automáticos** y **metas** (diaria de dominadas, semanal de km).
 - ⏳ **F11. Calorías estimadas** y **progreso semanal**.
+- ⏳ **F13. Más tipos de ejercicio** (no solo dominadas). *Backlog: generalizar el modelo de "sesión sin GPS" para registrar otros ejercicios (flexiones, sentadillas, abdominales, plancha por tiempo, etc.) con series/reps o duración. Requiere: catálogo de ejercicios, UI de registro genérica, historial/reportes por tipo. Detalle en §10.*
 - ⏳ **F12. Vista de ruta y tarjeta para compartir** (§9.5). *Parcial: la vista de detalle con mapa + stats + gráficas ya existe. Falta: marcadores inicio/fin, tarjeta compartible con selección de tema, y la acción de compartir (Web Share / plugin Share).*
 
 ---
@@ -194,8 +195,7 @@ Interpretación (coincide con la intuición del usuario):
 ### 9.1 Por actividad
 - **Mapa de la ruta.**
 - **Splits por km:** tabla con ritmo de cada kilómetro.
-- **Ritmo en el tiempo:** línea de ritmo (o velocidad) a lo largo de la salida.
-- **Cadencia en el tiempo:** línea de pasos/min.
+- **Ritmo/velocidad y cadencia como serie:** líneas a lo largo de la salida, con **eje X conmutable entre tiempo y distancia recorrida** (toggle "Por tiempo / Por distancia"). El eje por distancia permite ver *en qué punto del trayecto* pasó algo (p. ej. "aceleré a partir de los 300 m"), no solo *en qué minuto*.
 - **Zancada vs cadencia (dispersión/histograma):** el gráfico clave del §8, resalta la zona óptima.
 - **Velocidad vs cadencia:** para ver dónde acelerar deja de rendir.
 
@@ -229,6 +229,7 @@ Interpretación (coincide con la intuición del usuario):
 - **F10 · PR y metas:** detección automática de récords al guardar; meta diaria de dominadas y semanal de km, con barra de progreso.
 - **F11 · Calorías estimadas:** cálculo aproximado por tipo de actividad, distancia/tiempo y peso del usuario (dato opcional que el usuario ingresa una vez; se guarda local). Siempre etiquetado como *estimado*.
 - **F12 · Vista de ruta y tarjeta para compartir:** detalle de la actividad con el mapa de la ruta y una tarjeta compartible (imagen con trazado + stats), generada localmente y compartida solo por acción explícita del usuario. Detalle en §9.5.
+- **F13 · Más tipos de ejercicio (backlog):** hoy solo hay dominadas como sesión sin GPS. Generalizar a un catálogo de ejercicios de fuerza/peso corporal (flexiones, sentadillas, abdominales, dominadas, plancha por tiempo…). Modelo: sesión con `exercise` (id/nombre), y series de **reps** o de **duración** según el ejercicio. UI de registro reutilizable (el stepper de series ya sirve), historial y reportes filtrables por ejercicio, PR por ejercicio. Mantiene el principio local-first; no toca el motor GPS. A definir: catálogo fijo vs. ejercicios personalizados del usuario.
 
 ---
 

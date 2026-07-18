@@ -4,7 +4,7 @@ import IconDumbbell from '~icons/lucide/dumbbell';
 import IconInbox from '~icons/lucide/inbox';
 import IconRoute from '~icons/lucide/route';
 import { computed, ref } from 'vue';
-import { fmtPace, fmtTime, paceSecPerKm } from '../lib/format';
+import { fmtDistance, fmtPace, fmtTime, paceSecPerKm } from '../lib/format';
 import { relDate } from '../lib/date';
 import { TYPE_COLOR, TYPE_LABEL } from '../lib/labels';
 import { isDominadas, type Activity } from '../lib/types';
@@ -89,7 +89,7 @@ async function confirmDelete(id: string): Promise<void> {
           <div><div class="k">Mejor serie</div><div class="v num">{{ bestSet(a) }}</div></div>
         </div>
         <div v-else class="mets">
-          <div><div class="k">Distancia</div><div class="v num">{{ (a.distance / 1000).toFixed(2) }}<small> km</small></div></div>
+          <div><div class="k">Distancia</div><div class="v num">{{ fmtDistance(a.distance).value }}<small> {{ fmtDistance(a.distance).unit }}</small></div></div>
           <div><div class="k">Tiempo</div><div class="v num">{{ fmtTime(a.duration) }}</div></div>
           <div><div class="k">Ritmo</div><div class="v num">{{ fmtPace(paceSecPerKm(a.distance, a.duration)) }}<small> /km</small></div></div>
         </div>

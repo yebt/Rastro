@@ -5,7 +5,7 @@ import L from 'leaflet';
 import IconLocate from '~icons/lucide/locate-fixed';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { geo } from '../geolocation';
-import { fmtPace, fmtTime, paceSecPerKm } from '../lib/format';
+import { fmtDistance, fmtPace, fmtTime, paceSecPerKm } from '../lib/format';
 import type { GpsType } from '../lib/types';
 import { $cadence, $steps } from '../motion/pedometer';
 import { $activeTab } from '../stores/ui';
@@ -48,7 +48,7 @@ const cadence = useStore($cadence);
 const steps = useStore($steps);
 
 const km = computed(() => distance.value / 1000);
-const distText = computed(() => km.value.toFixed(2));
+const dist = computed(() => fmtDistance(distance.value));
 const timeText = computed(() => fmtTime(elapsed.value));
 const paceText = computed(() =>
   km.value > 0.02 ? fmtPace(paceSecPerKm(distance.value, elapsed.value)) : '—',
@@ -190,7 +190,7 @@ watch(activeTab, (tab) => {
     <div class="readout">
       <div class="lbl">Distancia</div>
       <div class="big">
-        <span class="val num">{{ distText }}</span><span class="unit num">km</span>
+        <span class="val num">{{ dist.value }}</span><span class="unit num">{{ dist.unit }}</span>
       </div>
       <div class="grid3">
         <div class="stat"><div class="k">Tiempo</div><div class="v num">{{ timeText }}</div></div>

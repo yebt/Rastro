@@ -15,10 +15,19 @@ export interface Split {
   partial: boolean;
 }
 
-/** A point in a time series: seconds since start → value. */
+/** A point in a series: x (seconds since start, or meters travelled) → value. */
 export interface SeriesPoint {
+  /** x axis: seconds when axis="time", accumulated meters when axis="distance" */
   t: number;
   v: number;
+}
+
+/** X axis for a time series: elapsed time or distance travelled. */
+export type SeriesAxis = "time" | "distance";
+
+/** Pick a sample's x value for the requested axis. */
+function xOf(s: { t: number; d: number }, axis: SeriesAxis): number {
+  return axis === "distance" ? s.d : s.t;
 }
 
 export function hasSamples(activity: GpsActivity): boolean {
@@ -75,14 +84,64 @@ export function splitsPerKm(activity: GpsActivity): Split[] {
   return splits;
 }
 
-/** Speed over time, km/h. */
-export function speedSeriesKmh(activity: GpsActivity): SeriesPoint[] {
-  return (activity.samples ?? []).map((s) => ({ t: s.t, v: s.v * 3.6 }));
+/** Drill-down metrics for a single kilometer, from its samples. */
+export interface KmSegment {
+  km: number;
+  meters: number;
+  seconds: number;
+  avgSpeedKmh: number;
+  avgCad: number;
+  /** speed (km/h) over time, t relative to the km's start */
+  speedSeries: SeriesPoint[];
+  /** cadence (steps/min) over time, t relative to the km's start */
+  cadSeries: SeriesPoint[];
 }
 
-/** Pace over time, seconds per km. Near-stops are dropped (pace → ∞). */
-export function paceSeriesSecPerKm(activity: GpsActivity): SeriesPoint[] {
-  return (activity.samples ?? []).filter((s) => s.v > 0.3).map((s) => ({ t: s.t, v: 1000 / s.v }));
+/**
+ * Per-kilometer detail built from the samples whose accumulated distance falls
+ * in [(km-1)·1000, km·1000]. null when that window has < 2 samples (old data or
+ * a km with no coverage). Time is rebased to the segment start for the charts.
+ */
+export function kmSegment(activity: GpsActivity, km: number): KmSegment | null {
+  const s = activity.samples;
+  if (!s || s.length < 2 || km < 1) return null;
+
+  const lower = (km - 1) * 1000;
+  const upper = km * 1000;
+  const win = s.filter((p) => p.d >= lower && p.d <= upper);
+  if (win.length < 2) return null;
+
+  const first = win[0]!;
+  const last = win[win.length - 1]!;
+  const speeds = win.map((p) => p.v);
+  const cads = win.map((p) => p.cad).filter((c): c is number => typeof c === "number" && c > 0);
+
+  return {
+    km,
+    meters: Math.round(last.d - first.d),
+    seconds: last.t - first.t,
+    avgSpeedKmh: (speeds.reduce((a, b) => a + b, 0) / speeds.length) * 3.6,
+    avgCad: cads.length ? Math.round(cads.reduce((a, b) => a + b, 0) / cads.length) : 0,
+    speedSeries: win.map((p) => ({ t: p.t - first.t, v: p.v * 3.6 })),
+    cadSeries: win
+      .filter((p) => typeof p.cad === "number" && p.cad > 0)
+      .map((p) => ({ t: p.t - first.t, v: p.cad as number })),
+  };
+}
+
+/** Speed over time or distance, km/h. */
+export function speedSeriesKmh(activity: GpsActivity, axis: SeriesAxis = "time"): SeriesPoint[] {
+  return (activity.samples ?? []).map((s) => ({ t: xOf(s, axis), v: s.v * 3.6 }));
+}
+
+/** Pace over time or distance, seconds per km. Near-stops are dropped (pace → ∞). */
+export function paceSeriesSecPerKm(
+  activity: GpsActivity,
+  axis: SeriesAxis = "time",
+): SeriesPoint[] {
+  return (activity.samples ?? [])
+    .filter((s) => s.v > 0.3)
+    .map((s) => ({ t: xOf(s, axis), v: 1000 / s.v }));
 }
 
 /** Fastest split index (1-based), or 0 if none. */
@@ -107,9 +166,9 @@ export function avgCadence(activity: GpsActivity): number {
   return Math.round(cads.reduce((a, b) => a + b, 0) / cads.length);
 }
 
-/** Cadence over time (steps/min). Empty when no cadence was captured. */
-export function cadenceSeriesSpm(activity: GpsActivity): SeriesPoint[] {
+/** Cadence over time or distance (steps/min). Empty when no cadence was captured. */
+export function cadenceSeriesSpm(activity: GpsActivity, axis: SeriesAxis = "time"): SeriesPoint[] {
   return (activity.samples ?? [])
     .filter((s) => typeof s.cad === "number" && s.cad > 0)
-    .map((s) => ({ t: s.t, v: s.cad as number }));
+    .map((s) => ({ t: xOf(s, axis), v: s.cad as number }));
 }
