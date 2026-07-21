@@ -8,6 +8,16 @@ export function dayKey(ts: number): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+/**
+ * Sortable local date-time stamp `YYYY-MM-DD_HHMMSS` for backup filenames, so
+ * multiple copies keep and order naturally (lexicographic == chronological).
+ */
+export function backupStamp(ts: number): string {
+  const d = new Date(ts);
+  const time = `${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+  return `${dayKey(ts)}_${time}`;
+}
+
 const MONTHS_ES = [
   "ene",
   "feb",

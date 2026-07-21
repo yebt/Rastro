@@ -12,6 +12,8 @@ import { Directory, Encoding, Filesystem } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 
 const MIME = "application/json";
+/** Sub-folder under Documents where local copies live (native). */
+const BACKUP_DIR = "Rastro";
 
 function webDownload(json: string, filename: string): void {
   const blob = new Blob([json], { type: MIME });
@@ -36,26 +38,52 @@ export async function saveBackup(json: string, filename: string): Promise<string
   }
   try {
     await Filesystem.writeFile({
-      path: filename,
+      path: `${BACKUP_DIR}/${filename}`,
       data: json,
       directory: Directory.Documents,
       encoding: Encoding.UTF8,
+      recursive: true, // create Documents/Rastro if missing
     });
-    return "Documentos";
+    return `Documentos/${BACKUP_DIR}`;
   } catch {
     // Documents not writable on this device — fall back to app storage.
     try {
       await Filesystem.writeFile({
-        path: filename,
+        path: `${BACKUP_DIR}/${filename}`,
         data: json,
         directory: Directory.Cache,
         encoding: Encoding.UTF8,
+        recursive: true,
       });
       return "almacenamiento de la app";
     } catch {
       return null;
     }
   }
+}
+
+/**
+ * Delete old local copies, keeping the `keep` most recent (filenames sort
+ * chronologically). Returns the number deleted, or -1 when not on native.
+ */
+export async function cleanOldBackups(keep = 1): Promise<number> {
+  if (!Capacitor.isNativePlatform()) return -1;
+  let files: string[];
+  try {
+    const res = await Filesystem.readdir({ path: BACKUP_DIR, directory: Directory.Documents });
+    files = res.files.map((f) => f.name).filter((n) => n.endsWith(".json"));
+  } catch {
+    return 0; // folder doesn't exist yet → nothing to clean
+  }
+  const old = files.toSorted().toReversed().slice(keep); // newest first, drop the kept ones
+  const results = await Promise.all(
+    old.map((name) =>
+      Filesystem.deleteFile({ path: `${BACKUP_DIR}/${name}`, directory: Directory.Documents })
+        .then(() => true)
+        .catch(() => false),
+    ),
+  );
+  return results.filter(Boolean).length;
 }
 
 /**

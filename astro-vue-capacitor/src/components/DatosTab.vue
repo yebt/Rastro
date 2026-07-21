@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { useStore } from '@nanostores/vue';
+import IconEraser from '~icons/lucide/eraser';
 import IconDownload from '~icons/lucide/download';
 import IconShare from '~icons/lucide/share-2';
 import IconTrash from '~icons/lucide/trash-2';
 import IconUpload from '~icons/lucide/upload';
 import { ref } from 'vue';
-import { saveBackup, shareBackup } from '../backup';
-import { dayKey } from '../lib/date';
+import { cleanOldBackups, saveBackup, shareBackup } from '../backup';
+import { backupStamp } from '../lib/date';
 import type { ImportMode } from '../lib/db';
 import {
   $activities,
@@ -30,7 +31,7 @@ function backupJson(): { json: string; filename: string } {
     units: 'km',
     activities: activities.value,
   };
-  return { json: JSON.stringify(payload, null, 2), filename: `rastro-${dayKey(Date.now())}.json` };
+  return { json: JSON.stringify(payload, null, 2), filename: `rastro-${backupStamp(Date.now())}.json` };
 }
 
 async function saveCopy(): Promise<void> {
@@ -51,6 +52,15 @@ async function shareCopy(): Promise<void> {
   } catch {
     showToast('No se pudo compartir el respaldo');
   }
+}
+
+async function cleanBackups(): Promise<void> {
+  if (!globalThis.confirm('Borra las copias guardadas en Documentos/Rastro y conserva solo la más reciente.\n\n¿Seguir?')) {
+    return;
+  }
+  const deleted = await cleanOldBackups(1);
+  if (deleted < 0) showToast('Disponible solo en la app');
+  else showToast(deleted ? `Se borraron ${deleted} copias viejas` : 'No había copias viejas');
 }
 
 function pickFile(): void {
@@ -99,6 +109,10 @@ async function clearAll(): Promise<void> {
     <button class="dbtn" @click="shareCopy">
       <IconShare />
       <div><b>Compartir</b><div class="sub">Envía el respaldo a otra app (Drive, correo…)</div></div>
+    </button>
+    <button class="dbtn" @click="cleanBackups">
+      <IconEraser />
+      <div><b>Limpiar copias viejas</b><div class="sub">Conserva la más reciente en Documentos/Rastro</div></div>
     </button>
     <button class="dbtn" @click="pickFile">
       <IconUpload />
