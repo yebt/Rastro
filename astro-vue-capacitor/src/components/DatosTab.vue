@@ -4,6 +4,7 @@ import IconDownload from '~icons/lucide/download';
 import IconTrash from '~icons/lucide/trash-2';
 import IconUpload from '~icons/lucide/upload';
 import { ref } from 'vue';
+import { exportBackup } from '../backup';
 import { dayKey } from '../lib/date';
 import type { ImportMode } from '../lib/db';
 import {
@@ -20,7 +21,7 @@ const activities = useStore($activities);
 const summary = useStore($summary);
 const fileInput = ref<HTMLInputElement | null>(null);
 
-function exportData(): void {
+async function exportData(): Promise<void> {
   const payload = {
     app: 'Rastro',
     version: 1,
@@ -28,16 +29,13 @@ function exportData(): void {
     units: 'km',
     activities: activities.value,
   };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `rastro-${dayKey(Date.now())}.json`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-  showToast('Archivo exportado');
+  const json = JSON.stringify(payload, null, 2);
+  try {
+    const done = await exportBackup(json, `rastro-${dayKey(Date.now())}.json`);
+    if (done) showToast('Respaldo exportado');
+  } catch {
+    showToast('No se pudo exportar el respaldo');
+  }
 }
 
 function pickFile(): void {
