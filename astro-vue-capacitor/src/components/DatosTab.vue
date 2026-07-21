@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { useStore } from '@nanostores/vue';
 import IconDownload from '~icons/lucide/download';
+import IconShare from '~icons/lucide/share-2';
 import IconTrash from '~icons/lucide/trash-2';
 import IconUpload from '~icons/lucide/upload';
 import { ref } from 'vue';
-import { exportBackup } from '../backup';
+import { saveBackup, shareBackup } from '../backup';
 import { dayKey } from '../lib/date';
 import type { ImportMode } from '../lib/db';
 import {
@@ -21,7 +22,7 @@ const activities = useStore($activities);
 const summary = useStore($summary);
 const fileInput = ref<HTMLInputElement | null>(null);
 
-async function exportData(): Promise<void> {
+function backupJson(): { json: string; filename: string } {
   const payload = {
     app: 'Rastro',
     version: 1,
@@ -29,12 +30,26 @@ async function exportData(): Promise<void> {
     units: 'km',
     activities: activities.value,
   };
-  const json = JSON.stringify(payload, null, 2);
+  return { json: JSON.stringify(payload, null, 2), filename: `rastro-${dayKey(Date.now())}.json` };
+}
+
+async function saveCopy(): Promise<void> {
+  const { json, filename } = backupJson();
   try {
-    const done = await exportBackup(json, `rastro-${dayKey(Date.now())}.json`);
-    if (done) showToast('Respaldo exportado');
+    const where = await saveBackup(json, filename);
+    showToast(where ? `Copia guardada en ${where}` : 'No se pudo guardar la copia');
   } catch {
-    showToast('No se pudo exportar el respaldo');
+    showToast('No se pudo guardar la copia');
+  }
+}
+
+async function shareCopy(): Promise<void> {
+  const { json, filename } = backupJson();
+  try {
+    const done = await shareBackup(json, filename);
+    if (done) showToast('Respaldo compartido');
+  } catch {
+    showToast('No se pudo compartir el respaldo');
   }
 }
 
@@ -77,9 +92,13 @@ async function clearAll(): Promise<void> {
 <template>
   <section class="screen" :class="{ active }">
     <div class="section-h" style="margin-top: 12px">Respaldo</div>
-    <button class="dbtn" @click="exportData">
+    <button class="dbtn" @click="saveCopy">
       <IconDownload />
-      <div><b>Exportar datos</b><div class="sub">Descarga un archivo .json con todo tu historial</div></div>
+      <div><b>Guardar copia</b><div class="sub">Guarda un archivo .json en el dispositivo</div></div>
+    </button>
+    <button class="dbtn" @click="shareCopy">
+      <IconShare />
+      <div><b>Compartir</b><div class="sub">Envía el respaldo a otra app (Drive, correo…)</div></div>
     </button>
     <button class="dbtn" @click="pickFile">
       <IconUpload />
