@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import 'leaflet/dist/leaflet.css';
+import { Capacitor } from '@capacitor/core';
 import { useStore } from '@nanostores/vue';
 import L from 'leaflet';
 import IconLocate from '~icons/lucide/locate-fixed';
@@ -63,9 +64,16 @@ const paceText = computed(() =>
 );
 const speedText = computed(() => (speed.value > 0 ? speed.value.toFixed(1) : '0'));
 
+const native = Capacitor.isNativePlatform();
 const hint = computed(() => {
-  if (state.value === 'running') return 'Registrando… mantené la pantalla encendida.';
-  return 'Activá el GPS y tocá Iniciar. Dejá esta pantalla abierta mientras te movés.';
+  if (state.value === 'running') {
+    return native
+      ? 'Registrando… podés bloquear la pantalla, seguimos en segundo plano.'
+      : 'Registrando… mantené la pantalla encendida.';
+  }
+  return native
+    ? 'Elegí el tipo y tocá Iniciar.'
+    : 'Activá el GPS y tocá Iniciar. Dejá esta pantalla abierta mientras te movés.';
 });
 
 const mapEl = ref<HTMLDivElement | null>(null);

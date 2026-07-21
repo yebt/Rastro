@@ -11,6 +11,7 @@ export type StepSource = "accelerometer" | "hardware";
 const STEP_KEY = "rastro.stepSource";
 const MAP_KEY = "rastro.mapStyle";
 const SETUP_KEY = "rastro.setupDone";
+const THEME_KEY = "rastro.theme";
 
 function readStepSource(): StepSource {
   try {
@@ -128,6 +129,29 @@ export function completeSetup(): void {
   $setupDone.set(true);
   try {
     globalThis.localStorage?.setItem(SETUP_KEY, "1");
+  } catch {
+    // ignore
+  }
+}
+
+/** Color theme: follow the system, or force light/dark. */
+export type Theme = "auto" | "light" | "dark";
+
+function readTheme(): Theme {
+  try {
+    const t = globalThis.localStorage?.getItem(THEME_KEY);
+    return t === "light" || t === "dark" ? t : "auto";
+  } catch {
+    return "auto";
+  }
+}
+
+export const $theme = atom<Theme>(readTheme());
+
+export function setTheme(theme: Theme): void {
+  $theme.set(theme);
+  try {
+    globalThis.localStorage?.setItem(THEME_KEY, theme);
   } catch {
     // ignore
   }

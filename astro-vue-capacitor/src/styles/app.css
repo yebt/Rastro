@@ -13,11 +13,29 @@
   --green: #12a150;
   --red: #e5484d;
   --soft: #f0f1ec;
+  --map-bg: #dfe3dd;
+  --nav-bg: rgba(255, 255, 255, 0.94);
   --nav-h: 64px;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
   --sans: var(--font-inter, system-ui, -apple-system, sans-serif);
   --cond: var(--font-barlow, 'Barlow Condensed', sans-serif);
+}
+
+:root[data-theme='dark'] {
+  --paper: #14171a;
+  --surface: #1d2226;
+  --ink: #eef1ec;
+  --muted: #99a29a;
+  --line: #2b3137;
+  --blue: #4d7bff;
+  --blue-ink: #6b90ff;
+  --energy: #ff7a45;
+  --green: #2fbf6e;
+  --red: #f26a6e;
+  --soft: #1f252a;
+  --map-bg: #23292e;
+  --nav-bg: rgba(20, 23, 26, 0.94);
 }
 
 * {
@@ -162,7 +180,7 @@ input {
   height: 260px;
   border-radius: 18px;
   overflow: hidden;
-  background: #dfe3dd;
+  background: var(--map-bg);
   border: 1px solid var(--line);
   z-index: 1;
 }
@@ -727,7 +745,7 @@ nav {
   right: 0;
   height: calc(var(--nav-h) + var(--safe-b));
   padding-bottom: var(--safe-b);
-  background: rgba(255, 255, 255, 0.94);
+  background: var(--nav-bg);
   backdrop-filter: blur(12px);
   border-top: 1px solid var(--line);
   display: flex;

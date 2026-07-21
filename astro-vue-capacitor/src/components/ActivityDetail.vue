@@ -310,7 +310,7 @@ onBeforeUnmount(() => {
   height: 240px;
   border-radius: 18px;
   overflow: hidden;
-  background: #dfe3dd;
+  background: var(--map-bg);
   border: 1px solid var(--line);
   margin-top: 6px;
 }

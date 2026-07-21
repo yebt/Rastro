@@ -81,7 +81,7 @@ Ordenadas por fase. Cada una detallada en §7–§9.
 - ✅ **F4. Reportes básicos:** splits por km (drill-down por km) + ritmo/velocidad/cadencia en el tiempo con **tooltip táctil**, eje conmutable tiempo/distancia, y marcadores de inicio/fin en el mapa. *(implementado)*
 
 ### Fase 2 — App nativa (Capacitor)
-- 🔧 **F5. GPS en segundo plano** (`@capacitor-community/background-geolocation`, servicio en primer plano + notificación). *Implementado; la notificación muestra info base ("Rastro · {tipo} en curso — Registrando ubicación y pasos"). Validar pantalla apagada en dispositivo.*
+- 🔧 **F5. GPS en segundo plano** (`@capacitor-community/background-geolocation`, servicio en primer plano + notificación). *Código completo y cableado (nativo → `BackgroundGeolocationAdapter`; el permiso de notificación se pide en el setup; el servicio en primer plano de tipo `location` permite pantalla apagada sin `ACCESS_BACKGROUND_LOCATION`). Hint del tracker corregido: en nativo ya dice "podés bloquear la pantalla". **Solo falta validación en dispositivo con pantalla apagada** — no queda código pendiente.*
 - 🔧 **F6. Podómetro real por sensor de hardware** (`@capgo/capacitor-pedometer`, `TYPE_STEP_COUNTER`, permiso `ACTIVITY_RECOGNITION`). *Implementado como **contador alterno**: corre en paralelo al acelerómetro (F2) durante cada salida. Se muestran ambos en vivo (pestaña Registrar) y comparados en el detalle; toggle de "fuente por defecto" persistido. Falta: validar precisión en dispositivo y elegir el default definitivo.*
 - ✅ **F7. Almacenamiento nativo** (SQLite vía `@capacitor-community/sqlite`, adaptador del puerto de persistencia). *Implementado en nativo; web sigue con IndexedDB. Falta migración IndexedDB→SQLite (opcional).*
 
@@ -98,7 +98,7 @@ Ordenadas por fase. Cada una detallada en §7–§9.
 - ✅ **Fix navegación:** el botón **atrás** de Android ya no cierra la app — cierra overlays, luego vuelve al home, y solo minimiza (sin cortar el tracking) desde el home. *(`@capacitor/app` backButton)*
 - ✅ **F15. Pantalla de setup / permisos previos:** onboarding en primera corrida (nativo) que solicita ubicación, notificaciones y actividad física (podómetro de hardware), con explicación de cada uno y estado en vivo; reabrible desde Configuración → "Revisar permisos". *(implementado; `SetupScreen.vue`, `src/permissions.ts`, flag `$setupDone` persistido)*
 - ⏳ **F16. Sync online opcional (Google):** respaldo/sincronización opt-in con cuenta de Google cuando haya conexión, sin romper el principio local-first (funciona 100% offline; la nube es un extra). *Futuro.*
-- ⏳ **F17. Dark mode:** tema oscuro (Auto / Claro / Oscuro) con variables CSS, mapa oscuro CARTO y barra de estado adaptada. *Pendiente.*
+- ✅ **F17. Dark mode:** tema Auto / Claro / Oscuro (selector en Configuración → Apariencia), vía `data-theme` en `<html>` + override de variables CSS; "Auto" sigue `prefers-color-scheme`; script anti-flash en `index.astro`; `theme-color` sincronizado. *(implementado; `theme.ts`, `$theme` persistido. El mapa se elige aparte — hay tiles "Oscuro" CARTO.)*
 
 ---
 

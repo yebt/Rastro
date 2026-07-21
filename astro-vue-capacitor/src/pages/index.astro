@@ -16,7 +16,21 @@ const isProd = import.meta.env.PROD;
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no"
     />
-    <meta name="theme-color" content="#15181A" />
+    <meta name="theme-color" content="#f5f6f3" />
+    <script is:inline>
+      // Apply the saved theme before paint to avoid a flash of the wrong colors.
+      (() => {
+        try {
+          const t = localStorage.getItem('rastro.theme') || 'auto';
+          const dark =
+            t === 'dark' ||
+            (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+        } catch (e) {
+          /* ignore */
+        }
+      })();
+    </script>
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="mobile-web-app-capable" content="yes" />

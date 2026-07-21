@@ -7,6 +7,7 @@ import IconSettings from '~icons/lucide/settings';
 import { computed, onMounted, onUnmounted } from 'vue';
 import { loadActivities } from '../stores/activities';
 import { $setupDone } from '../stores/settings';
+import { initTheme } from '../theme';
 import {
   $activeTab,
   $detailId,
@@ -57,6 +58,7 @@ async function registerBackButton(): Promise<void> {
 }
 
 onMounted(() => {
+  initTheme();
   void loadActivities();
   void registerBackButton();
   if (import.meta.env.DEV) {

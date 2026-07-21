@@ -7,10 +7,13 @@ import { hardwareAvailable } from '../motion/hardware';
 import {
   $mapStyle,
   $stepSource,
+  $theme,
   MAP_STYLES,
   setMapStyle,
   setStepSource,
+  setTheme,
   type StepSource,
+  type Theme,
 } from '../stores/settings';
 import { closeSettings, openSetup } from '../stores/ui';
 
@@ -21,7 +24,14 @@ function reviewPermissions(): void {
 
 const stepSource = useStore($stepSource);
 const mapStyle = useStore($mapStyle);
+const theme = useStore($theme);
 const hwReady = ref<boolean | null>(null);
+
+const THEMES: { key: Theme; label: string }[] = [
+  { key: 'auto', label: 'Auto' },
+  { key: 'light', label: 'Claro' },
+  { key: 'dark', label: 'Oscuro' },
+];
 
 onMounted(async () => {
   hwReady.value = await hardwareAvailable();
@@ -47,6 +57,22 @@ const SOURCES: { key: StepSource; label: string; desc: string }[] = [
       <button class="back" type="button" aria-label="Cerrar" @click="closeSettings"><IconArrow /></button>
       <div class="s-ttl">Configuración</div>
     </div>
+
+    <section class="s-block">
+      <h3>Apariencia</h3>
+      <p class="s-hint">Tema de la app. "Auto" sigue al sistema.</p>
+      <div class="seg3">
+        <button
+          v-for="t in THEMES"
+          :key="t.key"
+          type="button"
+          :class="{ on: theme === t.key }"
+          @click="setTheme(t.key)"
+        >
+          {{ t.label }}
+        </button>
+      </div>
+    </section>
 
     <section class="s-block">
       <h3>Contador de pasos</h3>
@@ -218,5 +244,28 @@ const SOURCES: { key: StepSource; label: string; desc: string }[] = [
 }
 .map-opt.on {
   border-color: var(--ink);
+}
+.seg3 {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.seg3 button {
+  flex: 1;
+  padding: 9px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+.seg3 button.on {
+  background: var(--ink);
+  color: var(--paper);
 }
 </style>
