@@ -8,6 +8,8 @@ import { geo } from '../geolocation';
 import { fmtDistance, fmtPace, fmtTime, paceSecPerKm } from '../lib/format';
 import type { GpsType } from '../lib/types';
 import { $cadence, $steps } from '../motion/pedometer';
+import { $hwAvailable, $hwCadence, $hwSteps } from '../motion/hardware';
+import { $stepSource, setStepSource } from '../stores/settings';
 import { $activeTab } from '../stores/ui';
 import {
   $curType,
@@ -46,6 +48,10 @@ const activeTab = useStore($activeTab);
 const wakeLockActive = useStore($wakeLockActive);
 const cadence = useStore($cadence);
 const steps = useStore($steps);
+const hwCadence = useStore($hwCadence);
+const hwSteps = useStore($hwSteps);
+const hwAvailable = useStore($hwAvailable);
+const stepSource = useStore($stepSource);
 
 const km = computed(() => distance.value / 1000);
 const dist = computed(() => fmtDistance(distance.value));
@@ -197,8 +203,20 @@ watch(activeTab, (tab) => {
         <div class="stat"><div class="k">Ritmo /km</div><div class="v num">{{ paceText }}</div></div>
         <div class="stat"><div class="k">Velocidad</div><div class="v num">{{ speedText }}<small>km/h</small></div></div>
       </div>
-      <div v-if="state !== 'idle'" class="cadence-line">
-        Cadencia <b class="num">{{ cadence }}</b> pasos/min · <b class="num">{{ steps }}</b> pasos
+      <div v-if="state !== 'idle'" class="ped">
+        <div class="ped-row" :class="{ def: stepSource === 'accelerometer' }">
+          <span class="ped-name">Acelerómetro<small v-if="hwAvailable && stepSource === 'accelerometer'"> · por defecto</small></span>
+          <span class="ped-val num">{{ cadence }} ppm · {{ steps }} pasos</span>
+        </div>
+        <div v-if="hwAvailable" class="ped-row" :class="{ def: stepSource === 'hardware' }">
+          <span class="ped-name">Hardware<small v-if="stepSource === 'hardware'"> · por defecto</small></span>
+          <span class="ped-val num">{{ hwCadence }} ppm · {{ hwSteps }} pasos</span>
+        </div>
+        <div v-if="hwAvailable" class="ped-toggle">
+          <span class="ped-toggle-lbl">Fuente por defecto</span>
+          <button type="button" :class="{ on: stepSource === 'accelerometer' }" @click="setStepSource('accelerometer')">Acelerómetro</button>
+          <button type="button" :class="{ on: stepSource === 'hardware' }" @click="setStepSource('hardware')">Hardware</button>
+        </div>
       </div>
     </div>
 
@@ -224,16 +242,57 @@ watch(activeTab, (tab) => {
 </template>
 
 <style scoped>
-.cadence-line {
+.ped {
   margin-top: 14px;
-  padding-top: 14px;
+  padding-top: 12px;
   border-top: 1px solid var(--line);
+}
+.ped-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 4px 8px;
+  border-radius: 8px;
   font-size: 13px;
   color: var(--muted);
-  text-align: center;
 }
-.cadence-line b {
+.ped-row.def {
+  background: var(--surface);
+}
+.ped-name {
+  font-weight: 600;
+}
+.ped-name small {
+  font-weight: 500;
+  color: var(--green);
+}
+.ped-val {
   color: var(--ink);
-  font-size: 16px;
+}
+.ped-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+.ped-toggle-lbl {
+  font-size: 12px;
+  color: var(--muted);
+  margin-right: auto;
+}
+.ped-toggle button {
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+.ped-toggle button.on {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
 }
 </style>

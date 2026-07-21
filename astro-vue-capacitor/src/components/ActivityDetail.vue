@@ -71,6 +71,15 @@ const stepCount = computed(() => gps.value?.steps ?? 0);
 const cadenceSeries = computed(() => (gps.value ? cadenceSeriesSpm(gps.value, axis.value) : []));
 const segments = computed(() => (gps.value ? segmentProfile(gps.value) : []));
 const stride = computed(() => (gps.value ? analyzeStride(gps.value) : null));
+const stepsAccel = computed(() => gps.value?.stepsAccel ?? 0);
+const stepsHardware = computed(() => gps.value?.stepsHardware ?? 0);
+const bothSteps = computed(() => stepsAccel.value > 0 && stepsHardware.value > 0);
+const stepsDiffPct = computed(() =>
+  stepsAccel.value > 0
+    ? Math.round(((stepsHardware.value - stepsAccel.value) / stepsAccel.value) * 100)
+    : 0,
+);
+const defaultSource = computed(() => gps.value?.source?.pedometer ?? null);
 
 const domSets = computed(() => dom.value?.sets ?? []);
 const domBest = computed(() => (dom.value ? Math.max(0, ...dom.value.sets) : 0));
@@ -143,6 +152,24 @@ onBeforeUnmount(() => {
           <span v-if="avgCad && stepCount"> · </span>
           <span v-if="stepCount"><b class="num">{{ stepCount }}</b> pasos</span>
         </div>
+      </div>
+
+      <div v-if="bothSteps" class="card">
+        <h3>Podómetros comparados</h3>
+        <div class="ped-cmp">
+          <div class="ped-col" :class="{ def: defaultSource === 'accelerometer' }">
+            <div class="k">Acelerómetro<small v-if="defaultSource === 'accelerometer'"> · por defecto</small></div>
+            <div class="v num">{{ stepsAccel }}<small> pasos</small></div>
+          </div>
+          <div class="ped-col" :class="{ def: defaultSource === 'hardware' }">
+            <div class="k">Hardware<small v-if="defaultSource === 'hardware'"> · por defecto</small></div>
+            <div class="v num">{{ stepsHardware }}<small> pasos</small></div>
+          </div>
+        </div>
+        <p class="insight muted">
+          El hardware midió {{ stepsDiffPct === 0 ? 'lo mismo' : `${stepsDiffPct > 0 ? '+' : ''}${stepsDiffPct}%` }}
+          respecto al acelerómetro. Cambiá la fuente por defecto en la pestaña Registrar.
+        </p>
       </div>
 
       <template v-if="samplesOk">
@@ -344,6 +371,37 @@ onBeforeUnmount(() => {
 }
 .km-panel .grid3 {
   margin-bottom: 10px;
+}
+.ped-cmp {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.ped-col {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+}
+.ped-col.def {
+  border-color: var(--green);
+}
+.ped-col .k {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.ped-col .k small {
+  color: var(--green);
+}
+.ped-col .v {
+  font-size: 22px;
+  font-weight: 700;
+}
+.ped-col .v small {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
 }
 .axis-toggle {
   display: flex;

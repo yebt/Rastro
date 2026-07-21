@@ -25,6 +25,10 @@ export interface GeoOptions {
   enableHighAccuracy?: boolean;
   timeout?: number;
   maximumAge?: number;
+  /** Foreground-service notification title (background adapter only; F5). */
+  notificationTitle?: string;
+  /** Foreground-service notification body (background adapter only; F5). */
+  notificationText?: string;
 }
 
 export interface GeoWatch {

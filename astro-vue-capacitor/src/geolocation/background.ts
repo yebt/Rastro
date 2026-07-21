@@ -39,14 +39,19 @@ export class BackgroundGeolocationAdapter implements GeolocationProvider {
     return this.fg.getCurrent(opts);
   }
 
-  watch(onFix: (fix: GeoFix) => void, onError: (err: GeoError) => void): GeoWatch {
+  watch(
+    onFix: (fix: GeoFix) => void,
+    onError: (err: GeoError) => void,
+    opts?: GeoOptions,
+  ): GeoWatch {
     let id: string | null = null;
     let cancelled = false;
 
     void BackgroundGeolocation.addWatcher(
       {
-        backgroundTitle: "Rastro está registrando",
-        backgroundMessage: "Tocá para volver a la app.",
+        backgroundTitle: opts?.notificationTitle ?? "Rastro · registrando",
+        backgroundMessage:
+          opts?.notificationText ?? "GPS y podómetro activos. Tocá para abrir la app.",
         requestPermissions: true,
         stale: false,
         distanceFilter: 0, // our accuracy-aware filter (evaluatePoint) does the rest

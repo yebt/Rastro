@@ -44,8 +44,12 @@ export interface GpsActivity {
   route: RouteTuple[];
   /** NEW (Phase 1.1+): time series for reports */
   samples?: Sample[];
-  /** NEW (Phase 2): total steps */
+  /** NEW (Phase 2): total steps from the default source */
   steps?: number;
+  /** Steps from the accelerometer counter (F2), kept for source comparison */
+  stepsAccel?: number;
+  /** Steps from the hardware counter (F6), kept for source comparison */
+  stepsHardware?: number;
   /** provenance of the data */
   source?: {
     gps?: boolean;

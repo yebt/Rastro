@@ -81,8 +81,8 @@ Ordenadas por fase. Cada una detallada en §7–§9.
 - 🔧 **F4. Reportes básicos:** splits por km + ritmo/velocidad en el tiempo (gráficas SVG). *Falta: tooltip táctil interactivo, gráfica de cadencia en el tiempo, marcadores de inicio/fin en el mapa.*
 
 ### Fase 2 — App nativa (Capacitor)
-- 🔧 **F5. GPS en segundo plano** (`@capacitor-community/background-geolocation`, servicio en primer plano + notificación). *Implementado; validar pantalla apagada en dispositivo.*
-- ⏳ **F6. Podómetro real por sensor de hardware** (pasos y cadencia precisos, también en segundo plano). *Pendiente. Relevante si el acelerómetro (F2) no dispara en el WebView.*
+- 🔧 **F5. GPS en segundo plano** (`@capacitor-community/background-geolocation`, servicio en primer plano + notificación). *Implementado; la notificación muestra info base ("Rastro · {tipo} en curso — Registrando ubicación y pasos"). Validar pantalla apagada en dispositivo.*
+- 🔧 **F6. Podómetro real por sensor de hardware** (`@capgo/capacitor-pedometer`, `TYPE_STEP_COUNTER`, permiso `ACTIVITY_RECOGNITION`). *Implementado como **contador alterno**: corre en paralelo al acelerómetro (F2) durante cada salida. Se muestran ambos en vivo (pestaña Registrar) y comparados en el detalle; toggle de "fuente por defecto" persistido. Falta: validar precisión en dispositivo y elegir el default definitivo.*
 - ✅ **F7. Almacenamiento nativo** (SQLite vía `@capacitor-community/sqlite`, adaptador del puerto de persistencia). *Implementado en nativo; web sigue con IndexedDB. Falta migración IndexedDB→SQLite (opcional).*
 
 ### Fase 3 — Análisis y reportes avanzados
