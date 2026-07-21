@@ -19,6 +19,17 @@ const config: CapacitorConfig = {
   appId: 'com.rastro.app',
   appName: 'Rastro',
   webDir: 'dist',
+  plugins: {
+    SplashScreen: {
+      // Keep the splash up until the app signals it's ready (App.vue), so there
+      // is no black gap between the native splash and the first WebView paint.
+      launchAutoHide: false,
+      backgroundColor: '#15181A',
+      showSpinner: false,
+      androidScaleType: 'CENTER_CROP',
+      splashFullScreen: true,
+    },
+  },
   ...(liveReload
     ? { server: { url: `http://${lanIp()}:4321`, cleartext: true } }
     : {}),

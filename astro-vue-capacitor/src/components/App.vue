@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { App as CapApp } from '@capacitor/app';
 import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
+import { SplashScreen } from '@capacitor/splash-screen';
 import { useStore } from '@nanostores/vue';
 import IconMapPin from '~icons/lucide/map-pin';
 import IconSettings from '~icons/lucide/settings';
@@ -59,8 +60,12 @@ async function registerBackButton(): Promise<void> {
 
 onMounted(() => {
   initTheme();
-  void loadActivities();
   void registerBackButton();
+  // Reveal the app once the theme is applied and data is loaded — hides the
+  // splash with no black gap and no flash of an empty list.
+  void loadActivities().finally(() => {
+    if (Capacitor.isNativePlatform()) void SplashScreen.hide({ fadeOutDuration: 250 });
+  });
   if (import.meta.env.DEV) {
     // Dev-only tracking diagnostics (heartbeat + suspension detector) in eruda.
     void import('../debug/trackerDiagnostics').then((m) => m.initTrackerDiagnostics());
