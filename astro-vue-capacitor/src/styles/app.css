@@ -806,7 +806,7 @@ nav button.on .rec {
   opacity: 0;
   pointer-events: none;
   transition: 0.25s;
-  z-index: 1000;
+  z-index: 1300; /* above all overlays (detail 1100, share/setup 1200) */
   max-width: 88%;
   text-align: center;
 }

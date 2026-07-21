@@ -7,6 +7,9 @@ import { fmtDistance, fmtPace, fmtTime, paceSecPerKm, speedKmh } from "./lib/for
 import { TYPE_LABEL } from "./lib/labels";
 import type { GpsActivity } from "./lib/types";
 
+/** Procedural background texture drawn under the route (no tiles, offline). */
+export type Texture = "grid" | "topo" | "streets" | "halftone";
+
 export interface ShareTheme {
   id: string;
   label: string;
@@ -17,6 +20,9 @@ export interface ShareTheme {
   sub: string;
   /** end-of-route dot */
   accent: string;
+  texture?: Texture;
+  /** color (usually translucent) for the texture strokes/dots */
+  textureColor?: string;
 }
 
 export const SHARE_THEMES: ShareTheme[] = [
@@ -24,7 +30,90 @@ export const SHARE_THEMES: ShareTheme[] = [
   { id: "papel", label: "Papel", bg: "#f5f6f3", route: "#1b4dff", text: "#15181a", sub: "#6e746c", accent: "#ff5a1f" },
   { id: "energia", label: "Energía", bg: ["#ff7a45", "#e5484d"], route: "#ffffff", text: "#ffffff", sub: "#ffe4d6", accent: "#15181a" },
   { id: "bosque", label: "Bosque", bg: ["#0f2a1e", "#13402c"], route: "#2fbf6e", text: "#ffffff", sub: "#9ec9b3", accent: "#f5f6f3" },
+  { id: "blueprint", label: "Blueprint", bg: ["#0b1e38", "#0e2a4d"], route: "#8fd3ff", text: "#ffffff", sub: "#8fb2d6", accent: "#ffd166", texture: "grid", textureColor: "rgba(255,255,255,0.10)" },
+  { id: "topografico", label: "Topográfico", bg: ["#14231b", "#1d3327"], route: "#e8c07d", text: "#f2ede3", sub: "#a9b3a0", accent: "#e07a5f", texture: "topo", textureColor: "rgba(232,192,125,0.16)" },
+  { id: "trama", label: "Trama", bg: "#101418", route: "#ff5a1f", text: "#ffffff", sub: "#9aa39a", accent: "#4d7bff", texture: "streets", textureColor: "rgba(255,255,255,0.09)" },
+  { id: "halftone", label: "Halftone", bg: ["#2b1055", "#7b2ff7"], route: "#ffffff", text: "#ffffff", sub: "#d9c9ff", accent: "#00e0c6", texture: "halftone", textureColor: "rgba(255,255,255,0.16)" },
 ];
+
+/** Deterministic PRNG (mulberry32) so a texture looks the same on every render. */
+function prng(seed: number): () => number {
+  let s = seed;
+  return () => {
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function drawTexture(ctx: CanvasRenderingContext2D, size: number, theme: ShareTheme): void {
+  const color = theme.textureColor;
+  if (!theme.texture || !color) return;
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+
+  if (theme.texture === "grid") {
+    ctx.lineWidth = 1.5;
+    for (let x = 0; x <= size; x += 64) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, size);
+      ctx.stroke();
+    }
+    for (let y = 0; y <= size; y += 64) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(size, y);
+      ctx.stroke();
+    }
+  } else if (theme.texture === "topo") {
+    ctx.lineWidth = 2;
+    const rows = 15;
+    for (let i = 0; i < rows; i++) {
+      const baseY = ((i + 0.5) / rows) * size;
+      ctx.beginPath();
+      for (let x = 0; x <= size; x += 10) {
+        const y = baseY + Math.sin(x / 140 + i * 0.7) * 24 + Math.sin(x / 55 + i) * 7;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+  } else if (theme.texture === "streets") {
+    const rnd = prng(9876);
+    ctx.lineCap = "round";
+    for (let i = 0; i < 10; i++) {
+      const y = rnd() * size;
+      ctx.lineWidth = rnd() < 0.3 ? 6 : 2.5;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(size, y + (rnd() - 0.5) * 44);
+      ctx.stroke();
+    }
+    for (let i = 0; i < 10; i++) {
+      const x = rnd() * size;
+      ctx.lineWidth = rnd() < 0.3 ? 6 : 2.5;
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x + (rnd() - 0.5) * 44, size);
+      ctx.stroke();
+    }
+  } else {
+    // halftone
+    const step = 34;
+    for (let y = step / 2; y < size; y += step) {
+      for (let x = step / 2; x < size; x += step) {
+        const r = 2 + ((x + y) / (2 * size)) * 8;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+  ctx.restore();
+}
 
 const SANS = "system-ui, -apple-system, sans-serif";
 const DISPLAY = `"Barlow Condensed", ${SANS}`;
@@ -125,6 +214,7 @@ export function drawShareCard(
 ): void {
   const P = 74;
   fillBackground(ctx, size, theme);
+  drawTexture(ctx, size, theme);
 
   // Header: wordmark + date
   ctx.textAlign = "left";
