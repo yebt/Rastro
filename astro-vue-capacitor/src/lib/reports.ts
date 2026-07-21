@@ -219,6 +219,44 @@ export function paceSeriesSecPerKm(
     .map((s) => ({ t: xOf(s, axis), v: 1000 / s.v }));
 }
 
+/** Peak acceleration/deceleration over an outing, m/s². */
+export interface AccelStats {
+  /** strongest speed-up, m/s² (≥ 0) */
+  peakAccel: number;
+  /** strongest slow-down, m/s² (≤ 0) */
+  peakDecel: number;
+}
+
+/**
+ * Acceleration extremes from the speed samples. GPS speed is noisy, so we
+ * smooth it with a centered 3-point average before differentiating — this is
+ * an approximation, meant to show "how hard you sped up", not a lab figure.
+ * null when there aren't enough samples or no movement.
+ */
+export function accelerationStats(activity: GpsActivity): AccelStats | null {
+  const s = activity.samples;
+  if (!s || s.length < 4) return null;
+
+  const smooth = s.map((p, i) => {
+    const prev = s[i - 1] ?? p;
+    const next = s[i + 1] ?? p;
+    return { t: p.t, v: (prev.v + p.v + next.v) / 3 };
+  });
+
+  let peakAccel = 0;
+  let peakDecel = 0;
+  for (let i = 1; i < smooth.length; i++) {
+    const dt = smooth[i]!.t - smooth[i - 1]!.t;
+    if (dt <= 0) continue;
+    const a = (smooth[i]!.v - smooth[i - 1]!.v) / dt;
+    if (a > peakAccel) peakAccel = a;
+    if (a < peakDecel) peakDecel = a;
+  }
+
+  if (peakAccel === 0 && peakDecel === 0) return null;
+  return { peakAccel, peakDecel };
+}
+
 /** Fastest split index (1-based), or 0 if none. */
 export function fastestSplit(splits: Split[]): number {
   let best = 0;

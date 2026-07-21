@@ -8,6 +8,7 @@ import { relDate } from '../lib/date';
 import { fmtDistance, fmtDistanceLabel, fmtPace, fmtTime, paceSecPerKm, speedKmh } from '../lib/format';
 import { TYPE_LABEL } from '../lib/labels';
 import {
+  accelerationStats,
   avgCadence,
   cadenceSeriesSpm,
   hasSamples,
@@ -72,6 +73,7 @@ const avgCad = computed(() => (gps.value ? avgCadence(gps.value) : 0));
 const stepCount = computed(() => gps.value?.steps ?? 0);
 const cadenceSeries = computed(() => (gps.value ? cadenceSeriesSpm(gps.value, axis.value) : []));
 const segments = computed(() => (gps.value ? segmentProfile(gps.value) : []));
+const accel = computed(() => (gps.value ? accelerationStats(gps.value) : null));
 const stride = computed(() => (gps.value ? analyzeStride(gps.value) : null));
 const stepsAccel = computed(() => gps.value?.stepsAccel ?? 0);
 const stepsHardware = computed(() => gps.value?.stepsHardware ?? 0);
@@ -150,6 +152,11 @@ onBeforeUnmount(() => {
           <span v-if="avgCad">Cadencia <b class="num">{{ avgCad }}</b> pasos/min</span>
           <span v-if="avgCad && stepCount"> · </span>
           <span v-if="stepCount"><b class="num">{{ stepCount }}</b> pasos</span>
+        </div>
+        <div v-if="accel" class="cadence-line">
+          Aceleración máx <b class="num">+{{ accel.peakAccel.toFixed(1) }}</b> ·
+          frenado <b class="num">{{ accel.peakDecel.toFixed(1) }}</b> m/s²
+          <small class="approx">aprox.</small>
         </div>
       </div>
 
@@ -328,6 +335,11 @@ onBeforeUnmount(() => {
 .cadence-line b {
   color: var(--ink);
   font-size: 16px;
+}
+.cadence-line .approx {
+  font-size: 11px;
+  font-style: italic;
+  opacity: 0.7;
 }
 .insight {
   margin-top: 10px;

@@ -8,9 +8,8 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { geo } from '../geolocation';
 import { fmtDistance, fmtPace, fmtTime, paceSecPerKm } from '../lib/format';
 import type { GpsType } from '../lib/types';
-import { $cadence, $steps } from '../motion/pedometer';
-import { $hwAvailable, $hwCadence, $hwSteps } from '../motion/hardware';
-import { $mapStyle, $stepSource } from '../stores/settings';
+import { $activeCadence, $activeSource, $activeSteps } from '../motion';
+import { $mapStyle } from '../stores/settings';
 import { $activeTab } from '../stores/ui';
 import { applyTileLayer } from './mapTiles';
 import {
@@ -48,13 +47,14 @@ const lastPoint = useStore($lastPoint);
 const sessionStart = useStore($sessionStart);
 const activeTab = useStore($activeTab);
 const wakeLockActive = useStore($wakeLockActive);
-const cadence = useStore($cadence);
-const steps = useStore($steps);
-const hwCadence = useStore($hwCadence);
-const hwSteps = useStore($hwSteps);
-const hwAvailable = useStore($hwAvailable);
-const stepSource = useStore($stepSource);
+const cadence = useStore($activeCadence);
+const steps = useStore($activeSteps);
+const activeSource = useStore($activeSource);
 const mapStyle = useStore($mapStyle);
+
+const sourceLabel = computed(() =>
+  activeSource.value === 'hardware' ? 'Hardware' : 'Acelerómetro',
+);
 
 const km = computed(() => distance.value / 1000);
 const dist = computed(() => fmtDistance(distance.value));
@@ -216,15 +216,9 @@ watch(mapStyle, (id) => {
         <div class="stat"><div class="k">Ritmo /km</div><div class="v num">{{ paceText }}</div></div>
         <div class="stat"><div class="k">Velocidad</div><div class="v num">{{ speedText }}<small>km/h</small></div></div>
       </div>
-      <div v-if="state !== 'idle'" class="ped">
-        <div class="ped-row" :class="{ def: stepSource === 'accelerometer' }">
-          <span class="ped-name">Acelerómetro<small v-if="hwAvailable && stepSource === 'accelerometer'"> · por defecto</small></span>
-          <span class="ped-val num">{{ cadence }} ppm · {{ steps }} pasos</span>
-        </div>
-        <div v-if="hwAvailable" class="ped-row" :class="{ def: stepSource === 'hardware' }">
-          <span class="ped-name">Hardware<small v-if="stepSource === 'hardware'"> · por defecto</small></span>
-          <span class="ped-val num">{{ hwCadence }} ppm · {{ hwSteps }} pasos</span>
-        </div>
+      <div v-if="state !== 'idle'" class="ped-line">
+        Cadencia <b class="num">{{ cadence }}</b> ppm · <b class="num">{{ steps }}</b> pasos
+        <small class="ped-src">{{ sourceLabel }}</small>
       </div>
     </div>
 
@@ -250,31 +244,24 @@ watch(mapStyle, (id) => {
 </template>
 
 <style scoped>
-.ped {
+.ped-line {
   margin-top: 14px;
-  padding-top: 12px;
+  padding-top: 14px;
   border-top: 1px solid var(--line);
-}
-.ped-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  padding: 4px 8px;
-  border-radius: 8px;
   font-size: 13px;
   color: var(--muted);
+  text-align: center;
 }
-.ped-row.def {
-  background: var(--surface);
-}
-.ped-name {
-  font-weight: 600;
-}
-.ped-name small {
-  font-weight: 500;
-  color: var(--green);
-}
-.ped-val {
+.ped-line b {
   color: var(--ink);
+  font-size: 16px;
+}
+.ped-src {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 </style>

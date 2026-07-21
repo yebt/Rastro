@@ -16,20 +16,13 @@ import { evaluatePoint, shouldSample } from "../lib/track";
 import type { GpsActivity, GpsType, RoutePoint, Sample } from "../lib/types";
 import { geo, type GeoError, type GeoFix, type GeoWatch } from "../geolocation";
 import {
-  currentCadence,
-  setPedometerPaused,
-  startPedometer,
-  stopPedometer,
-} from "../motion/pedometer";
-import {
-  $hwAvailable,
-  currentHwCadence,
-  setHardwarePedometerPaused,
-  startHardwarePedometer,
-  stopHardwarePedometer,
-} from "../motion/hardware";
+  $activeSource,
+  currentActiveCadence,
+  pausePedometers,
+  startPedometers,
+  stopPedometers,
+} from "../motion";
 import { addActivity } from "./activities";
-import { $stepSource } from "./settings";
 import { showToast } from "./ui";
 
 export type TrackState = "idle" | "running" | "paused";
@@ -120,8 +113,7 @@ export async function start(): Promise<void> {
   $sessionStart.set(startTs);
   $trackState.set("running");
   void requestWakeLock();
-  void startPedometer(); // F2: accelerometer cadence + steps
-  void startHardwarePedometer(); // F6: hardware counter, runs in parallel to compare
+  void startPedometers(); // F2 + F6: both engines run; the active one drives the UI
   document.addEventListener("visibilitychange", onVisibility);
   geoWatch = geo.watch(onFix, onGeoError, {
     enableHighAccuracy: true,
@@ -164,9 +156,8 @@ function onFix(fix: GeoFix): void {
       const t = elapsedSec();
       $elapsed.set(t);
       if (shouldSample(t, lastSampleT)) {
-        // Cadence in the sample follows the user's chosen default source.
-        const useHw = $stepSource.get() === "hardware" && $hwAvailable.get();
-        const cad = useHw ? currentHwCadence() : currentCadence();
+        // Cadence in the sample follows the active source (facade decides).
+        const cad = currentActiveCadence();
         samples.push({
           t: Math.round(t),
           d: Math.round($distance.get()),
@@ -187,8 +178,7 @@ export function pause(): void {
   $trackState.set("paused");
   $speed.set(0);
   $elapsed.set(elapsedSec());
-  setPedometerPaused(true);
-  setHardwarePedometerPaused(true);
+  pausePedometers(true);
   void releaseWakeLock(); // SPECS F1: release on pause
 }
 
@@ -196,8 +186,7 @@ export function resume(): void {
   if ($trackState.get() !== "paused") return;
   startTs = Date.now();
   $trackState.set("running");
-  setPedometerPaused(false);
-  setHardwarePedometerPaused(false);
+  pausePedometers(false);
   void requestWakeLock();
 }
 
@@ -218,8 +207,7 @@ export async function stop(): Promise<void> {
   }
   void releaseWakeLock();
   document.removeEventListener("visibilitychange", onVisibility);
-  const stepsAccel = await stopPedometer();
-  const stepsHardware = await stopHardwarePedometer();
+  const { accel: stepsAccel, hardware: stepsHardware } = await stopPedometers();
   $trackState.set("idle");
 
   if (km < 0.01 && sec < 10) {
@@ -228,8 +216,8 @@ export async function stop(): Promise<void> {
     return;
   }
 
-  // Primary steps follow the chosen default source (falling back to whatever fired).
-  const useHw = $stepSource.get() === "hardware" && stepsHardware > 0;
+  // Primary steps follow the active source (falling back to whatever fired).
+  const useHw = $activeSource.get() === "hardware" && stepsHardware > 0;
   const primary = useHw ? stepsHardware : stepsAccel;
   const pedometer = useHw ? "hardware" : stepsAccel > 0 ? "accelerometer" : null;
 

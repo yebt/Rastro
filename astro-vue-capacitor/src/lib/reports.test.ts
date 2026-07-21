@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  accelerationStats,
   avgCadence,
   cadenceSeriesSpm,
   fastestSplit,
@@ -165,6 +166,28 @@ describe("kmSegment", () => {
     const seg = kmSegment(activity(withCad), 2); // samples at d 1000,1500,2000
     expect(seg!.avgCad).toBe(170); // only the d=1000 sample has cad
     expect(seg!.cadSeries).toHaveLength(1);
+  });
+});
+
+describe("accelerationStats", () => {
+  it("is null without enough samples", () => {
+    expect(accelerationStats(activity())).toBeNull();
+    expect(accelerationStats(activity([{ t: 0, d: 0, v: 1 }]))).toBeNull();
+  });
+  it("reports peak speed-up and slow-down from smoothed speed", () => {
+    const res = accelerationStats(
+      activity([
+        { t: 0, d: 0, v: 0 },
+        { t: 2, d: 2, v: 2 },
+        { t: 4, d: 8, v: 4 },
+        { t: 6, d: 16, v: 4 },
+        { t: 8, d: 22, v: 1 },
+        { t: 10, d: 23, v: 0 },
+      ]),
+    );
+    expect(res).not.toBeNull();
+    expect(res!.peakAccel).toBeCloseTo(0.667, 2);
+    expect(res!.peakDecel).toBeCloseTo(-0.667, 2);
   });
 });
 
