@@ -14,6 +14,7 @@ import type {
   BackgroundGeolocationPlugin,
   Location as BgLocation,
 } from "@capacitor-community/background-geolocation";
+import { LocalNotifications } from "@capacitor/local-notifications";
 import { CapacitorGeolocation } from "./capacitor";
 import type { GeoError, GeoFix, GeolocationProvider, GeoOptions, GeoWatch } from "./provider";
 
@@ -31,8 +32,18 @@ function toFix(l: BgLocation): GeoFix {
 export class BackgroundGeolocationAdapter implements GeolocationProvider {
   private fg = new CapacitorGeolocation();
 
-  ensurePermissions(): Promise<boolean> {
-    return this.fg.ensurePermissions();
+  async ensurePermissions(): Promise<boolean> {
+    const location = await this.fg.ensurePermissions();
+    // Android 13+ (API 33) needs POST_NOTIFICATIONS at runtime, or the
+    // foreground-service notification is silently hidden. The plugin does not
+    // request it — we do. Denial doesn't block tracking, just hides the badge.
+    try {
+      const status = await LocalNotifications.checkPermissions();
+      if (status.display !== "granted") await LocalNotifications.requestPermissions();
+    } catch {
+      // web / plugin unavailable — no notification permission to request
+    }
+    return location;
   }
 
   getCurrent(opts?: GeoOptions): Promise<GeoFix> {

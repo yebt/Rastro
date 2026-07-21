@@ -78,7 +78,7 @@ Ordenadas por fase. Cada una detallada en §7–§9.
 - ✅ **F1. Wake Lock:** la pantalla no se apaga sola mientras registrás. *(implementado; indicador "pantalla activa")*
 - ✅ **F2. Cadencia aproximada por acelerómetro** (`@capacitor/motion`). *Validado en dispositivo (dispara: ~125 ppm + conteo de pasos reales). Detector de pasos + cadencia guardados en `samples.cad` y `activity.steps`; mostrados en vivo y en el detalle. Habilita F8.*
 - ✅ **F3. Serie de tiempo por actividad:** muestras (t, distancia, velocidad, cadencia) cada ~3s. *(implementado)*
-- 🔧 **F4. Reportes básicos:** splits por km + ritmo/velocidad en el tiempo (gráficas SVG). *Falta: tooltip táctil interactivo, gráfica de cadencia en el tiempo, marcadores de inicio/fin en el mapa.*
+- ✅ **F4. Reportes básicos:** splits por km (drill-down por km) + ritmo/velocidad/cadencia en el tiempo con **tooltip táctil**, eje conmutable tiempo/distancia, y marcadores de inicio/fin en el mapa. *(implementado)*
 
 ### Fase 2 — App nativa (Capacitor)
 - 🔧 **F5. GPS en segundo plano** (`@capacitor-community/background-geolocation`, servicio en primer plano + notificación). *Implementado; la notificación muestra info base ("Rastro · {tipo} en curso — Registrando ubicación y pasos"). Validar pantalla apagada en dispositivo.*
@@ -91,7 +91,7 @@ Ordenadas por fase. Cada una detallada en §7–§9.
 - ⏳ **F10. Récords (PR) automáticos** y **metas** (diaria de dominadas, semanal de km).
 - ⏳ **F11. Calorías estimadas** y **progreso semanal**.
 - ⏳ **F13. Más tipos de ejercicio** (no solo dominadas). *Backlog: generalizar el modelo de "sesión sin GPS" para registrar otros ejercicios (flexiones, sentadillas, abdominales, plancha por tiempo, etc.) con series/reps o duración. Requiere: catálogo de ejercicios, UI de registro genérica, historial/reportes por tipo. Detalle en §10.*
-- ⏳ **F12. Vista de ruta y tarjeta para compartir** (§9.5). *Parcial: la vista de detalle con mapa + stats + gráficas ya existe. Falta: marcadores inicio/fin, tarjeta compartible con selección de tema, y la acción de compartir (Web Share / plugin Share).*
+- ⏳ **F12. Vista de ruta y tarjeta para compartir** (§9.5). *Parcial: la vista de detalle con mapa + stats + gráficas + marcadores inicio/fin ya existe. Falta: tarjeta compartible (imagen canvas) con selección de tema, y la acción de compartir (Web Share / plugin Share).*
 
 ---
 
