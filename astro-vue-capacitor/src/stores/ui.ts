@@ -32,6 +32,17 @@ export function closeSettings(): void {
   $settingsOpen.set(false);
 }
 
+/** Whether the permissions setup screen is open for a manual re-run. */
+export const $setupOpen = atom<boolean>(false);
+
+export function openSetup(): void {
+  $setupOpen.set(true);
+}
+
+export function closeSetup(): void {
+  $setupOpen.set(false);
+}
+
 export const $toast = atom<string>("");
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null;

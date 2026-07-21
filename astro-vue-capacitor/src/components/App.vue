@@ -1,17 +1,20 @@
 <script setup lang="ts">
 import { App as CapApp } from '@capacitor/app';
-import type { PluginListenerHandle } from '@capacitor/core';
+import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
 import { useStore } from '@nanostores/vue';
 import IconMapPin from '~icons/lucide/map-pin';
 import IconSettings from '~icons/lucide/settings';
-import { onMounted, onUnmounted } from 'vue';
+import { computed, onMounted, onUnmounted } from 'vue';
 import { loadActivities } from '../stores/activities';
+import { $setupDone } from '../stores/settings';
 import {
   $activeTab,
   $detailId,
   $settingsOpen,
+  $setupOpen,
   closeDetail,
   closeSettings,
+  closeSetup,
   openSettings,
   setTab,
 } from '../stores/ui';
@@ -22,12 +25,20 @@ import DominadasTab from './DominadasTab.vue';
 import HistorialTab from './HistorialTab.vue';
 import ProgresoTab from './ProgresoTab.vue';
 import SettingsSheet from './SettingsSheet.vue';
+import SetupScreen from './SetupScreen.vue';
 import Toast from './Toast.vue';
 import TrackerTab from './TrackerTab.vue';
 
 const tab = useStore($activeTab);
 const detailId = useStore($detailId);
 const settingsOpen = useStore($settingsOpen);
+const setupDone = useStore($setupDone);
+const setupOpen = useStore($setupOpen);
+
+// First run on native prompts for permissions; also re-openable from settings.
+const showSetup = computed(
+  () => setupOpen.value || (Capacitor.isNativePlatform() && !setupDone.value),
+);
 
 let backHandle: PluginListenerHandle | null = null;
 
@@ -37,6 +48,7 @@ let backHandle: PluginListenerHandle | null = null;
  */
 async function registerBackButton(): Promise<void> {
   backHandle = await CapApp.addListener('backButton', () => {
+    if ($setupOpen.get()) return closeSetup();
     if ($settingsOpen.get()) return closeSettings();
     if ($detailId.get()) return closeDetail();
     if ($activeTab.get() !== 'track') return setTab('track');
@@ -85,4 +97,5 @@ onUnmounted(() => {
 
   <ActivityDetail v-if="detailId" :id="detailId" />
   <SettingsSheet v-if="settingsOpen" />
+  <SetupScreen v-if="showSetup" />
 </template>

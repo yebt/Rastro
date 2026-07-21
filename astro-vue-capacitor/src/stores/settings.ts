@@ -10,6 +10,7 @@ export type StepSource = "accelerometer" | "hardware";
 
 const STEP_KEY = "rastro.stepSource";
 const MAP_KEY = "rastro.mapStyle";
+const SETUP_KEY = "rastro.setupDone";
 
 function readStepSource(): StepSource {
   try {
@@ -107,6 +108,26 @@ export function setMapStyle(id: string): void {
   $mapStyle.set(id);
   try {
     globalThis.localStorage?.setItem(MAP_KEY, id);
+  } catch {
+    // ignore
+  }
+}
+
+/** Whether the first-run permissions setup has been completed/dismissed. */
+function readSetupDone(): boolean {
+  try {
+    return globalThis.localStorage?.getItem(SETUP_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export const $setupDone = atom<boolean>(readSetupDone());
+
+export function completeSetup(): void {
+  $setupDone.set(true);
+  try {
+    globalThis.localStorage?.setItem(SETUP_KEY, "1");
   } catch {
     // ignore
   }

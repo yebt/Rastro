@@ -96,7 +96,7 @@ Ordenadas por fase. Cada una detallada en §7–§9.
 ### Fase 4 — Configuración, UX y nube
 - ✅ **F14. Configuración global** (overlay desde engranaje en el topbar): elegir **fuente de pasos** (hardware/acelerómetro, antes de empezar — no en vivo) y **estilo del mapa** (OSM, Voyager, Claro, Oscuro, Topográfico; tiles OSM/CARTO sin API key). *(implementado; `SettingsSheet.vue`, `stores/settings.ts`)*
 - ✅ **Fix navegación:** el botón **atrás** de Android ya no cierra la app — cierra overlays, luego vuelve al home, y solo minimiza (sin cortar el tracking) desde el home. *(`@capacitor/app` backButton)*
-- ⏳ **F15. Pantalla de setup / permisos previos:** onboarding que solicita permisos antes de usar la app (ubicación siempre, notificaciones, actividad física para el podómetro de hardware). *Pendiente.*
+- ✅ **F15. Pantalla de setup / permisos previos:** onboarding en primera corrida (nativo) que solicita ubicación, notificaciones y actividad física (podómetro de hardware), con explicación de cada uno y estado en vivo; reabrible desde Configuración → "Revisar permisos". *(implementado; `SetupScreen.vue`, `src/permissions.ts`, flag `$setupDone` persistido)*
 - ⏳ **F16. Sync online opcional (Google):** respaldo/sincronización opt-in con cuenta de Google cuando haya conexión, sin romper el principio local-first (funciona 100% offline; la nube es un extra). *Futuro.*
 - ⏳ **F17. Dark mode:** tema oscuro (Auto / Claro / Oscuro) con variables CSS, mapa oscuro CARTO y barra de estado adaptada. *Pendiente.*
 

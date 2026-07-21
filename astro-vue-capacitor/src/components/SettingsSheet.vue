@@ -12,7 +12,12 @@ import {
   setStepSource,
   type StepSource,
 } from '../stores/settings';
-import { closeSettings } from '../stores/ui';
+import { closeSettings, openSetup } from '../stores/ui';
+
+function reviewPermissions(): void {
+  closeSettings();
+  openSetup();
+}
 
 const stepSource = useStore($stepSource);
 const mapStyle = useStore($mapStyle);
@@ -63,6 +68,17 @@ const SOURCES: { key: StepSource; label: string; desc: string }[] = [
       <p v-if="hwReady === false" class="s-warn">
         Este dispositivo no reporta un contador de hardware; se usará el acelerómetro.
       </p>
+    </section>
+
+    <section class="s-block">
+      <h3>Permisos</h3>
+      <p class="s-hint">Ubicación, notificaciones y actividad física.</p>
+      <button type="button" class="opt" @click="reviewPermissions">
+        <div class="opt-body">
+          <div class="opt-label">Revisar permisos</div>
+          <div class="opt-desc">Volvé a ver y conceder los permisos que Rastro necesita.</div>
+        </div>
+      </button>
     </section>
 
     <section class="s-block">
