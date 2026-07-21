@@ -9,8 +9,9 @@ import { fmtDistance, fmtPace, fmtTime, paceSecPerKm } from '../lib/format';
 import type { GpsType } from '../lib/types';
 import { $cadence, $steps } from '../motion/pedometer';
 import { $hwAvailable, $hwCadence, $hwSteps } from '../motion/hardware';
-import { $stepSource, setStepSource } from '../stores/settings';
+import { $mapStyle, $stepSource } from '../stores/settings';
 import { $activeTab } from '../stores/ui';
+import { applyTileLayer } from './mapTiles';
 import {
   $curType,
   $distance,
@@ -52,6 +53,7 @@ const hwCadence = useStore($hwCadence);
 const hwSteps = useStore($hwSteps);
 const hwAvailable = useStore($hwAvailable);
 const stepSource = useStore($stepSource);
+const mapStyle = useStore($mapStyle);
 
 const km = computed(() => distance.value / 1000);
 const dist = computed(() => fmtDistance(distance.value));
@@ -68,6 +70,7 @@ const hint = computed(() => {
 
 const mapEl = ref<HTMLDivElement | null>(null);
 let map: L.Map | null = null;
+let tiles: L.TileLayer | null = null;
 let meMarker: L.Marker | null = null;
 let routeLine: L.Polyline | null = null;
 let startMarker: L.Marker | null = null;
@@ -120,12 +123,9 @@ async function recenter(): Promise<void> {
 
 onMounted(() => {
   if (!mapEl.value) return;
-  map = L.map(mapEl.value, { zoomControl: false, attributionControl: false }).setView(
-    [4.6533, -74.0836],
-    14,
-  );
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-  L.control.attribution({ prefix: false, position: 'bottomright' }).addAttribution('© OpenStreetMap').addTo(map);
+  map = L.map(mapEl.value, { zoomControl: false }).setView([4.6533, -74.0836], 14);
+  map.attributionControl.setPrefix(false);
+  tiles = applyTileLayer(map, null, $mapStyle.get());
   routeLine = L.polyline([], { color: '#1B4DFF', weight: 5, opacity: 0.9, lineJoin: 'round' }).addTo(map);
   void locateOnce();
 });
@@ -165,6 +165,11 @@ watch(sessionStart, () => {
 // Leaflet needs a size refresh when the map becomes visible again.
 watch(activeTab, (tab) => {
   if (tab === 'track' && map) nextTick(() => setTimeout(() => map?.invalidateSize(), 80));
+});
+
+// Swap the base map when the user changes the style in settings.
+watch(mapStyle, (id) => {
+  if (map) tiles = applyTileLayer(map, tiles, id);
 });
 </script>
 
@@ -211,11 +216,6 @@ watch(activeTab, (tab) => {
         <div v-if="hwAvailable" class="ped-row" :class="{ def: stepSource === 'hardware' }">
           <span class="ped-name">Hardware<small v-if="stepSource === 'hardware'"> · por defecto</small></span>
           <span class="ped-val num">{{ hwCadence }} ppm · {{ hwSteps }} pasos</span>
-        </div>
-        <div v-if="hwAvailable" class="ped-toggle">
-          <span class="ped-toggle-lbl">Fuente por defecto</span>
-          <button type="button" :class="{ on: stepSource === 'accelerometer' }" @click="setStepSource('accelerometer')">Acelerómetro</button>
-          <button type="button" :class="{ on: stepSource === 'hardware' }" @click="setStepSource('hardware')">Hardware</button>
         </div>
       </div>
     </div>
@@ -268,31 +268,5 @@ watch(activeTab, (tab) => {
 }
 .ped-val {
   color: var(--ink);
-}
-.ped-toggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 10px;
-}
-.ped-toggle-lbl {
-  font-size: 12px;
-  color: var(--muted);
-  margin-right: auto;
-}
-.ped-toggle button {
-  padding: 6px 10px;
-  border: 1px solid var(--line);
-  background: var(--paper);
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--muted);
-  cursor: pointer;
-}
-.ped-toggle button.on {
-  background: var(--ink);
-  color: var(--paper);
-  border-color: var(--ink);
 }
 </style>

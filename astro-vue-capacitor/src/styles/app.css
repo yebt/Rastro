@@ -114,6 +114,24 @@ input {
   margin-top: 2px;
 }
 
+.gear {
+  margin-left: auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  flex: none;
+}
+
+.gear svg {
+  width: 21px;
+  height: 21px;
+}
+
 .screen {
   display: none;
   padding: 4px 16px 24px;

@@ -21,6 +21,17 @@ export function closeDetail(): void {
   $detailId.set(null);
 }
 
+/** Whether the global settings overlay is open. */
+export const $settingsOpen = atom<boolean>(false);
+
+export function openSettings(): void {
+  $settingsOpen.set(true);
+}
+
+export function closeSettings(): void {
+  $settingsOpen.set(false);
+}
+
 export const $toast = atom<string>("");
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null;

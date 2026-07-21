@@ -20,7 +20,9 @@ import {
 import { analyzeStride } from '../lib/stride';
 import { isGps } from '../lib/types';
 import { $activities } from '../stores/activities';
+import { $mapStyle } from '../stores/settings';
 import { closeDetail } from '../stores/ui';
+import { applyTileLayer } from './mapTiles';
 import LineChart from './charts/LineChart.vue';
 import SegmentChart from './charts/SegmentChart.vue';
 import SplitsChart from './charts/SplitsChart.vue';
@@ -102,12 +104,9 @@ function endpointIcon(kind: 'start' | 'end'): L.DivIcon {
 onMounted(() => {
   const a = gps.value;
   if (!a || !a.route.length || !mapEl.value) return;
-  map = L.map(mapEl.value, { zoomControl: false, attributionControl: false });
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-  L.control
-    .attribution({ prefix: false, position: 'bottomright' })
-    .addAttribution('© OpenStreetMap')
-    .addTo(map);
+  map = L.map(mapEl.value, { zoomControl: false });
+  map.attributionControl.setPrefix(false);
+  applyTileLayer(map, null, $mapStyle.get());
   const latlngs = a.route.map((p) => [p[0], p[1]] as L.LatLngTuple);
   const routeLine = L.polyline(latlngs, { color: '#1B4DFF', weight: 5, opacity: 0.9 }).addTo(map);
   map.fitBounds(routeLine.getBounds(), { padding: [24, 24] });

@@ -93,6 +93,13 @@ Ordenadas por fase. Cada una detallada en §7–§9.
 - ⏳ **F13. Más tipos de ejercicio** (no solo dominadas). *Backlog: generalizar el modelo de "sesión sin GPS" para registrar otros ejercicios (flexiones, sentadillas, abdominales, plancha por tiempo, etc.) con series/reps o duración. Requiere: catálogo de ejercicios, UI de registro genérica, historial/reportes por tipo. Detalle en §10.*
 - ⏳ **F12. Vista de ruta y tarjeta para compartir** (§9.5). *Parcial: la vista de detalle con mapa + stats + gráficas + marcadores inicio/fin ya existe. Falta: tarjeta compartible (imagen canvas) con selección de tema, y la acción de compartir (Web Share / plugin Share).*
 
+### Fase 4 — Configuración, UX y nube
+- ✅ **F14. Configuración global** (overlay desde engranaje en el topbar): elegir **fuente de pasos** (hardware/acelerómetro, antes de empezar — no en vivo) y **estilo del mapa** (OSM, Voyager, Claro, Oscuro, Topográfico; tiles OSM/CARTO sin API key). *(implementado; `SettingsSheet.vue`, `stores/settings.ts`)*
+- ✅ **Fix navegación:** el botón **atrás** de Android ya no cierra la app — cierra overlays, luego vuelve al home, y solo minimiza (sin cortar el tracking) desde el home. *(`@capacitor/app` backButton)*
+- ⏳ **F15. Pantalla de setup / permisos previos:** onboarding que solicita permisos antes de usar la app (ubicación siempre, notificaciones, actividad física para el podómetro de hardware). *Pendiente.*
+- ⏳ **F16. Sync online opcional (Google):** respaldo/sincronización opt-in con cuenta de Google cuando haya conexión, sin romper el principio local-first (funciona 100% offline; la nube es un extra). *Futuro.*
+- ⏳ **F17. Dark mode:** tema oscuro (Auto / Claro / Oscuro) con variables CSS, mapa oscuro CARTO y barra de estado adaptada. *Pendiente.*
+
 ---
 
 ## 6. Modelo de datos
