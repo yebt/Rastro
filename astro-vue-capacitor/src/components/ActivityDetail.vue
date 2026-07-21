@@ -3,6 +3,7 @@ import 'leaflet/dist/leaflet.css';
 import { useStore } from '@nanostores/vue';
 import L from 'leaflet';
 import IconArrow from '~icons/lucide/arrow-left';
+import IconShare from '~icons/lucide/share-2';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { relDate } from '../lib/date';
 import { fmtDistance, fmtDistanceLabel, fmtPace, fmtTime, paceSecPerKm, speedKmh } from '../lib/format';
@@ -28,6 +29,7 @@ import LineChart from './charts/LineChart.vue';
 import SegmentChart from './charts/SegmentChart.vue';
 import SplitsChart from './charts/SplitsChart.vue';
 import StrideChart from './charts/StrideChart.vue';
+import ShareCard from './ShareCard.vue';
 
 const props = defineProps<{ id: string }>();
 const activities = useStore($activities);
@@ -91,6 +93,8 @@ const domBest = computed(() => (dom.value ? Math.max(0, ...dom.value.sets) : 0))
 const speedFmt = (v: number) => v.toFixed(1);
 const cadFmt = (v: number) => String(Math.round(v));
 
+const showShare = ref(false);
+
 const mapEl = ref<HTMLDivElement | null>(null);
 let map: L.Map | null = null;
 
@@ -133,6 +137,13 @@ onBeforeUnmount(() => {
         <div class="detail-ttl">{{ title }}</div>
         <div class="detail-date">{{ dateText }}</div>
       </div>
+      <button
+        v-if="gps && hasRoute"
+        class="back share-btn"
+        type="button"
+        aria-label="Compartir ruta"
+        @click="showShare = true"
+      ><IconShare /></button>
     </div>
 
     <div v-if="!act" class="empty"><p>Actividad no encontrada.</p></div>
@@ -265,6 +276,8 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </template>
+
+    <ShareCard v-if="showShare && gps" :activity="gps" @close="showShare = false" />
   </div>
 </template>
 
@@ -303,6 +316,9 @@ onBeforeUnmount(() => {
 .back svg {
   width: 22px;
   height: 22px;
+}
+.share-btn {
+  margin-left: auto;
 }
 .detail-ttl {
   font-weight: 600;

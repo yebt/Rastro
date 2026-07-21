@@ -91,7 +91,7 @@ Ordenadas por fase. Cada una detallada en §7–§9.
 - ⏳ **F10. Récords (PR) automáticos** y **metas** (diaria de dominadas, semanal de km).
 - ⏳ **F11. Calorías estimadas** y **progreso semanal**.
 - ⏳ **F13. Más tipos de ejercicio** (no solo dominadas). *Backlog: generalizar el modelo de "sesión sin GPS" para registrar otros ejercicios (flexiones, sentadillas, abdominales, plancha por tiempo, etc.) con series/reps o duración. Requiere: catálogo de ejercicios, UI de registro genérica, historial/reportes por tipo. Detalle en §10.*
-- ⏳ **F12. Vista de ruta y tarjeta para compartir** (§9.5). *Parcial: la vista de detalle con mapa + stats + gráficas + marcadores inicio/fin ya existe. Falta: tarjeta compartible (imagen canvas) con selección de tema, y la acción de compartir (Web Share / plugin Share).*
+- ✅ **F12. Vista de ruta y tarjeta para compartir** (§9.5). *Implementado: botón compartir en el detalle → `ShareCard.vue` genera una imagen 1080² en canvas (ruta proyectada + stats + marca, sin tiles) con **selección de tema** (Noche/Papel/Energía/Bosque); compartir vía Web Share / plugin Share y guardar PNG en Documentos/Rastro (`shareCard.ts`, `share.ts`).*
 
 ### Fase 4 — Configuración, UX y nube
 - ✅ **F14. Configuración global** (overlay desde engranaje en el topbar): elegir **fuente de pasos** (hardware/acelerómetro, antes de empezar — no en vivo) y **estilo del mapa** (OSM, Voyager, Claro, Oscuro, Topográfico; tiles OSM/CARTO sin API key). *(implementado; `SettingsSheet.vue`, `stores/settings.ts`)*

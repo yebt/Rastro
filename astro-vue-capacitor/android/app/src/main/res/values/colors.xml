@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand splash background — avoids the default black/white first frame. -->
+    <color name="splash_bg">#15181A</color>
+</resources>
