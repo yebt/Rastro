@@ -2,11 +2,11 @@
 import IconX from '~icons/lucide/x';
 import IconShare from '~icons/lucide/share-2';
 import IconDownload from '~icons/lucide/download';
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { backupStamp } from '../lib/date';
 import type { GpsActivity } from '../lib/types';
 import { saveImage, shareImage } from '../share';
-import { drawShareCard, SHARE_THEMES, type ShareTheme } from '../shareCard';
+import { composeMapCard, drawShareCard, SHARE_THEMES, type ShareTheme } from '../shareCard';
 import { showToast } from '../stores/ui';
 
 const props = defineProps<{ activity: GpsActivity }>();
@@ -16,6 +16,12 @@ const SIZE = 1080;
 const canvas = ref<HTMLCanvasElement | null>(null);
 const theme = ref<ShareTheme>(SHARE_THEMES[0]!);
 const busy = ref(false);
+const online = ref(globalThis.navigator?.onLine !== false);
+
+// The Mapa theme needs internet; hide it offline.
+const themes = computed(() => SHARE_THEMES.filter((t) => !t.requiresOnline || online.value));
+
+let renderToken = 0;
 
 async function render(): Promise<void> {
   const el = canvas.value;
@@ -23,7 +29,28 @@ async function render(): Promise<void> {
   const ctx = el.getContext('2d');
   if (!ctx) return;
   await document.fonts.ready.catch(() => undefined);
-  drawShareCard(ctx, SIZE, props.activity, theme.value);
+  const token = ++renderToken;
+  const t = theme.value;
+
+  if (t.requiresOnline) {
+    busy.value = true;
+    try {
+      const { renderRouteMap } = await import('../routeMap');
+      const result = await renderRouteMap(props.activity.route, SIZE);
+      if (token !== renderToken) return; // theme changed while rendering
+      if (result instanceof HTMLCanvasElement) {
+        composeMapCard(ctx, SIZE, props.activity, result, t);
+      } else {
+        showToast(`No se pudo generar el mapa: ${result.error}`);
+        theme.value = SHARE_THEMES[0]!;
+      }
+    } finally {
+      if (token === renderToken) busy.value = false;
+    }
+    return;
+  }
+
+  drawShareCard(ctx, SIZE, props.activity, t);
 }
 
 onMounted(render);
@@ -69,11 +96,12 @@ async function onSave(): Promise<void> {
 
     <div class="preview">
       <canvas ref="canvas" :width="SIZE" :height="SIZE"></canvas>
+      <div v-if="busy" class="preview-busy">Generando mapa…</div>
     </div>
 
     <div class="themes">
       <button
-        v-for="t in SHARE_THEMES"
+        v-for="t in themes"
         :key="t.id"
         type="button"
         class="theme-chip"
@@ -134,6 +162,7 @@ async function onSave(): Promise<void> {
   height: 22px;
 }
 .preview {
+  position: relative;
   border-radius: 18px;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -143,6 +172,16 @@ async function onSave(): Promise<void> {
   display: block;
   width: 100%;
   height: auto;
+}
+.preview-busy {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
 }
 .themes {
   display: flex;

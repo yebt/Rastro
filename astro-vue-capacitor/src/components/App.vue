@@ -42,6 +42,18 @@ const showSetup = computed(
   () => setupOpen.value || (Capacitor.isNativePlatform() && !setupDone.value),
 );
 
+// Short motivational line under the wordmark, rotating by day.
+const MOTIVES = [
+  'Un paso más que ayer',
+  'Hoy también suma',
+  'Constancia le gana a intensidad',
+  'Tu única competencia sos vos',
+  'Cada km cuenta',
+  'Empezá, el resto viene solo',
+  'El mejor rastro es el que dejás hoy',
+];
+const motive = MOTIVES[new Date().getDate() % MOTIVES.length];
+
 let backHandle: PluginListenerHandle | null = null;
 
 /**
@@ -85,7 +97,7 @@ onUnmounted(() => {
       </div>
       <div>
         <div class="brand">Rastro</div>
-        <small>tus km · tus dominadas</small>
+        <small>{{ motive }}</small>
       </div>
       <button class="gear" type="button" aria-label="Configuración" @click="openSettings">
         <IconSettings />

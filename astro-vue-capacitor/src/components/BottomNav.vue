@@ -13,7 +13,7 @@ const active = useStore($activeTab);
 <template>
   <nav>
     <button :class="{ on: active === 'track' }" @click="setTab('track')">
-      <IconRoute /> Registrar
+      <IconRoute /> Rastrear
     </button>
     <button :class="{ on: active === 'pull' }" @click="setTab('pull')">
       <IconDumbbell /> Dominadas

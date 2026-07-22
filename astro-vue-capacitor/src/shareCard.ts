@@ -23,6 +23,8 @@ export interface ShareTheme {
   texture?: Texture;
   /** color (usually translucent) for the texture strokes/dots */
   textureColor?: string;
+  /** renders the route on a real map (MapLibre); only usable with internet */
+  requiresOnline?: boolean;
 }
 
 export const SHARE_THEMES: ShareTheme[] = [
@@ -34,6 +36,7 @@ export const SHARE_THEMES: ShareTheme[] = [
   { id: "topografico", label: "Topográfico", bg: ["#14231b", "#1d3327"], route: "#e8c07d", text: "#f2ede3", sub: "#a9b3a0", accent: "#e07a5f", texture: "topo", textureColor: "rgba(232,192,125,0.16)" },
   { id: "trama", label: "Trama", bg: "#101418", route: "#ff5a1f", text: "#ffffff", sub: "#9aa39a", accent: "#4d7bff", texture: "streets", textureColor: "rgba(255,255,255,0.09)" },
   { id: "halftone", label: "Halftone", bg: ["#2b1055", "#7b2ff7"], route: "#ffffff", text: "#ffffff", sub: "#d9c9ff", accent: "#00e0c6", texture: "halftone", textureColor: "rgba(255,255,255,0.16)" },
+  { id: "mapa", label: "Mapa", bg: "#0b0d10", route: "#1b4dff", text: "#ffffff", sub: "rgba(255,255,255,0.85)", accent: "#ff5a1f", requiresOnline: true },
 ];
 
 /** Deterministic PRNG (mulberry32) so a texture looks the same on every render. */
@@ -205,18 +208,15 @@ function stat(
 
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
-/** Render the whole card into a square `size`×`size` context. */
-export function drawShareCard(
+/** Wordmark, date, type, stats + footer — shared by the flat and map cards. */
+function drawCardText(
   ctx: CanvasRenderingContext2D,
   size: number,
   activity: GpsActivity,
   theme: ShareTheme,
 ): void {
   const P = 74;
-  fillBackground(ctx, size, theme);
-  drawTexture(ctx, size, theme);
 
-  // Header: wordmark + date
   ctx.textAlign = "left";
   ctx.fillStyle = theme.text;
   ctx.font = `700 46px ${DISPLAY}`;
@@ -231,16 +231,11 @@ export function drawShareCard(
   ctx.font = `600 30px ${SANS}`;
   ctx.fillText(dateStr, size - P, P + 34);
 
-  // Activity type
   ctx.textAlign = "left";
   ctx.fillStyle = theme.text;
   ctx.font = `700 96px ${DISPLAY}`;
   ctx.fillText(TYPE_LABEL[activity.type], P, 250);
 
-  // Route
-  drawRoute(ctx, { x: P, y: 300, w: size - 2 * P, h: 440 }, activity.route, theme);
-
-  // Stats row
   const dist = fmtDistance(activity.distance);
   const y = 850;
   const col = (size - 2 * P) / 3;
@@ -248,7 +243,6 @@ export function drawShareCard(
   stat(ctx, P + col, y, "Tiempo", fmtTime(activity.duration), "", theme);
   stat(ctx, P + col * 2, y, "Ritmo", fmtPace(paceSecPerKm(activity.distance, activity.duration)), "/km", theme);
 
-  // Footer line
   ctx.textAlign = "left";
   ctx.fillStyle = theme.sub;
   ctx.font = `500 28px ${SANS}`;
@@ -257,4 +251,49 @@ export function drawShareCard(
     P,
     size - P + 6,
   );
+}
+
+/** Render the whole flat card (bg + texture + route + text) into a square context. */
+export function drawShareCard(
+  ctx: CanvasRenderingContext2D,
+  size: number,
+  activity: GpsActivity,
+  theme: ShareTheme,
+): void {
+  const P = 74;
+  fillBackground(ctx, size, theme);
+  drawTexture(ctx, size, theme);
+  drawRoute(ctx, { x: P, y: 300, w: size - 2 * P, h: 440 }, activity.route, theme);
+  drawCardText(ctx, size, activity, theme);
+}
+
+/** Compose the map card: a full-bleed route map + gradient scrims + white text. */
+export function composeMapCard(
+  ctx: CanvasRenderingContext2D,
+  size: number,
+  activity: GpsActivity,
+  mapCanvas: CanvasImageSource,
+  theme: ShareTheme,
+): void {
+  ctx.drawImage(mapCanvas, 0, 0, size, size);
+
+  const top = ctx.createLinearGradient(0, 0, 0, 320);
+  top.addColorStop(0, "rgba(0,0,0,0.6)");
+  top.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = top;
+  ctx.fillRect(0, 0, size, 320);
+
+  const bot = ctx.createLinearGradient(0, size - 380, 0, size);
+  bot.addColorStop(0, "rgba(0,0,0,0)");
+  bot.addColorStop(1, "rgba(0,0,0,0.82)");
+  ctx.fillStyle = bot;
+  ctx.fillRect(0, size - 380, size, 380);
+
+  drawCardText(ctx, size, activity, theme);
+
+  // Tile attribution (required by OSM/CARTO).
+  ctx.textAlign = "right";
+  ctx.fillStyle = "rgba(255,255,255,0.7)";
+  ctx.font = `500 20px ${SANS}`;
+  ctx.fillText("© OpenStreetMap · CARTO", size - 74, size - 30);
 }
