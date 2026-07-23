@@ -17,6 +17,32 @@ export interface RoutePoint {
 /** Simplified route point persisted with an activity: [lat, lng]. */
 export type RouteTuple = [number, number];
 
+/**
+ * Lossless track point persisted with an activity (Phase 1 / schema v2).
+ * Unlike RouteTuple, this keeps timing and raw GPS quality so later phases can
+ * derive elevation, speed, and accuracy without re-capturing.
+ */
+export interface TrackPoint {
+  lat: number;
+  lng: number;
+  /** epoch ms when the point was recorded */
+  t: number;
+  /** GPS altitude in meters (noisy, optional) */
+  alt?: number;
+  /** horizontal accuracy in meters */
+  acc?: number;
+}
+
+/** Photo attached to an activity (reserved for a later phase; nothing writes it yet). */
+export interface ActivityPhoto {
+  id: string;
+  uri: string;
+  /** epoch ms the photo was taken */
+  t?: number;
+  lat?: number;
+  lng?: number;
+}
+
 /** Time-series sample for analysis (SPECS §6.1, Phase 1.1+). */
 export interface Sample {
   /** seconds since activity start */
@@ -42,6 +68,10 @@ export interface GpsActivity {
   /** seconds, excluding pauses */
   duration: number;
   route: RouteTuple[];
+  /** NEW (Phase 1 / schema v2): lossless GPS track (timing + altitude + accuracy) */
+  track?: TrackPoint[];
+  /** NEW (Phase 1 / schema v2): attached photos (reserved) */
+  photos?: ActivityPhoto[];
   /** NEW (Phase 1.1+): time series for reports */
   samples?: Sample[];
   /** NEW (Phase 2): total steps from the default source */
@@ -55,6 +85,8 @@ export interface GpsActivity {
     gps?: boolean;
     pedometer?: "hardware" | "accelerometer" | null;
   };
+  /** Schema version of this record (migration layer, Phase 1). */
+  schemaVersion?: number;
 }
 
 export interface DominadasSession {
@@ -65,9 +97,14 @@ export interface DominadasSession {
   sets: number[];
   total: number;
   notes?: string;
+  /** Schema version of this record (migration layer, Phase 1). */
+  schemaVersion?: number;
 }
 
 export type Activity = GpsActivity | DominadasSession;
+
+/** Current persisted schema version. Bump when the on-disk shape changes. */
+export const CURRENT_SCHEMA_VERSION = 2;
 
 /** Records / goals (SPECS §6.3, Phase 3). */
 export interface Goals {

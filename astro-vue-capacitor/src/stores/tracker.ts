@@ -13,7 +13,14 @@
 import { atom } from "nanostores";
 import { genId } from "../lib/id";
 import { evaluatePoint, shouldSample } from "../lib/track";
-import type { GpsActivity, GpsType, RoutePoint, Sample } from "../lib/types";
+import {
+  CURRENT_SCHEMA_VERSION,
+  type GpsActivity,
+  type GpsType,
+  type RoutePoint,
+  type Sample,
+  type TrackPoint,
+} from "../lib/types";
 import { geo, type GeoError, type GeoFix, type GeoWatch } from "../geolocation";
 import {
   $activeSource,
@@ -42,7 +49,9 @@ export const $sessionStart = atom<number>(0);
 /** Whether the screen Wake Lock is held (F1) — drives a UI indicator. */
 export const $wakeLockActive = atom<boolean>(false);
 
-let route: RoutePoint[] = [];
+// Accepted points kept lossless in memory (timing + altitude + accuracy) so
+// stop() can persist both the compat route tuples and the full track.
+let route: TrackPoint[] = [];
 let samples: Sample[] = []; // F3 time-series
 let lastSampleT = -Infinity;
 let geoWatch: GeoWatch | null = null;
@@ -133,7 +142,13 @@ function onGeoError(err: GeoError): void {
 
 function onFix(fix: GeoFix): void {
   if ($trackState.get() !== "running") return;
-  const next: RoutePoint = { lat: fix.lat, lng: fix.lng, t: Date.now() };
+  const next: TrackPoint = {
+    lat: fix.lat,
+    lng: fix.lng,
+    t: Date.now(),
+    alt: fix.altitude ?? undefined,
+    acc: fix.accuracy,
+  };
   $rawPos.set({ lat: next.lat, lng: next.lng }); // marker follows always
   const accuracy = fix.accuracy;
   const last = route.length ? route[route.length - 1]! : null;
@@ -221,6 +236,19 @@ export async function stop(): Promise<void> {
   const primary = useHw ? stepsHardware : stepsAccel;
   const pedometer = useHw ? "hardware" : stepsAccel > 0 ? "accelerometer" : null;
 
+  // Lossless track: same 5-decimal precision as the compat tuples, but keeps
+  // timing plus altitude/accuracy when the device reported them.
+  const track: TrackPoint[] = route.map((pt) => {
+    const point: TrackPoint = {
+      lat: Number(pt.lat.toFixed(5)),
+      lng: Number(pt.lng.toFixed(5)),
+      t: pt.t,
+    };
+    if (pt.alt !== undefined) point.alt = pt.alt;
+    if (pt.acc !== undefined) point.acc = pt.acc;
+    return point;
+  });
+
   const activity: GpsActivity = {
     id: genId("a"),
     kind: "gps",
@@ -229,11 +257,13 @@ export async function stop(): Promise<void> {
     distance: Math.round(meters),
     duration: Math.round(sec),
     route: route.map((pt) => [Number(pt.lat.toFixed(5)), Number(pt.lng.toFixed(5))]),
+    track: track.length ? track : undefined,
     samples: samples.length ? samples : undefined,
     steps: primary > 0 ? primary : undefined,
     stepsAccel: stepsAccel > 0 ? stepsAccel : undefined,
     stepsHardware: stepsHardware > 0 ? stepsHardware : undefined,
     source: { gps: true, pedometer },
+    schemaVersion: CURRENT_SCHEMA_VERSION,
   };
   await addActivity(activity);
   showToast(`¡Guardado! ${km.toFixed(2)} km`);

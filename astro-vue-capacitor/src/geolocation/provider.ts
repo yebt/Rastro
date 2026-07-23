@@ -12,6 +12,8 @@ export interface GeoFix {
   lng: number;
   /** accuracy in meters */
   accuracy: number;
+  /** GPS altitude in meters, if the device reported one (noisy) */
+  altitude?: number | null;
   /** epoch ms */
   timestamp: number;
 }

@@ -11,6 +11,7 @@ import { extractActivities, mergeActivities, summarize, type ImportMode } from "
 import { genId } from "../lib/id";
 import type { Activity } from "../lib/types";
 import { createRepository, type ActivityRepository } from "../persistence";
+import { migrateActivity, migrateAll } from "../persistence/migrate";
 
 let repo: ActivityRepository = createRepository();
 
@@ -27,13 +28,16 @@ export const $summary = computed($activities, (acts) => summarize(acts));
 
 /** Load everything from storage into the store. Call once on app mount. */
 export async function loadActivities(): Promise<void> {
-  $activities.set(await repo.all());
+  // Every record entering from storage passes through the migration layer.
+  $activities.set(migrateAll(await repo.all()));
   $ready.set(true);
 }
 
 export async function addActivity(activity: Activity): Promise<void> {
-  await repo.add(activity);
-  $activities.set([...$activities.get(), activity]);
+  // Stamp schemaVersion centrally so both activity kinds are always versioned.
+  const stamped = migrateActivity(activity);
+  await repo.add(stamped);
+  $activities.set([...$activities.get(), stamped]);
 }
 
 export async function removeActivity(id: string): Promise<void> {

@@ -21,6 +21,7 @@ function toFix(p: Position): GeoFix {
     lat: p.coords.latitude,
     lng: p.coords.longitude,
     accuracy: p.coords.accuracy ?? 999,
+    altitude: p.coords.altitude ?? undefined,
     timestamp: p.timestamp,
   };
 }

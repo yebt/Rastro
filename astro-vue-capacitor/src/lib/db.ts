@@ -4,6 +4,7 @@
  * SPECS §4.4 / §13: never lose data on a malformed import; validate before writing.
  */
 
+import { migrateAll } from "../persistence/migrate";
 import { isDominadas, isGps, type Activity, type Database } from "./types";
 
 export type ImportMode = "merge" | "replace";
@@ -24,7 +25,8 @@ export function extractActivities(data: unknown): Activity[] {
       ? (data as { activities: unknown }).activities
       : data;
   if (!Array.isArray(incoming)) throw new Error("invalid import format");
-  return incoming as Activity[];
+  // Upgrade old backups through the migration layer as they enter the app.
+  return migrateAll(incoming);
 }
 
 /**
