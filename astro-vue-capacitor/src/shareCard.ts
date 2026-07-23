@@ -273,6 +273,36 @@ export function drawShareCard(
   drawCardText(ctx, size, activity, theme);
 }
 
+/**
+ * Progressive ("gradient") blur: frost the top and bottom bands of the map while
+ * keeping the middle (the route) sharp. Reads like frosted glass under the text —
+ * exactly the poster look. Canvas `filter` is Chromium/WebView-supported; if it
+ * no-ops, the masked copy is just the sharp map, so nothing breaks.
+ */
+function frostBands(ctx: CanvasRenderingContext2D, size: number, mapCanvas: CanvasImageSource): void {
+  const blur = document.createElement("canvas");
+  blur.width = size;
+  blur.height = size;
+  const b = blur.getContext("2d");
+  if (!b) return;
+  b.filter = "blur(16px)";
+  b.drawImage(mapCanvas, 0, 0, size, size);
+  b.filter = "none";
+
+  // Keep the blurred pixels only in the top/bottom bands, faded toward the middle.
+  b.globalCompositeOperation = "destination-in";
+  const mask = b.createLinearGradient(0, 0, 0, size);
+  mask.addColorStop(0, "rgba(0,0,0,1)");
+  mask.addColorStop(0.33, "rgba(0,0,0,0)");
+  mask.addColorStop(0.63, "rgba(0,0,0,0)");
+  mask.addColorStop(1, "rgba(0,0,0,1)");
+  b.fillStyle = mask;
+  b.fillRect(0, 0, size, size);
+  b.globalCompositeOperation = "source-over";
+
+  ctx.drawImage(blur, 0, 0);
+}
+
 /** Compose the map card: a full-bleed route map + gradient scrims + white text. */
 export function composeMapCard(
   ctx: CanvasRenderingContext2D,
@@ -282,6 +312,7 @@ export function composeMapCard(
   theme: ShareTheme,
 ): void {
   ctx.drawImage(mapCanvas, 0, 0, size, size);
+  frostBands(ctx, size, mapCanvas);
 
   // Fading scrims: darken top (wordmark/type) and bottom (stats) so white text
   // stays legible even over a light basemap. Taller + darker than a thin band.

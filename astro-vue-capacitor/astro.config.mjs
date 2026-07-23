@@ -123,5 +123,9 @@ export default defineConfig({
     // MapLibre GL (share "Mapa" theme): bundle it for SSR so Vite doesn't resolve
     // its CommonJS entry on the server. Worker is wired via ?worker&url in routeMap.
     ssr: { noExternal: ['maplibre-gl'] },
+    // MapLibre (~900K + worker) is lazy-imported only when a Mapa theme is picked,
+    // so it never touches the app-open bundle. Raise the warning limit so Vite
+    // stops flagging that intentionally-split chunk.
+    build: { chunkSizeWarningLimit: 1000 },
   },
 });

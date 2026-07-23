@@ -54,6 +54,18 @@ function styleFor(id: MapStyleId): StyleSpecification {
 
 export type MapResult = HTMLCanvasElement | { error: string };
 
+/** Optional camera overrides for the "personalizado" map card. */
+export interface MapView {
+  /** tilt in degrees (0 = top-down, up to 60 for a 3D feel) */
+  pitch?: number;
+  /** rotation in degrees (0 = north up) */
+  bearing?: number;
+  /** zoom delta applied after fit-to-route (+ closer, − wider) */
+  zoom?: number;
+}
+
+const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
+
 function webglSupported(): boolean {
   try {
     const c = document.createElement("canvas");
@@ -67,11 +79,15 @@ export async function renderRouteMap(
   route: RouteTuple[],
   size: number,
   styleId: MapStyleId = "voyager",
+  view?: MapView,
 ): Promise<MapResult> {
   if (route.length < 2) return { error: "ruta sin puntos" };
   if (!webglSupported()) return { error: "WebGL no disponible en el WebView" };
 
   const basemap = BASEMAPS[styleId];
+  const pitch = clamp(view?.pitch ?? 0, 0, 60);
+  const bearing = view?.bearing ?? 0;
+  const zoomDelta = clamp(view?.zoom ?? 0, -2, 2);
 
   // On-screen but behind the (opaque) share overlay: fully off-screen containers
   // get their WebGL paint throttled in some WebViews → blank capture.
@@ -155,9 +171,37 @@ export async function renderRouteMap(
           layout: { "line-cap": "round", "line-join": "round" },
           paint: { "line-color": basemap.route, "line-width": 6 },
         });
-        const bounds = new LngLatBounds(coords[0]!, coords[0]!);
+
+        // Start (green) + end (orange) markers, data-driven color by "kind".
+        const start = coords[0]!;
+        const end = coords[coords.length - 1]!;
+        map.addSource("ends", {
+          type: "geojson",
+          data: {
+            type: "FeatureCollection",
+            features: [
+              { type: "Feature", properties: { kind: "start" }, geometry: { type: "Point", coordinates: start } },
+              { type: "Feature", properties: { kind: "end" }, geometry: { type: "Point", coordinates: end } },
+            ],
+          },
+        });
+        map.addLayer({
+          id: "end-dots",
+          type: "circle",
+          source: "ends",
+          paint: {
+            "circle-radius": 9,
+            "circle-color": ["match", ["get", "kind"], "start", "#12A150", "#ff5a1f"],
+            "circle-stroke-width": 3,
+            "circle-stroke-color": "#ffffff",
+          },
+        });
+
+        const bounds = new LngLatBounds(start, start);
         for (const c of coords) bounds.extend(c);
-        map.fitBounds(bounds, { padding: Math.round(size * 0.12), duration: 0 });
+        map.fitBounds(bounds, { padding: Math.round(size * 0.14), duration: 0, bearing });
+        if (pitch) map.setPitch(pitch);
+        if (zoomDelta) map.setZoom(map.getZoom() + zoomDelta);
         map.once("idle", capture);
       } catch (e) {
         finish({ error: `capa ruta: ${String(e).slice(0, 60)}` });

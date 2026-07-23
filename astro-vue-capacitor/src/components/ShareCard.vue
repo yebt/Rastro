@@ -18,6 +18,13 @@ const theme = ref<ShareTheme>(SHARE_THEMES[0]!);
 const busy = ref(false);
 const online = ref(globalThis.navigator?.onLine !== false);
 
+// Custom camera (only for map themes): tilt / rotation / zoom.
+const showCamera = ref(false);
+const pitch = ref(0);
+const bearing = ref(0);
+const zoom = ref(0);
+const isMap = computed(() => !!theme.value.requiresOnline);
+
 // The Mapa theme needs internet; hide it offline.
 const themes = computed(() => SHARE_THEMES.filter((t) => !t.requiresOnline || online.value));
 
@@ -36,7 +43,10 @@ async function render(): Promise<void> {
     busy.value = true;
     try {
       const { renderRouteMap } = await import('../routeMap');
-      const result = await renderRouteMap(props.activity.route, SIZE, t.mapStyle);
+      const view = showCamera.value
+        ? { pitch: pitch.value, bearing: bearing.value, zoom: zoom.value }
+        : undefined;
+      const result = await renderRouteMap(props.activity.route, SIZE, t.mapStyle, view);
       if (token !== renderToken) return; // theme changed while rendering
       if (result instanceof HTMLCanvasElement) {
         composeMapCard(ctx, SIZE, props.activity, result, t);
@@ -108,6 +118,23 @@ async function onSave(): Promise<void> {
         :class="{ on: theme.id === t.id }"
         @click="theme = t"
       >{{ t.label }}</button>
+    </div>
+
+    <div v-if="isMap" class="camera">
+      <button class="cam-toggle" type="button" :class="{ on: showCamera }" @click="showCamera = !showCamera; render()">
+        Personalizar cámara
+      </button>
+      <div v-if="showCamera" class="cam-grid">
+        <label>Inclinación <span>{{ pitch }}°</span>
+          <input type="range" min="0" max="60" step="5" v-model.number="pitch" @change="render" />
+        </label>
+        <label>Rotación <span>{{ bearing }}°</span>
+          <input type="range" min="0" max="360" step="15" v-model.number="bearing" @change="render" />
+        </label>
+        <label>Zoom <span>{{ zoom > 0 ? '+' : '' }}{{ zoom }}</span>
+          <input type="range" min="-2" max="2" step="0.5" v-model.number="zoom" @change="render" />
+        </label>
+      </div>
     </div>
 
     <div class="share-actions">
@@ -203,6 +230,48 @@ async function onSave(): Promise<void> {
   background: var(--ink);
   color: var(--paper);
   border-color: var(--ink);
+}
+.camera {
+  margin-top: 14px;
+}
+.cam-toggle {
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+.cam-toggle.on {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.cam-grid {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+.cam-grid label {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.cam-grid label span {
+  justify-self: end;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.cam-grid input[type='range'] {
+  grid-column: 1 / -1;
+  width: 100%;
+  accent-color: var(--ink);
 }
 .share-actions {
   display: flex;
