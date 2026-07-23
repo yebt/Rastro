@@ -1,17 +1,25 @@
 /**
- * Offscreen route-on-real-map renderer for the "Mapa" share theme (online only).
- * Renders CARTO/OSM raster tiles + the route with MapLibre GL into a detached
- * container, captures the WebGL canvas, and returns it — or null on any failure
- * (offline, tiles blocked, timeout) so the caller can fall back to a flat theme.
+ * Route-on-real-map renderer for the "Mapa" share theme (online only), via
+ * MapLibre GL. Renders a CARTO vector basemap + the route into an offscreen map
+ * and captures the canvas.
  *
- * MapLibre + its CSS are only pulled in when this module is dynamically imported
- * (i.e. only when the user picks the Mapa theme), keeping the base bundle lean.
+ * The worker is wired the way the MapLibre docs require for Vite (`?worker&url`
+ * + setWorkerUrl) — a plain import serves maplibre-gl-worker.mjs with a bad MIME
+ * type and the map hangs. astro.config also sets ssr.noExternal:['maplibre-gl'].
+ *
+ * Lazy-imported (only when the user picks the Mapa theme), so MapLibre stays out
+ * of the base bundle. Returns { error } on any failure so the caller can report it.
  */
 
 import "maplibre-gl/dist/maplibre-gl.css";
-import { LngLatBounds, Map as MlMap, type StyleSpecification } from "maplibre-gl";
+import { LngLatBounds, Map as MlMap, setWorkerUrl, type StyleSpecification } from "maplibre-gl";
+import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import type { RouteTuple } from "./lib/types";
 
+setWorkerUrl(workerUrl);
+
+// Raster style: CARTO Voyager tiles already include streets/labels, so there
+// are no vector glyphs/sprites/tiles to fail — the map always paints.
 const STYLE: StyleSpecification = {
   version: 8,
   sources: {
@@ -45,9 +53,8 @@ export async function renderRouteMap(route: RouteTuple[], size: number): Promise
   if (route.length < 2) return { error: "ruta sin puntos" };
   if (!webglSupported()) return { error: "WebGL no disponible en el WebView" };
 
-  // On-screen but behind the (opaque) share overlay and nearly transparent:
-  // fully off-screen containers get their WebGL paint throttled in some WebViews,
-  // which would capture a blank map.
+  // On-screen but behind the (opaque) share overlay: fully off-screen containers
+  // get their WebGL paint throttled in some WebViews → blank capture.
   const container = document.createElement("div");
   container.style.cssText = `position:fixed;top:0;left:0;width:${size}px;height:${size}px;z-index:-1;opacity:0.01;pointer-events:none;`;
   document.body.appendChild(container);
@@ -83,7 +90,6 @@ export async function renderRouteMap(route: RouteTuple[], size: number): Promise
       resolve(value);
     };
 
-    // Grab whatever the WebGL canvas currently holds (needs a loaded style).
     const capture = (): void => {
       if (settled) return;
       if (!map.isStyleLoaded()) {
@@ -102,10 +108,8 @@ export async function renderRouteMap(route: RouteTuple[], size: number): Promise
       }
     };
 
-    // Fallback: capture (or bail) even if the map never reports "idle".
-    const timer = setTimeout(capture, 7000);
+    const timer = setTimeout(capture, 8000);
 
-    // Per-tile errors are transient — log but don't abort; the timeout decides.
     map.on("error", (e) => {
       lastError = e.error?.message ?? String(e);
       console.warn("[routeMap] map error", lastError);
@@ -118,11 +122,18 @@ export async function renderRouteMap(route: RouteTuple[], size: number): Promise
           data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords } },
         });
         map.addLayer({
+          id: "route-casing",
+          type: "line",
+          source: "route",
+          layout: { "line-cap": "round", "line-join": "round" },
+          paint: { "line-color": "#ffffff", "line-width": 11 },
+        });
+        map.addLayer({
           id: "route-line",
           type: "line",
           source: "route",
           layout: { "line-cap": "round", "line-join": "round" },
-          paint: { "line-color": "#1b4dff", "line-width": 7 },
+          paint: { "line-color": "#1b4dff", "line-width": 6 },
         });
         const bounds = new LngLatBounds(coords[0]!, coords[0]!);
         for (const c of coords) bounds.extend(c);

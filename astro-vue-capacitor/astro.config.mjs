@@ -120,5 +120,8 @@ export default defineConfig({
   vite: {
     // Import icons as Vue components: `import IconRoute from '~icons/lucide/route'`.
     plugins: [Icons({ compiler: 'vue3' }), ...(mobile ? [basicSsl()] : [])],
+    // MapLibre GL (share "Mapa" theme): bundle it for SSR so Vite doesn't resolve
+    // its CommonJS entry on the server. Worker is wired via ?worker&url in routeMap.
+    ssr: { noExternal: ['maplibre-gl'] },
   },
 });
