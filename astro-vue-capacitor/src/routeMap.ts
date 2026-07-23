@@ -18,25 +18,39 @@ import type { RouteTuple } from "./lib/types";
 
 setWorkerUrl(workerUrl);
 
-// Raster style: CARTO Voyager tiles already include streets/labels, so there
-// are no vector glyphs/sprites/tiles to fail — the map always paints.
-const STYLE: StyleSpecification = {
-  version: 8,
-  sources: {
-    carto: {
-      type: "raster",
-      tiles: [
-        "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
-        "https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
-        "https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
-        "https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
-      ],
-      tileSize: 256,
-      attribution: "© OpenStreetMap · © CARTO",
-    },
-  },
-  layers: [{ id: "carto", type: "raster", source: "carto" }],
+/** CARTO raster basemaps. Raster PNGs already bake in streets/labels, so there
+ * are no vector glyphs/sprites/tiles to fail — the map always paints. */
+export type MapStyleId = "voyager" | "dark" | "light";
+
+interface Basemap {
+  /** CARTO tile path segment (subdomains a–d are prepended per URL). */
+  path: string;
+  /** route line + casing colors tuned for this basemap's brightness */
+  route: string;
+  casing: string;
+}
+
+const BASEMAPS: Record<MapStyleId, Basemap> = {
+  voyager: { path: "rastertiles/voyager", route: "#1b4dff", casing: "#ffffff" },
+  dark: { path: "dark_all", route: "#4d9bff", casing: "rgba(255,255,255,0.85)" },
+  light: { path: "light_all", route: "#1b4dff", casing: "#ffffff" },
 };
+
+function styleFor(id: MapStyleId): StyleSpecification {
+  const path = BASEMAPS[id].path;
+  return {
+    version: 8,
+    sources: {
+      carto: {
+        type: "raster",
+        tiles: ["a", "b", "c", "d"].map((s) => `https://${s}.basemaps.cartocdn.com/${path}/{z}/{x}/{y}.png`),
+        tileSize: 256,
+        attribution: "© OpenStreetMap · © CARTO",
+      },
+    },
+    layers: [{ id: "carto", type: "raster", source: "carto" }],
+  };
+}
 
 export type MapResult = HTMLCanvasElement | { error: string };
 
@@ -49,9 +63,15 @@ function webglSupported(): boolean {
   }
 }
 
-export async function renderRouteMap(route: RouteTuple[], size: number): Promise<MapResult> {
+export async function renderRouteMap(
+  route: RouteTuple[],
+  size: number,
+  styleId: MapStyleId = "voyager",
+): Promise<MapResult> {
   if (route.length < 2) return { error: "ruta sin puntos" };
   if (!webglSupported()) return { error: "WebGL no disponible en el WebView" };
+
+  const basemap = BASEMAPS[styleId];
 
   // On-screen but behind the (opaque) share overlay: fully off-screen containers
   // get their WebGL paint throttled in some WebViews → blank capture.
@@ -62,7 +82,7 @@ export async function renderRouteMap(route: RouteTuple[], size: number): Promise
   const coords = route.map((p) => [p[1], p[0]] as [number, number]);
   const map = new MlMap({
     container,
-    style: STYLE,
+    style: styleFor(styleId),
     interactive: false,
     attributionControl: false,
     canvasContextAttributes: { preserveDrawingBuffer: true },
@@ -126,14 +146,14 @@ export async function renderRouteMap(route: RouteTuple[], size: number): Promise
           type: "line",
           source: "route",
           layout: { "line-cap": "round", "line-join": "round" },
-          paint: { "line-color": "#ffffff", "line-width": 11 },
+          paint: { "line-color": basemap.casing, "line-width": 11 },
         });
         map.addLayer({
           id: "route-line",
           type: "line",
           source: "route",
           layout: { "line-cap": "round", "line-join": "round" },
-          paint: { "line-color": "#1b4dff", "line-width": 6 },
+          paint: { "line-color": basemap.route, "line-width": 6 },
         });
         const bounds = new LngLatBounds(coords[0]!, coords[0]!);
         for (const c of coords) bounds.extend(c);

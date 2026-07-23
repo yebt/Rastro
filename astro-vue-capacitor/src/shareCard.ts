@@ -6,6 +6,8 @@
 import { fmtDistance, fmtPace, fmtTime, paceSecPerKm, speedKmh } from "./lib/format";
 import { TYPE_LABEL } from "./lib/labels";
 import type { GpsActivity } from "./lib/types";
+// Type-only: erased at build, so MapLibre stays out of the base bundle.
+import type { MapStyleId } from "./routeMap";
 
 /** Procedural background texture drawn under the route (no tiles, offline). */
 export type Texture = "grid" | "topo" | "streets" | "halftone";
@@ -25,6 +27,8 @@ export interface ShareTheme {
   textureColor?: string;
   /** renders the route on a real map (MapLibre); only usable with internet */
   requiresOnline?: boolean;
+  /** CARTO basemap to use when requiresOnline (defaults to voyager) */
+  mapStyle?: MapStyleId;
 }
 
 export const SHARE_THEMES: ShareTheme[] = [
@@ -36,7 +40,9 @@ export const SHARE_THEMES: ShareTheme[] = [
   { id: "topografico", label: "Topográfico", bg: ["#14231b", "#1d3327"], route: "#e8c07d", text: "#f2ede3", sub: "#a9b3a0", accent: "#e07a5f", texture: "topo", textureColor: "rgba(232,192,125,0.16)" },
   { id: "trama", label: "Trama", bg: "#101418", route: "#ff5a1f", text: "#ffffff", sub: "#9aa39a", accent: "#4d7bff", texture: "streets", textureColor: "rgba(255,255,255,0.09)" },
   { id: "halftone", label: "Halftone", bg: ["#2b1055", "#7b2ff7"], route: "#ffffff", text: "#ffffff", sub: "#d9c9ff", accent: "#00e0c6", texture: "halftone", textureColor: "rgba(255,255,255,0.16)" },
-  { id: "mapa", label: "Mapa", bg: "#0b0d10", route: "#1b4dff", text: "#ffffff", sub: "rgba(255,255,255,0.85)", accent: "#ff5a1f", requiresOnline: true },
+  { id: "mapa", label: "Mapa", bg: "#0b0d10", route: "#1b4dff", text: "#ffffff", sub: "rgba(255,255,255,0.85)", accent: "#ff5a1f", requiresOnline: true, mapStyle: "voyager" },
+  { id: "mapa-noche", label: "Mapa noche", bg: "#0b0d10", route: "#4d9bff", text: "#ffffff", sub: "rgba(255,255,255,0.85)", accent: "#ff5a1f", requiresOnline: true, mapStyle: "dark" },
+  { id: "mapa-claro", label: "Mapa claro", bg: "#0b0d10", route: "#1b4dff", text: "#ffffff", sub: "rgba(255,255,255,0.85)", accent: "#ff5a1f", requiresOnline: true, mapStyle: "light" },
 ];
 
 /** Deterministic PRNG (mulberry32) so a texture looks the same on every render. */
@@ -277,19 +283,30 @@ export function composeMapCard(
 ): void {
   ctx.drawImage(mapCanvas, 0, 0, size, size);
 
-  const top = ctx.createLinearGradient(0, 0, 0, 320);
-  top.addColorStop(0, "rgba(0,0,0,0.6)");
+  // Fading scrims: darken top (wordmark/type) and bottom (stats) so white text
+  // stays legible even over a light basemap. Taller + darker than a thin band.
+  const top = ctx.createLinearGradient(0, 0, 0, 430);
+  top.addColorStop(0, "rgba(0,0,0,0.7)");
+  top.addColorStop(0.55, "rgba(0,0,0,0.28)");
   top.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = top;
-  ctx.fillRect(0, 0, size, 320);
+  ctx.fillRect(0, 0, size, 430);
 
-  const bot = ctx.createLinearGradient(0, size - 380, 0, size);
+  const bot = ctx.createLinearGradient(0, size - 470, 0, size);
   bot.addColorStop(0, "rgba(0,0,0,0)");
-  bot.addColorStop(1, "rgba(0,0,0,0.82)");
+  bot.addColorStop(0.45, "rgba(0,0,0,0.45)");
+  bot.addColorStop(1, "rgba(0,0,0,0.86)");
   ctx.fillStyle = bot;
-  ctx.fillRect(0, size - 380, size, 380);
+  ctx.fillRect(0, size - 470, size, 470);
 
+  // Soft per-glyph shadow (the "blur desvaneciente"): a halo under every letter
+  // so text never blends into the map, regardless of what's behind it.
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.6)";
+  ctx.shadowBlur = 16;
+  ctx.shadowOffsetY = 1;
   drawCardText(ctx, size, activity, theme);
+  ctx.restore();
 
   // Tile attribution (required by OSM/CARTO).
   ctx.textAlign = "right";

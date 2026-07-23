@@ -36,7 +36,7 @@ async function render(): Promise<void> {
     busy.value = true;
     try {
       const { renderRouteMap } = await import('../routeMap');
-      const result = await renderRouteMap(props.activity.route, SIZE);
+      const result = await renderRouteMap(props.activity.route, SIZE, t.mapStyle);
       if (token !== renderToken) return; // theme changed while rendering
       if (result instanceof HTMLCanvasElement) {
         composeMapCard(ctx, SIZE, props.activity, result, t);
