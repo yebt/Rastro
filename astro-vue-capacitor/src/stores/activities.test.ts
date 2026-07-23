@@ -24,8 +24,8 @@ const gps = (id: string, distance: number): Activity => ({
 
 const pull = (id: string, total: number): Activity => ({
   id,
-  kind: "dominadas",
-  type: "dominadas",
+  kind: "exercise",
+  exercise: "dominadas",
   date: 1_720_000_000_000,
   sets: [total],
   total,
@@ -57,7 +57,7 @@ describe("activities store", () => {
   it("recomputes the summary reactively", async () => {
     await addActivity(gps("a1", 5000));
     await addActivity(pull("p1", 26));
-    expect($summary.get()).toEqual({ count: 2, km: 5, pullups: 26 });
+    expect($summary.get()).toEqual({ count: 2, km: 5, reps: 26 });
   });
 
   it("imports (merge) de-duplicating by id", async () => {

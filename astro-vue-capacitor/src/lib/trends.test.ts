@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Activity, DominadasSession, GpsActivity, Sample } from "./types";
+import type { Activity, ExerciseSession, GpsActivity, Sample } from "./types";
 import {
   computeRecords,
   fastestWindowSec,
@@ -25,10 +25,10 @@ const gps = (date: number, distance: number, samples?: Sample[], duration = 600)
   samples,
 });
 
-const pull = (date: number, sets: number[]): DominadasSession => ({
+const pull = (date: number, sets: number[]): ExerciseSession => ({
   id: `p${date}`,
-  kind: "dominadas",
-  type: "dominadas",
+  kind: "exercise",
+  exercise: "dominadas",
   date,
   sets,
   total: sets.reduce((a, b) => a + b, 0),

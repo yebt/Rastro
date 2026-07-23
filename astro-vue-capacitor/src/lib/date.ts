@@ -33,6 +33,17 @@ const MONTHS_ES = [
   "dic",
 ];
 
+const WEEKDAYS_ES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+
+/**
+ * Compact uppercase header date for the Home screen, e.g. "MARTES 23 JUL".
+ * Spanish (app UI language).
+ */
+export function fmtDayHeader(ts: number): string {
+  const d = new Date(ts);
+  return `${WEEKDAYS_ES[d.getDay()]} ${d.getDate()} ${MONTHS_ES[d.getMonth()]}`.toUpperCase();
+}
+
 /**
  * Human-friendly relative date in Spanish (app UI language).
  * `now` is injectable for deterministic tests.

@@ -132,8 +132,8 @@ async function clearAll(): Promise<void> {
           <div class="num" style="font-size: 34px; font-weight: 700">{{ summary.km.toFixed(1) }}</div>
         </div>
         <div>
-          <div class="k" style="font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 600">Dominadas</div>
-          <div class="num" style="font-size: 34px; font-weight: 700">{{ summary.pullups }}</div>
+          <div class="k" style="font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 600">Reps</div>
+          <div class="num" style="font-size: 34px; font-weight: 700">{{ summary.reps }}</div>
         </div>
       </div>
     </div>

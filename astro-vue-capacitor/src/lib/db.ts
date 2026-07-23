@@ -5,7 +5,7 @@
  */
 
 import { migrateAll } from "../persistence/migrate";
-import { isDominadas, isGps, type Activity, type Database } from "./types";
+import { isExercise, isGps, type Activity, type Database } from "./types";
 
 export type ImportMode = "merge" | "replace";
 
@@ -55,19 +55,19 @@ export interface DataSummary {
   count: number;
   /** total km across GPS activities */
   km: number;
-  /** total pull-up reps */
-  pullups: number;
+  /** total reps across all exercise sessions */
+  reps: number;
 }
 
 /** Saved-data summary shown in the Datos tab (SPECS §4.4). */
 export function summarize(activities: Activity[]): DataSummary {
   let meters = 0;
-  let pullups = 0;
+  let reps = 0;
   for (const a of activities) {
     if (isGps(a)) meters += a.distance || 0;
-    else if (isDominadas(a)) pullups += a.total || 0;
+    else if (isExercise(a)) reps += a.total || 0;
   }
-  return { count: activities.length, km: meters / 1000, pullups };
+  return { count: activities.length, km: meters / 1000, reps };
 }
 
 export const EMPTY_DB: Database = { activities: [] };

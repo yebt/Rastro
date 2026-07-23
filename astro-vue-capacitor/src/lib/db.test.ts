@@ -14,8 +14,8 @@ const gps = (id: string, distance: number): Activity => ({
 
 const pull = (id: string, total: number): Activity => ({
   id,
-  kind: "dominadas",
-  type: "dominadas",
+  kind: "exercise",
+  exercise: "dominadas",
   date: 1_720_000_000_000,
   sets: [total],
   total,
@@ -58,11 +58,11 @@ describe("mergeActivities", () => {
 });
 
 describe("summarize", () => {
-  it("totals count, km and pull-ups", () => {
+  it("totals count, km and exercise reps", () => {
     const acts = [gps("a1", 5230), gps("a2", 2770), pull("p1", 26), pull("p2", 14)];
     const s = summarize(acts);
     expect(s.count).toBe(4);
     expect(s.km).toBeCloseTo(8, 5);
-    expect(s.pullups).toBe(40);
+    expect(s.reps).toBe(40);
   });
 });

@@ -7,7 +7,7 @@ import IconShare from '~icons/lucide/share-2';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { relDate } from '../lib/date';
 import { fmtDistance, fmtDistanceLabel, fmtPace, fmtTime, paceSecPerKm, speedKmh } from '../lib/format';
-import { TYPE_LABEL } from '../lib/labels';
+import { EXERCISE_LABEL, TYPE_LABEL } from '../lib/labels';
 import {
   accelerationStats,
   avgCadence,
@@ -20,7 +20,7 @@ import {
   splitsPerKm,
 } from '../lib/reports';
 import { analyzeStride } from '../lib/stride';
-import { isGps } from '../lib/types';
+import { isExercise, isGps } from '../lib/types';
 import { $activities } from '../stores/activities';
 import { $mapStyle } from '../stores/settings';
 import { closeDetail } from '../stores/ui';
@@ -39,12 +39,16 @@ const gps = computed(() => {
   const a = act.value;
   return a && isGps(a) ? a : null;
 });
-const dom = computed(() => {
+const ex = computed(() => {
   const a = act.value;
-  return a && a.kind === 'dominadas' ? a : null;
+  return a && isExercise(a) ? a : null;
 });
 
-const title = computed(() => (act.value ? TYPE_LABEL[act.value.type] : ''));
+const title = computed(() => {
+  const a = act.value;
+  if (!a) return '';
+  return isExercise(a) ? EXERCISE_LABEL[a.exercise] : (TYPE_LABEL[a.type] ?? '');
+});
 const dateText = computed(() => (act.value ? relDate(act.value.date) : ''));
 
 const dist = computed(() => fmtDistance(gps.value ? gps.value.distance : 0));
@@ -87,8 +91,8 @@ const stepsDiffPct = computed(() =>
 );
 const defaultSource = computed(() => gps.value?.source?.pedometer ?? null);
 
-const domSets = computed(() => dom.value?.sets ?? []);
-const domBest = computed(() => (dom.value ? Math.max(0, ...dom.value.sets) : 0));
+const exSets = computed(() => ex.value?.sets ?? []);
+const exBest = computed(() => (ex.value ? Math.max(0, ...ex.value.sets) : 0));
 
 const speedFmt = (v: number) => v.toFixed(1);
 const cadFmt = (v: number) => String(Math.round(v));
@@ -258,19 +262,19 @@ onBeforeUnmount(() => {
       </p>
     </template>
 
-    <template v-else-if="dom">
+    <template v-else-if="ex">
       <div class="totcard" style="margin-top: 14px">
         <div class="k">Total de la sesión</div>
-        <div class="v num">{{ dom.total }}<span class="u">reps</span></div>
+        <div class="v num">{{ ex.total }}<span class="u">reps</span></div>
         <div class="row">
-          <div><div class="k">Series</div><div class="m num">{{ domSets.length }}</div></div>
-          <div><div class="k">Mejor serie</div><div class="m num">{{ domBest }}</div></div>
+          <div><div class="k">Series</div><div class="m num">{{ exSets.length }}</div></div>
+          <div><div class="k">Mejor serie</div><div class="m num">{{ exBest }}</div></div>
         </div>
       </div>
       <div class="card">
         <h3>Series</h3>
         <div class="sets">
-          <div v-for="(r, i) in domSets" :key="i" class="chip">
+          <div v-for="(r, i) in exSets" :key="i" class="chip">
             <span class="s">S{{ i + 1 }}</span><span class="n num">{{ r }}</span>
           </div>
         </div>

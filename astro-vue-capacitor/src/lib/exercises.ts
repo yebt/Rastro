@@ -1,9 +1,9 @@
-/** Pull-up (dominadas) aggregations (SPECS §4.2). Pure. */
+/** Bodyweight-exercise aggregations (SPECS §4.2). Pure. */
 
 import { dayKey } from "./date";
-import type { DominadasSession } from "./types";
+import type { ExerciseKind, ExerciseSession } from "./types";
 
-export interface PullStats {
+export interface ExerciseStats {
   /** all-time total reps */
   all: number;
   /** reps done today */
@@ -15,10 +15,16 @@ export interface PullStats {
 }
 
 /**
- * Compute pull-up stat card values.
- * `now` is injectable so "today" is deterministic in tests.
+ * Compute exercise stat-card values across a list of sessions.
+ * When `exercise` is given, only sessions of that exercise are aggregated;
+ * otherwise every session counts. `now` is injectable so "today" is
+ * deterministic in tests.
  */
-export function pullStats(sessions: DominadasSession[], now: number = Date.now()): PullStats {
+export function exerciseStats(
+  sessions: ExerciseSession[],
+  exercise?: ExerciseKind,
+  now: number = Date.now(),
+): ExerciseStats {
   const todayKey = dayKey(now);
   let all = 0;
   let today = 0;
@@ -26,6 +32,7 @@ export function pullStats(sessions: DominadasSession[], now: number = Date.now()
   let bestSet = 0;
 
   for (const s of sessions) {
+    if (exercise !== undefined && s.exercise !== exercise) continue;
     all += s.total;
     if (dayKey(s.date) === todayKey) today += s.total;
     if (s.total > best) best = s.total;

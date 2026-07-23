@@ -29,7 +29,7 @@ import {
   stop,
 } from '../stores/tracker';
 
-defineProps<{ active: boolean }>();
+const props = defineProps<{ active: boolean }>();
 
 const TYPES: { key: GpsType; label: string }[] = [
   { key: 'Caminata', label: 'Caminar' },
@@ -170,10 +170,17 @@ watch(sessionStart, () => {
   needStart = true;
 });
 
-// Leaflet needs a size refresh when the map becomes visible again.
+// Leaflet needs a size refresh when the map becomes visible again — both when
+// the Moverme tab is (re)entered and when the in-tab segment toggles back here.
 watch(activeTab, (tab) => {
-  if (tab === 'track' && map) nextTick(() => setTimeout(() => map?.invalidateSize(), 80));
+  if (tab === 'workout' && map) nextTick(() => setTimeout(() => map?.invalidateSize(), 80));
 });
+watch(
+  () => props.active,
+  (visible) => {
+    if (visible && map) nextTick(() => setTimeout(() => map?.invalidateSize(), 80));
+  },
+);
 
 // Swap the base map when the user changes the style in settings.
 watch(mapStyle, (id) => {

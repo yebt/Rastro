@@ -15,6 +15,13 @@
   --soft: #f0f1ec;
   --map-bg: #dfe3dd;
   --nav-bg: rgba(255, 255, 255, 0.94);
+  /* Brand accent (F18). JS (theme.ts + anti-flash inline) overrides these on
+     <html> per accent × effective-theme. These defaults = green/light so any
+     var(--accent*) resolves before JS runs. Contrast is guarded by accent.test.ts. */
+  --accent: #0a7f3d;
+  --accent-strong: #086b33;
+  --accent-soft: rgba(10, 127, 61, 0.14);
+  --accent-contrast: #ffffff;
   /* "Hero" card (total histórico) — always dark, never inverts with the theme. */
   --hero-bg: #15181a;
   --hero-fg: #ffffff;
@@ -24,6 +31,11 @@
   --safe-t: env(safe-area-inset-top, 0px);
   --sans: var(--font-inter, system-ui, -apple-system, sans-serif);
   --cond: var(--font-barlow, 'Barlow Condensed', sans-serif);
+  --mono: var(--font-mono, ui-monospace, 'JetBrains Mono', monospace);
+  /* Radius scale (DESIGN §4: short, coherent — not rounded-everything). */
+  --r-1: 8px;
+  --r-2: 12px;
+  --r-3: 16px;
 }
 
 :root[data-theme='dark'] {
@@ -69,7 +81,8 @@ body {
 .num {
   font-family: var(--cond);
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.01em;
+  /* Slight negative tracking on numerals (DESIGN §2). */
+  letter-spacing: -0.01em;
 }
 
 button {
@@ -229,10 +242,10 @@ input {
 .me-dot {
   width: 18px;
   height: 18px;
-  background: var(--blue);
+  background: var(--accent);
   border: 3px solid #fff;
   border-radius: 50%;
-  box-shadow: 0 0 0 4px rgba(27, 77, 255, 0.25);
+  box-shadow: 0 0 0 4px var(--accent-soft);
 }
 
 /* Route start/end markers (Leaflet divIcons — must be global, not scoped). */
@@ -311,14 +324,153 @@ input {
   color: var(--muted);
 }
 
+/* Mono micro-label (DESIGN §2): PACE, dates, section labels. */
 .lbl {
-  font-family: var(--sans);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
   margin-bottom: 6px;
+}
+
+/* ---- v2 design primitives (DESIGN §5, §4) ---- */
+
+/* Primary action: accent fill + guaranteed-contrast text, comfortable height. */
+.cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 15px 18px;
+  border-radius: var(--r-2);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 700;
+  font-size: 16px;
+  transition: transform 0.12s ease;
+}
+
+.cta:active {
+  transform: scale(0.97);
+}
+
+.cta svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Secondary/ghost: hairline border, subtle surface, ink text. */
+.ghost {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 13px 16px;
+  border-radius: var(--r-2);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.ghost svg {
+  width: 19px;
+  height: 19px;
+}
+
+/* Stat columns split by vertical hairlines (mono label + tabular number). */
+.statcols {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+}
+
+.statcol {
+  padding: 0 14px;
+  border-left: 1px solid var(--line);
+  min-width: 0;
+}
+
+.statcol:first-child {
+  padding-left: 0;
+  border-left: none;
+}
+
+.statcol .val {
+  font-family: var(--cond);
+  font-variant-numeric: tabular-nums;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.statcol .val small {
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* Hairline list: rows separated by 1px lines, not boxed cards. */
+.hlist {
+  display: flex;
+  flex-direction: column;
+}
+
+.hrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 52px;
+  padding: 13px 2px;
+  border-top: 1px solid var(--line);
+  text-align: left;
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.hlist .hrow:last-child {
+  border-bottom: 1px solid var(--line);
+}
+
+.hrow > svg {
+  width: 20px;
+  height: 20px;
+  color: var(--muted);
+  flex: none;
+}
+
+.hrow .hbody {
+  flex: 1;
+  min-width: 0;
+}
+
+.hrow .hsub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.hrow .hval {
+  color: var(--muted);
+  font-size: 14px;
+  margin-left: auto;
+}
+
+.hrow .hchev {
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+  flex: none;
+  margin-left: auto;
 }
 
 .grid3 {
@@ -376,8 +528,8 @@ input {
 }
 
 .btn-go {
-  background: var(--green);
-  color: #fff;
+  background: var(--accent);
+  color: var(--accent-contrast);
 }
 
 .btn-pause {
@@ -737,7 +889,7 @@ input {
   width: 20px;
   height: 20px;
   flex: none;
-  color: var(--blue);
+  color: var(--accent);
 }
 
 .dbtn .sub {
@@ -773,29 +925,42 @@ nav {
 }
 
 nav button {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 4px;
   color: var(--muted);
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 nav button svg {
-  width: 23px;
-  height: 23px;
+  width: 22px;
+  height: 22px;
+}
+
+/* Small accent bar riding the top edge of the active item (DESIGN §5). */
+nav button .tabbar {
+  position: absolute;
+  top: 0;
+  width: 26px;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: transparent;
 }
 
 nav button.on {
-  color: var(--ink);
+  color: var(--accent);
 }
 
-nav button.on .rec {
-  color: var(--green);
+nav button.on .tabbar {
+  background: var(--accent);
 }
 
 /* ---- Toast ---- */
@@ -836,7 +1001,7 @@ nav button.on .rec {
 }
 
 a.link {
-  color: var(--blue);
+  color: var(--accent);
   font-weight: 600;
   text-decoration: none;
 }

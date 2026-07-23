@@ -2,9 +2,9 @@
 
 import { atom } from "nanostores";
 
-export type Tab = "track" | "pull" | "hist" | "progress" | "data";
+export type Tab = "home" | "workout" | "profile" | "more";
 
-export const $activeTab = atom<Tab>("track");
+export const $activeTab = atom<Tab>("home");
 
 export function setTab(tab: Tab): void {
   $activeTab.set(tab);

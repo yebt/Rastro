@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { useStore } from '@nanostores/vue';
-import IconDatabase from '~icons/lucide/database';
-import IconDumbbell from '~icons/lucide/dumbbell';
-import IconHistory from '~icons/lucide/history';
-import IconRoute from '~icons/lucide/route';
-import IconTrend from '~icons/lucide/trending-up';
+import IconActivity from '~icons/lucide/activity';
+import IconHome from '~icons/lucide/house';
+import IconMore from '~icons/lucide/more-horizontal';
+import IconUser from '~icons/lucide/user';
 import { $activeTab, setTab } from '../stores/ui';
 
 const active = useStore($activeTab);
@@ -12,20 +11,21 @@ const active = useStore($activeTab);
 
 <template>
   <nav>
-    <button :class="{ on: active === 'track' }" @click="setTab('track')">
-      <IconRoute /> Rastrear
+    <button :class="{ on: active === 'home' }" @click="setTab('home')">
+      <span class="tabbar" />
+      <IconHome /> Inicio
     </button>
-    <button :class="{ on: active === 'pull' }" @click="setTab('pull')">
-      <IconDumbbell /> Dominadas
+    <button :class="{ on: active === 'workout' }" @click="setTab('workout')">
+      <span class="tabbar" />
+      <IconActivity /> Moverme
     </button>
-    <button :class="{ on: active === 'hist' }" @click="setTab('hist')">
-      <IconHistory /> Historial
+    <button :class="{ on: active === 'profile' }" @click="setTab('profile')">
+      <span class="tabbar" />
+      <IconUser /> Perfil
     </button>
-    <button :class="{ on: active === 'progress' }" @click="setTab('progress')">
-      <IconTrend /> Progreso
-    </button>
-    <button :class="{ on: active === 'data' }" @click="setTab('data')">
-      <IconDatabase /> Datos
+    <button :class="{ on: active === 'more' }" @click="setTab('more')">
+      <span class="tabbar" />
+      <IconMore /> Más
     </button>
   </nav>
 </template>

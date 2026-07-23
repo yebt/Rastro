@@ -3,12 +3,15 @@ import { useStore } from '@nanostores/vue';
 import IconArrow from '~icons/lucide/arrow-left';
 import IconCheck from '~icons/lucide/check';
 import { onMounted, ref } from 'vue';
+import { type Accent, ACCENT_ORDER, ACCENTS } from '../lib/accent';
 import { hardwareAvailable } from '../motion/hardware';
 import {
+  $accent,
   $mapStyle,
   $stepSource,
   $theme,
   MAP_STYLES,
+  setAccent,
   setMapStyle,
   setStepSource,
   setTheme,
@@ -25,6 +28,7 @@ function reviewPermissions(): void {
 const stepSource = useStore($stepSource);
 const mapStyle = useStore($mapStyle);
 const theme = useStore($theme);
+const accent = useStore($accent);
 const hwReady = ref<boolean | null>(null);
 
 const THEMES: { key: Theme; label: string }[] = [
@@ -32,6 +36,19 @@ const THEMES: { key: Theme; label: string }[] = [
   { key: 'light', label: 'Claro' },
   { key: 'dark', label: 'Oscuro' },
 ];
+
+const ACCENT_LABELS: Record<Accent, string> = {
+  green: 'Verde',
+  orange: 'Naranja',
+  purple: 'Violeta',
+  blue: 'Azul',
+  mono: 'Monocromo',
+};
+
+// Swatch preview uses the light-theme accent so all five read clearly against
+// the settings surface regardless of the active theme.
+const accentSwatch = (a: Accent): string => ACCENTS[a].light.accent;
+const accentSwatchInk = (a: Accent): string => ACCENTS[a].light.contrast;
 
 onMounted(async () => {
   hwReady.value = await hardwareAvailable();
@@ -70,6 +87,32 @@ const SOURCES: { key: StepSource; label: string; desc: string }[] = [
           @click="setTheme(t.key)"
         >
           {{ t.label }}
+        </button>
+      </div>
+    </section>
+
+    <section class="s-block">
+      <h3>Color de acento</h3>
+      <p class="s-hint">El color de marca para botones, enlaces y elementos activos.</p>
+      <div class="accent-grid">
+        <button
+          v-for="a in ACCENT_ORDER"
+          :key="a"
+          type="button"
+          class="accent-opt"
+          :class="{ on: accent === a }"
+          :aria-label="ACCENT_LABELS[a]"
+          :aria-pressed="accent === a"
+          @click="setAccent(a)"
+        >
+          <span class="accent-swatch" :style="{ background: accentSwatch(a) }">
+            <IconCheck
+              v-if="accent === a"
+              class="accent-check"
+              :style="{ color: accentSwatchInk(a) }"
+            />
+          </span>
+          <span class="accent-name">{{ ACCENT_LABELS[a] }}</span>
         </button>
       </div>
     </section>
@@ -220,8 +263,47 @@ const SOURCES: { key: StepSource; label: string; desc: string }[] = [
 .opt-check {
   width: 22px;
   height: 22px;
-  color: var(--green);
+  color: var(--accent);
   flex: none;
+}
+.accent-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+.accent-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.accent-swatch {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--line);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+.accent-opt.on .accent-swatch {
+  border-color: var(--ink);
+}
+.accent-check {
+  width: 20px;
+  height: 20px;
+}
+.accent-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.accent-opt.on .accent-name {
+  color: var(--ink);
 }
 .map-grid {
   display: grid;

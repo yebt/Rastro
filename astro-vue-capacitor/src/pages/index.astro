@@ -18,14 +18,47 @@ const isProd = import.meta.env.PROD;
     />
     <meta name="theme-color" content="#f5f6f3" />
     <script is:inline>
-      // Apply the saved theme before paint to avoid a flash of the wrong colors.
+      // Apply the saved theme AND accent before paint to avoid a flash of the
+      // wrong colors. The accent palette is mirrored from src/lib/accent.ts;
+      // keep the two in sync (accent.test.ts guards the contrast, not the copy).
       (() => {
         try {
           const t = localStorage.getItem('rastro.theme') || 'auto';
           const dark =
             t === 'dark' ||
             (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
-          document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+          const eff = dark ? 'dark' : 'light';
+          document.documentElement.dataset.theme = eff;
+
+          const ACCENTS = {
+            green: {
+              light: { accent: '#0A7F3D', strong: '#086B33', soft: 'rgba(10,127,61,.14)', contrast: '#ffffff' },
+              dark: { accent: '#2FBF6E', strong: '#37D07C', soft: 'rgba(47,191,110,.18)', contrast: '#05130A' },
+            },
+            orange: {
+              light: { accent: '#E85410', strong: '#CF4A0D', soft: 'rgba(232,84,16,.14)', contrast: '#15181A' },
+              dark: { accent: '#FF7A45', strong: '#FF8D5F', soft: 'rgba(255,122,69,.18)', contrast: '#1A0D05' },
+            },
+            purple: {
+              light: { accent: '#7C3AED', strong: '#6D28D9', soft: 'rgba(124,58,237,.14)', contrast: '#ffffff' },
+              dark: { accent: '#A78BFA', strong: '#B9A5FB', soft: 'rgba(167,139,250,.18)', contrast: '#1E1033' },
+            },
+            blue: {
+              light: { accent: '#1B4DFF', strong: '#123BD6', soft: 'rgba(27,77,255,.14)', contrast: '#ffffff' },
+              dark: { accent: '#4D7BFF', strong: '#6B93FF', soft: 'rgba(77,123,255,.18)', contrast: '#04123A' },
+            },
+            mono: {
+              light: { accent: '#15181A', strong: '#000000', soft: 'rgba(21,24,26,.10)', contrast: '#ffffff' },
+              dark: { accent: '#F5F6F3', strong: '#ffffff', soft: 'rgba(245,246,243,.14)', contrast: '#15181A' },
+            },
+          };
+          const a = localStorage.getItem('rastro.accent');
+          const tokens = (ACCENTS[a] || ACCENTS.green)[eff];
+          const s = document.documentElement.style;
+          s.setProperty('--accent', tokens.accent);
+          s.setProperty('--accent-strong', tokens.strong);
+          s.setProperty('--accent-soft', tokens.soft);
+          s.setProperty('--accent-contrast', tokens.contrast);
         } catch (e) {
           /* ignore */
         }
@@ -36,7 +69,7 @@ const isProd = import.meta.env.PROD;
     <meta name="mobile-web-app-capable" content="yes" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
-    <title>Rastro — GPS + Dominadas</title>
+    <title>Rastro — GPS + Ejercicios</title>
     {isProd && <link rel="manifest" href="/manifest.webmanifest" />}
     <Font cssVariable="--font-inter" preload />
     <Font cssVariable="--font-barlow" preload />

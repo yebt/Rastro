@@ -41,7 +41,16 @@ export function migrateActivity(raw: unknown): Activity {
     // v1 -> v2: additive only (track/photos are optional), no structural change.
     version = 2;
   }
-  // Future: if (version < 3) { ...transform migrated...; version = 3; }
+  if (version < 3) {
+    // v2 -> v3: the single "dominadas" kind became the generic "exercise" model.
+    if (migrated.kind === "dominadas") {
+      migrated.kind = "exercise";
+      migrated.exercise = "dominadas";
+      delete migrated.type;
+    }
+    version = 3;
+  }
+  // Future: if (version < 4) { ...transform migrated...; version = 4; }
 
   // Stamp whatever version the ladder reached (equals CURRENT once complete).
   migrated.schemaVersion = version;

@@ -28,13 +28,15 @@ por punto; samples sin posición) y **no tiene migraciones**. Se arregla ACÁ, u
 
 - [x] 🔒 Esquema de datos v2 con `schemaVersion` + **capa de migración** que envuelve los blobs viejos sin romperlos. → `src/persistence/migrate.ts` (+ tests), wired en load/add/import.
 - [x] 🔒 Captura de punto rico: guardar `alt` + `t` + `acc` por punto. → `GeoFix.altitude` capturado en ambos adapters; `track: TrackPoint[]` lossless en `stop()`; `route` compat intacto.
-- [ ] Modelo `Exercise` genérico (dominadas → ejercicios; rutinas a futuro).
+- [x] Modelo `Exercise` genérico (dominadas → ejercicios): 4 ejercicios (Dominadas/Burpees/Abdominales/Flexiones), migración estructural v2→v3, tab renombrada a Ejercicios. Rutinas a futuro.
 - [ ] Reservar en el modelo: `photos[]`, `segments` (tramos manuales), favoritos de tarjeta.
-- [ ] Sistema de **accent tokens** (verde / naranja / púrpura / azul / mono) con contraste garantizado en claro y oscuro. Derivar `--accent / --accent-strong / --accent-soft / --accent-contrast`. Ningún hex suelto.
-- [ ] Navegación 4 tabs (Home · Work out · Profile · More).
-- [ ] **Home**: dashboard de stats + racha/calendario + records.
-- [ ] **Profile**: historial + calendario + records + nombre.
-- [ ] **More (⋯)**: ajustes + datos (export/import/backup) + about.
+- [x] Sistema de **accent tokens** (verde / naranja / púrpura / azul / mono), default verde. Tokens `--accent / --accent-strong / --accent-soft / --accent-contrast` aplicados por JS + anti-flash. **Contraste WCAG como test** (`accent.test.ts`): romperlo = falla CI. Picker en Ajustes. Pendiente menor: si se usan links de acento, subir el umbral a 4.5 (hoy `.link` no se usa).
+- [x] Navegación 4 tabs (Home · Work out · Profile · More). Shell + BottomNav con iconos Lucide + back button mapeado. Gear-overlay eliminado.
+- [x] **Home**: dashboard insignia — header + hero "esta semana" + racha + sparkline + CTA Empezar + stat columns + tira de semana + última actividad + empty state. Cumple `DESIGN.md`.
+- [~] **Profile**: wrapper con header + calendario mensual (streak lib) + records + historial reusado. Falta pulido de UX.
+- [~] **More (⋯)**: wrapper con ajustes (tema/accent/pasos/mapa/permisos) + datos (export/import/limpiar) + about. Falta pulido de UX.
+- [x] Fuente mono técnica (JetBrains Mono, offline) + primitivas de diseño (`.lbl`, `.num`, statcols, hlist, cta) en `DESIGN.md`.
+- [ ] Work out: toggle Moverme/Ejercicios (shell hecho; rediseño profundo del tracking = Fase 2).
 - [ ] Splash screen con logo (`@capacitor/splash-screen`) — sin flash blanco/negro.
 - [ ] Onboarding primer arranque: permisos → input lindo de nombre/nickname (local, para el futuro).
 

@@ -4,6 +4,7 @@
  */
 
 import { atom } from "nanostores";
+import { type Accent, DEFAULT_ACCENT, isAccent } from "../lib/accent";
 
 /** Which pedometer drives the primary steps/cadence: accelerometer (F2) or hardware (F6). */
 export type StepSource = "accelerometer" | "hardware";
@@ -12,6 +13,8 @@ const STEP_KEY = "rastro.stepSource";
 const MAP_KEY = "rastro.mapStyle";
 const SETUP_KEY = "rastro.setupDone";
 const THEME_KEY = "rastro.theme";
+const ACCENT_KEY = "rastro.accent";
+const NAME_KEY = "rastro.name";
 
 function readStepSource(): StepSource {
   try {
@@ -152,6 +155,48 @@ export function setTheme(theme: Theme): void {
   $theme.set(theme);
   try {
     globalThis.localStorage?.setItem(THEME_KEY, theme);
+  } catch {
+    // ignore
+  }
+}
+
+/** Brand accent color (F18). Default green; drives the --accent* CSS variables. */
+function readAccent(): Accent {
+  try {
+    const a = globalThis.localStorage?.getItem(ACCENT_KEY);
+    return isAccent(a) ? a : DEFAULT_ACCENT;
+  } catch {
+    return DEFAULT_ACCENT;
+  }
+}
+
+export const $accent = atom<Accent>(readAccent());
+
+export function setAccent(accent: Accent): void {
+  $accent.set(accent);
+  try {
+    globalThis.localStorage?.setItem(ACCENT_KEY, accent);
+  } catch {
+    // ignore
+  }
+}
+
+/** Optional display name for the Home greeting / Profile header. Empty by default. */
+function readName(): string {
+  try {
+    return globalThis.localStorage?.getItem(NAME_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+export const $name = atom<string>(readName());
+
+export function setName(name: string): void {
+  const trimmed = name.trim();
+  $name.set(trimmed);
+  try {
+    globalThis.localStorage?.setItem(NAME_KEY, trimmed);
   } catch {
     // ignore
   }

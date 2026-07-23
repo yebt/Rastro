@@ -4,7 +4,10 @@
  */
 
 export type GpsType = "Caminata" | "Trote" | "Carrera";
-export type ActivityKind = "gps" | "dominadas";
+export type ActivityKind = "gps" | "exercise";
+
+/** The bodyweight exercises the app can log under the generic exercise model. */
+export type ExerciseKind = "dominadas" | "burpees" | "abdominales" | "flexiones";
 
 /** A raw GPS reading captured while tracking (in-memory, main thread). */
 export interface RoutePoint {
@@ -89,10 +92,14 @@ export interface GpsActivity {
   schemaVersion?: number;
 }
 
-export interface DominadasSession {
+/**
+ * A logged bodyweight-exercise session (schema v3+). Generalizes the former
+ * single-purpose "dominadas" record into one shape parameterized by `exercise`.
+ */
+export interface ExerciseSession {
   id: string;
-  kind: "dominadas";
-  type: "dominadas";
+  kind: "exercise";
+  exercise: ExerciseKind;
   date: number;
   sets: number[];
   total: number;
@@ -101,10 +108,10 @@ export interface DominadasSession {
   schemaVersion?: number;
 }
 
-export type Activity = GpsActivity | DominadasSession;
+export type Activity = GpsActivity | ExerciseSession;
 
 /** Current persisted schema version. Bump when the on-disk shape changes. */
-export const CURRENT_SCHEMA_VERSION = 2;
+export const CURRENT_SCHEMA_VERSION = 3;
 
 /** Records / goals (SPECS §6.3, Phase 3). */
 export interface Goals {
@@ -130,6 +137,6 @@ export function isGps(a: Activity): a is GpsActivity {
   return a.kind === "gps";
 }
 
-export function isDominadas(a: Activity): a is DominadasSession {
-  return a.kind === "dominadas";
+export function isExercise(a: Activity): a is ExerciseSession {
+  return a.kind === "exercise";
 }

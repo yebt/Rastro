@@ -7,7 +7,7 @@
  */
 
 import { avgCadence } from "./reports";
-import { type Activity, type GpsActivity, isGps, type Prs } from "./types";
+import { type Activity, type GpsActivity, isExercise, isGps, type Prs } from "./types";
 
 /** One weekly data point: value aggregated over the ISO week starting Monday. */
 export interface WeekPoint {
@@ -103,9 +103,13 @@ export function weeklyAvgCadence(activities: Activity[]): WeekPoint[] {
     .map(([ws, b]) => ({ weekStart: ws, label: weekLabel(ws), value: Math.round(b.cad / b.dur) }));
 }
 
-/** Total pull-up reps per week. */
+/** Total pull-up reps per week (dominadas only). */
 export function weeklyPullups(activities: Activity[]): WeekPoint[] {
-  return weekly(activities, (a) => (a.kind === "dominadas" ? a.total : null), sum);
+  return weekly(
+    activities,
+    (a) => (isExercise(a) && a.exercise === "dominadas" ? a.total : null),
+    sum,
+  );
 }
 
 /**
@@ -144,7 +148,8 @@ export function computeRecords(activities: Activity[]): Prs {
       const t5 = fastestWindowSec(a, 5000);
       if (t5 !== null && (prs.fastest5k === undefined || t5 < prs.fastest5k)) prs.fastest5k = t5;
       if (prs.longestRun === undefined || a.distance > prs.longestRun) prs.longestRun = a.distance;
-    } else {
+    } else if (isExercise(a) && a.exercise === "dominadas") {
+      // Pull-up records are dominadas-specific; other exercises don't feed them.
       if (prs.bestPullSession === undefined || a.total > prs.bestPullSession) {
         prs.bestPullSession = a.total;
       }
