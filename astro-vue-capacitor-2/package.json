@@ -9,9 +9,25 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "check": "astro check",
+    "cap": "cap",
+    "sync": "cap sync"
   },
   "dependencies": {
-    "astro": "^7.1.3"
+    "@astrojs/vue": "^7.0.1",
+    "@capacitor/core": "^8.4.2",
+    "@nanostores/vue": "^1.1.0",
+    "astro": "^7.1.3",
+    "nanostores": "^1.4.1",
+    "vue": "^3.5.40"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "@capacitor/android": "^8.4.2",
+    "@capacitor/cli": "^8.4.2",
+    "@iconify-json/lucide": "^1.2.119",
+    "typescript": "^6",
+    "unplugin-icons": "^23.0.1"
   }
 }

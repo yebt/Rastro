@@ -13,7 +13,7 @@ Base estable actual: `7355e03` (share/maplibre themes).
 
 - [ ] Nueva distribución de tabs (reorganizar las 5 actuales `track/pull/hist/progress/data` en algo más claro). Propuesta a confirmar.
 - [ ] Home / dashboard con las stats base.
-- [ ] Ajustes como vista propia (hoy es un overlay).
+- [~] Ajustes como vista propia → tab **Más** agregada (6ta, temporal) con config segmentada: Perfil · Vista y temas · Registro · Datos · Información. Falta jubilar las vistas viejas en supresión.
 
 ## 2. Calendario y racha
 
@@ -62,9 +62,9 @@ Base estable actual: `7355e03` (share/maplibre themes).
 
 ## 9. Onboarding e identidad
 
-- [ ] Splash con logo (sin flash blanco/negro al iniciar).
-- [ ] Pedir permisos de entrada.
-- [ ] Nombre/nickname (local, opcional; para uso futuro).
+- [x] Splash con logo (plugin + `splash.png` + ícono Android 12+). Verificar en dispositivo.
+- [x] Pedir permisos de entrada (SetupScreen, ya existía).
+- [x] Info base: nombre/apodo + altura + **peso como registro** (lista con fecha, para re-pesar y ver el cambio a futuro). En el setup y editable en Más › Perfil.
 
 ## 10. Diseño / UI
 
