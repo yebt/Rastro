@@ -45,11 +45,11 @@
   --sp-6: 32px;
 
   /* ---- Type ---- */
-  --font-sans: -apple-system, system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', 'Roboto Mono', Menlo, monospace;
+  --font-sans: -apple-system, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, monospace;
   /* Condensed display face — falls back to sans until a self-hosted font
      (e.g. Barlow Condensed) is wired via the Astro Fonts API. */
-  --font-cond: 'Barlow Condensed', var(--font-sans);
+  --font-cond: "Barlow Condensed", var(--font-sans);
 
   /* ---- Elevation ---- */
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.06);
@@ -90,7 +90,7 @@
 }
 
 /* Explicit choice always overrides the OS preference. */
-:root[data-theme='light'] {
+:root[data-theme="light"] {
   --bg: #e7e8e4;
   --surface: #f3f4f0;
   --surface-2: #e9eae5;
@@ -106,7 +106,7 @@
   color-scheme: light;
 }
 
-:root[data-theme='dark'] {
+:root[data-theme="dark"] {
   --bg: #0a0c0d;
   --surface: #14181a;
   --surface-2: #1b2124;

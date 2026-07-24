@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { useStore } from '@nanostores/vue';
-import { computed } from 'vue';
-import HomeScreen from '../home/HomeScreen.vue';
-import BottomNav from './BottomNav.vue';
-import { $activeTab, TABS } from './nav.store';
-import PlaceholderScreen from './PlaceholderScreen.vue';
+import { useStore } from "@nanostores/vue";
+import { computed } from "vue";
+import HomeScreen from "../home/HomeScreen.vue";
+import BottomNav from "./BottomNav.vue";
+import { $activeTab, TABS } from "./nav.store";
+import PlaceholderScreen from "./PlaceholderScreen.vue";
 
 /**
  * Island root — a thin composition surface: it wires the active-tab store to
@@ -12,7 +12,7 @@ import PlaceholderScreen from './PlaceholderScreen.vue';
  */
 const active = useStore($activeTab);
 
-const activeLabel = computed(() => TABS.find((t) => t.id === active.value)?.label ?? '');
+const activeLabel = computed(() => TABS.find((t) => t.id === active.value)?.label ?? "");
 </script>
 
 <template>

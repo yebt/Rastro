@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { useStore } from '@nanostores/vue';
-import { AppIcon } from '../../shared/ui';
-import { $activeTab, setTab, TABS, type TabId } from './nav.store';
+import { useStore } from "@nanostores/vue";
+import { AppIcon } from "../../shared/ui";
+import { $activeTab, setTab, TABS, type TabId } from "./nav.store";
 
 /**
  * Fixed bottom tab bar. Reads the active tab from the shell store and writes
@@ -63,7 +63,7 @@ function select(id: TabId): void {
   color: var(--accent);
 }
 .tab.on::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -1px;
   width: 22px;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AppScreen } from '../../shared/ui';
+import { AppScreen } from "../../shared/ui";
 
 /**
  * Home tab. Intentionally empty for now — it exists to prove the shell, the

@@ -7,10 +7,10 @@
  * when moving between tabs.
  */
 
-import { atom } from 'nanostores';
-import type { IconName } from '../../shared/ui';
+import { atom } from "nanostores";
+import type { IconName } from "../../shared/ui";
 
-export type TabId = 'home' | 'workout' | 'profile' | 'more';
+export type TabId = "home" | "workout" | "profile" | "more";
 
 export interface TabDef {
   id: TabId;
@@ -20,13 +20,13 @@ export interface TabDef {
 
 /** Tab order and copy. Labels are Spanish per the product's Spanish-UI rule. */
 export const TABS: TabDef[] = [
-  { id: 'home', label: 'Inicio', icon: 'home' },
-  { id: 'workout', label: 'Actividad', icon: 'workout' },
-  { id: 'profile', label: 'Perfil', icon: 'profile' },
-  { id: 'more', label: 'Más', icon: 'more' },
+  { id: "home", label: "Inicio", icon: "home" },
+  { id: "workout", label: "Actividad", icon: "workout" },
+  { id: "profile", label: "Perfil", icon: "profile" },
+  { id: "more", label: "Más", icon: "more" },
 ];
 
-export const $activeTab = atom<TabId>('home');
+export const $activeTab = atom<TabId>("home");
 
 export function setTab(tab: TabId): void {
   $activeTab.set(tab);

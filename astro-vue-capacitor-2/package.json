@@ -7,14 +7,25 @@
   },
   "scripts": {
     "dev": "astro dev",
+    "dev:mobile": "MOBILE=1 astro dev",
+    "dev:lan": "LAN=1 astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "check": "astro check",
-    "cap": "cap",
-    "cap:run": "astro build && cap run ",
-    "cap:runa": "astro build && cap run android",
-    "sync": "cap sync"
+    "cap:sync": "cap sync android",
+    "cap:open": "cap open android",
+    "cap:run": "astro build && cap run android",
+    "cap:live": "CAP_LIVE=1 cap run android",
+    "apk:debug": "astro build && cap sync android && ./android/gradlew -p android assembleDebug && echo 'APK -> android/app/build/outputs/apk/debug/app-debug.apk'",
+    "apk:release": "astro build && cap sync android && ./android/gradlew -p android assembleRelease && echo 'APK -> android/app/build/outputs/apk/release/'",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:cov": "vitest run --coverage",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "format": "oxfmt src",
+    "format:check": "oxfmt --check src",
+    "check": "astro check && oxlint"
   },
   "dependencies": {
     "@astrojs/vue": "^7.0.1",
@@ -29,7 +40,17 @@
     "@capacitor/android": "^8.4.2",
     "@capacitor/cli": "^8.4.2",
     "@iconify-json/lucide": "^1.2.119",
+    "@types/qrcode-terminal": "^0.12.2",
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "@vitest/coverage-v8": "^4.1.10",
+    "@vue/test-utils": "^2.4.11",
+    "happy-dom": "^20.11.1",
+    "oxfmt": "^0.60.0",
+    "oxlint": "^1.75.0",
+    "qrcode-terminal": "^0.12.0",
     "typescript": "^6",
-    "unplugin-icons": "^23.0.1"
+    "unplugin-icons": "^23.0.1",
+    "vitest": "^4.1.10"
   }
 }

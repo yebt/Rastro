@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AppScreen } from '../../shared/ui';
+import { AppScreen } from "../../shared/ui";
 
 /**
  * Stand-in for tabs that don't have a feature yet. Keeps the shell fully

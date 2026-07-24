@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import AppIcon from './AppIcon.vue';
-import type { IconName } from './icons';
+import AppIcon from "./AppIcon.vue";
+import type { IconName } from "./icons";
 
 /**
  * The app's button. Variants and sizes are the only knobs — no ad-hoc styling
@@ -10,15 +10,15 @@ import type { IconName } from './icons';
  */
 withDefaults(
   defineProps<{
-    variant?: 'primary' | 'ghost' | 'danger';
-    size?: 'md' | 'lg';
+    variant?: "primary" | "ghost" | "danger";
+    size?: "md" | "lg";
     icon?: IconName;
     block?: boolean;
     disabled?: boolean;
   }>(),
   {
-    variant: 'primary',
-    size: 'md',
+    variant: "primary",
+    size: "md",
     icon: undefined,
     block: false,
     disabled: false,

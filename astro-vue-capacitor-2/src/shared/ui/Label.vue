@@ -3,8 +3,8 @@
  * Mono micro-label / kicker — the small uppercase tracked text used above
  * sections and stats. Accent tone highlights an active/positive value.
  */
-withDefaults(defineProps<{ tone?: 'default' | 'accent' }>(), {
-  tone: 'default',
+withDefaults(defineProps<{ tone?: "default" | "accent" }>(), {
+  tone: "default",
 });
 </script>
 
