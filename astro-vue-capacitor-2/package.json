@@ -12,6 +12,8 @@
     "astro": "astro",
     "check": "astro check",
     "cap": "cap",
+    "cap:run": "astro build && cap run ",
+    "cap:runa": "astro build && cap run android",
     "sync": "cap sync"
   },
   "dependencies": {
