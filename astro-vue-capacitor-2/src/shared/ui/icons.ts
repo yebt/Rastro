@@ -11,11 +11,24 @@
 
 import type { Component } from "vue";
 import IconActivity from "~icons/lucide/activity";
-import IconChevronRight from "~icons/lucide/chevron-right";
+import IconBack from "~icons/lucide/chevron-left";
+import IconBell from "~icons/lucide/bell";
+import IconChevron from "~icons/lucide/chevron-right";
+import IconDatabase from "~icons/lucide/database";
+import IconDownload from "~icons/lucide/download";
 import IconEllipsis from "~icons/lucide/ellipsis";
+import IconFootprints from "~icons/lucide/footprints";
 import IconHouse from "~icons/lucide/house";
+import IconInfo from "~icons/lucide/info";
+import IconMapPin from "~icons/lucide/map-pin";
+import IconPalette from "~icons/lucide/palette";
 import IconPlay from "~icons/lucide/play";
+import IconPlus from "~icons/lucide/plus";
 import IconSettings from "~icons/lucide/settings";
+import IconShield from "~icons/lucide/shield-check";
+import IconTheme from "~icons/lucide/sun-moon";
+import IconTrash from "~icons/lucide/trash-2";
+import IconUpload from "~icons/lucide/upload";
 import IconUser from "~icons/lucide/user";
 
 export const ICONS = {
@@ -25,7 +38,20 @@ export const ICONS = {
   more: IconEllipsis,
   play: IconPlay,
   settings: IconSettings,
-  chevron: IconChevronRight,
+  chevron: IconChevron,
+  back: IconBack,
+  theme: IconTheme,
+  palette: IconPalette,
+  data: IconDatabase,
+  info: IconInfo,
+  plus: IconPlus,
+  shield: IconShield,
+  location: IconMapPin,
+  steps: IconFootprints,
+  bell: IconBell,
+  export: IconUpload,
+  import: IconDownload,
+  trash: IconTrash,
 } satisfies Record<string, Component>;
 
 export type IconName = keyof typeof ICONS;

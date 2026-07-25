@@ -14,6 +14,7 @@ withDefaults(
     size?: "md" | "lg";
     icon?: IconName;
     block?: boolean;
+    square?: boolean;
     disabled?: boolean;
   }>(),
   {
@@ -21,6 +22,7 @@ withDefaults(
     size: "md",
     icon: undefined,
     block: false,
+    square: false,
     disabled: false,
   },
 );
@@ -32,12 +34,12 @@ const emit = defineEmits<{ press: [] }>();
   <button
     type="button"
     class="btn"
-    :class="[`v-${variant}`, `s-${size}`, { block }]"
+    :class="[`v-${variant}`, `s-${size}`, { block, square }]"
     :disabled="disabled"
     @click="emit('press')"
   >
     <AppIcon v-if="icon" :name="icon" size="18px" />
-    <span class="btn-label"><slot /></span>
+    <span v-if="!square" class="btn-label"><slot /></span>
   </button>
 </template>
 
@@ -66,6 +68,14 @@ const emit = defineEmits<{ press: [] }>();
 .btn.block {
   display: flex;
   width: 100%;
+}
+.btn.square {
+  width: 44px;
+  padding: 0;
+  flex: none;
+}
+.btn.square.s-lg {
+  width: 52px;
 }
 
 /* Sizes */

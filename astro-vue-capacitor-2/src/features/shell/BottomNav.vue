@@ -35,7 +35,7 @@ function select(id: TabId): void {
 <style scoped>
 .nav {
   flex: none;
-  height: var(--nav-h);
+  height: calc(var(--nav-h) + var(--safe-b));
   padding-bottom: var(--safe-b);
   display: grid;
   grid-template-columns: repeat(4, 1fr);
