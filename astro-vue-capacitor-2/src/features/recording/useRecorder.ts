@@ -1,0 +1,53 @@
+/**
+ * Vue binding for the live recorder. Exposes reactive status/activity/error and
+ * an `elapsedMs` ref that ticks (only while recording) for the timer display.
+ * Methods are forwarded straight from the singleton.
+ */
+
+import { useStore } from "@nanostores/vue";
+import { onUnmounted, ref } from "vue";
+import { recorder } from "./singleton";
+
+export function useRecorder() {
+  const status = useStore(recorder.$status);
+  const activity = useStore(recorder.$activity);
+  const error = useStore(recorder.$error);
+  const elapsedMs = ref(recorder.elapsedMs());
+
+  let timer: ReturnType<typeof setInterval> | null = null;
+
+  function tick(): void {
+    elapsedMs.value = recorder.elapsedMs();
+  }
+
+  function stopTimer(): void {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+  }
+
+  // Run the display timer only while recording; keep the value fresh otherwise.
+  const unsubscribe = recorder.$status.subscribe((s) => {
+    tick();
+    if (s === "recording") timer ??= setInterval(tick, 250);
+    else stopTimer();
+  });
+
+  onUnmounted(() => {
+    stopTimer();
+    unsubscribe();
+  });
+
+  return {
+    status,
+    activity,
+    error,
+    elapsedMs,
+    start: recorder.start,
+    pause: recorder.pause,
+    resume: recorder.resume,
+    finish: recorder.finish,
+    discard: recorder.discard,
+  };
+}

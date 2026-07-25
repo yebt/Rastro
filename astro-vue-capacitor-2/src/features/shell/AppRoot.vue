@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { useStore } from "@nanostores/vue";
-import { computed, onMounted } from "vue";
+import { computed, onBeforeUnmount, onMounted } from "vue";
 import { applyTheme } from "../settings/settings.store";
 import SettingsRoot from "../settings/SettingsRoot.vue";
 import { $setupDone } from "../setup/setup.store";
 import SetupScreen from "../setup/SetupScreen.vue";
 import HomeScreen from "../home/HomeScreen.vue";
+import { registerBackButton } from "./back";
 import BottomNav from "./BottomNav.vue";
 import { $activeTab, TABS } from "./nav.store";
 import PlaceholderScreen from "./PlaceholderScreen.vue";
@@ -20,8 +21,15 @@ const setupDone = useStore($setupDone);
 
 const activeLabel = computed(() => TABS.find((t) => t.id === active.value)?.label ?? "");
 
+let disposeBack: (() => void) | null = null;
+
 onMounted(() => {
   applyTheme();
+  disposeBack = registerBackButton();
+});
+
+onBeforeUnmount(() => {
+  disposeBack?.();
 });
 </script>
 

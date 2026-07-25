@@ -1,23 +1,33 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { AppButton, AppIcon, Field, Label } from "../../shared/ui";
-import PermissionList from "../permissions/PermissionList.vue";
-import { addWeight, setHeight, setNickname } from "../profile/profile.store";
-import { completeSetup } from "./setup.store";
+import { useStore } from "@nanostores/vue";
+import { computed, ref } from "vue";
+import { AppButton, AppIcon } from "../../shared/ui";
+import { addWeight, setHeight, setName, setNickname } from "../profile/profile.store";
+import { $setupStep, completeSetup, nextStep, prevStep, SETUP_STEPS } from "./setup.store";
+import IdentityStep from "./steps/IdentityStep.vue";
+import MeasuresStep from "./steps/MeasuresStep.vue";
+import PermissionsStep from "./steps/PermissionsStep.vue";
 
 /**
- * First-run screen: explain and grant permissions, optionally capture profile
- * basics, then enter the app. Nothing here blocks finishing — permissions and
- * profile can both be completed later from Settings.
+ * First-run wizard. Owns the form state (props down to each step, events up) and
+ * the step chrome; steps stay presentational. Nothing here blocks finishing —
+ * only permissions matter, and even those can be granted later from settings.
  */
+const step = useStore($setupStep);
 
 const nickname = ref("");
+const name = ref("");
 const weight = ref("");
 const height = ref("");
+
+const first = computed(() => step.value === 0);
+const last = computed(() => step.value === SETUP_STEPS.length - 1);
 
 function finish(): void {
   const nick = nickname.value.trim();
   if (nick) setNickname(nick);
+  const nm = name.value.trim();
+  if (nm) setName(nm);
 
   const h = Number(height.value);
   if (Number.isFinite(h) && h > 0) setHeight(h);
@@ -32,39 +42,29 @@ function finish(): void {
 <template>
   <div class="setup">
     <div class="inner">
-      <header class="hero">
-        <div class="badge"><AppIcon name="location" size="30px" /></div>
-        <h1>Bienvenido a Rastro</h1>
-        <p>
-          Funciona en tu dispositivo, sin cuenta. Para registrar bien tus salidas necesita este
-          permiso — podés concederlo ahora o después desde Más.
-        </p>
-      </header>
+      <div
+        class="progress"
+        role="progressbar"
+        :aria-valuenow="step + 1"
+        :aria-valuemax="SETUP_STEPS.length"
+      >
+        <span v-for="(_, i) in SETUP_STEPS" :key="i" class="bar" :class="{ on: i <= step }" />
+      </div>
 
-      <PermissionList />
+      <div class="content">
+        <PermissionsStep v-if="step === 0" />
+        <IdentityStep v-else-if="step === 1" v-model:nickname="nickname" v-model:name="name" />
+        <MeasuresStep v-else v-model:weight="weight" v-model:height="height" />
+      </div>
 
-      <section class="about">
-        <Label>Sobre vos · opcional</Label>
-        <Field v-model="nickname" label="Apodo" placeholder="Cómo te dicen" />
-        <div class="pair">
-          <Field
-            v-model="weight"
-            label="Peso (kg)"
-            type="number"
-            inputmode="decimal"
-            placeholder="72"
-          />
-          <Field
-            v-model="height"
-            label="Altura (cm)"
-            type="number"
-            inputmode="numeric"
-            placeholder="175"
-          />
-        </div>
-      </section>
-
-      <AppButton size="lg" block @press="finish">Empezar a usar Rastro</AppButton>
+      <div class="nav">
+        <button v-if="!first" type="button" class="back" @click="prevStep()">
+          <AppIcon name="back" size="20px" /> Atrás
+        </button>
+        <div class="spacer" />
+        <AppButton v-if="!last" size="lg" @press="nextStep()">Siguiente</AppButton>
+        <AppButton v-else size="lg" @press="finish">Empezar</AppButton>
+      </div>
     </div>
   </div>
 </template>
@@ -75,58 +75,52 @@ function finish(): void {
   inset: 0;
   z-index: 1200;
   background: var(--bg);
-  overflow-y: auto;
 }
 .inner {
   max-width: 520px;
+  height: 100%;
   margin: 0 auto;
-  min-height: 100%;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
-  padding: calc(var(--safe-t) + var(--sp-6)) var(--sp-5) calc(var(--safe-b) + var(--sp-5));
+  padding: calc(var(--safe-t) + var(--sp-5)) var(--sp-5) calc(var(--safe-b) + var(--sp-4));
 }
-.hero {
-  text-align: center;
-}
-.badge {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--r-lg);
-  background: var(--ink);
-  color: var(--bg);
-  display: grid;
-  place-items: center;
-  margin: 0 auto var(--sp-3);
-}
-.hero h1 {
-  margin: 0;
-  font-family: var(--font-cond);
-  font-size: 28px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.01em;
-}
-.hero p {
-  margin: var(--sp-2) 0 0;
-  font-size: 13px;
-  color: var(--muted);
-  line-height: 1.5;
-}
-.about {
+.progress {
   display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-  padding: var(--sp-4);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
+  gap: 6px;
+  margin-bottom: var(--sp-5);
 }
-.pair {
-  display: flex;
-  gap: var(--sp-3);
-}
-.pair > * {
+.bar {
   flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--line);
+  transition: background 0.2s ease;
+}
+.bar.on {
+  background: var(--accent);
+}
+.content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding-top: var(--sp-4);
+}
+.spacer {
+  flex: 1;
+}
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 52px;
+  padding: 0 var(--sp-2);
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 600;
 }
 </style>
