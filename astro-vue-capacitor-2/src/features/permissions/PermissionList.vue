@@ -29,6 +29,11 @@ onMounted(async () => {
 });
 
 async function ask(id: PermissionId): Promise<void> {
+  // Already granted → nothing to ask. Re-check live in case it changed in
+  // system settings since mount, so we never prompt for something already OK.
+  state[id] = await checkPermission(id);
+  if (state[id] === "granted" || state[id] === "unsupported") return;
+
   busy[id] = true;
   state[id] = await requestPermission(id);
   busy[id] = false;

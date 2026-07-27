@@ -11,3 +11,9 @@ import Layout from '../shared/layouts/Layout.astro';
   -->
   <AppRoot client:only="vue" />
 </Layout>
+
+<script>
+if (import.meta.env.DEV) {
+  import('eruda').then((m) => m.default.init());
+}
+</script>

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { Field } from "../../../shared/ui";
 
-/** Step 2 — optional identity. Parent owns the values (props down, events up). */
-defineProps<{ nickname: string; name: string }>();
-defineEmits<{ "update:nickname": [value: string]; "update:name": [value: string] }>();
+/** Step 2 — a single optional name. Parent owns the value (props down, events up). */
+defineProps<{ nickname: string }>();
+defineEmits<{ "update:nickname": [value: string] }>();
 </script>
 
 <template>
@@ -14,16 +14,9 @@ defineEmits<{ "update:nickname": [value: string]; "update:name": [value: string]
     </header>
     <Field
       :model-value="nickname"
-      label="Apodo"
+      label="Nombre o apodo"
       placeholder="Cómo te dicen"
       @update:model-value="$emit('update:nickname', $event)"
-    />
-    <Field
-      :model-value="name"
-      label="Nombre"
-      autocomplete="name"
-      placeholder="Tu nombre"
-      @update:model-value="$emit('update:name', $event)"
     />
   </div>
 </template>

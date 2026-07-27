@@ -14,6 +14,11 @@ import RecordingSettings from "./pages/RecordingSettings.vue";
  * the menu lists categories, each opening its own dedicated page. New categories
  * are added in settings.nav.ts + a page component here, nothing else.
  */
+// Entering the "Más" tab remounts this root; always land on the menu rather
+// than the sub-page left open last time. Reset in setup (before first render)
+// so the stale page never flashes.
+closeSettingsPage();
+
 const page = useStore($settingsPage);
 
 const PAGES = {

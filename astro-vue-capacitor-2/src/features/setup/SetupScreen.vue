@@ -2,7 +2,7 @@
 import { useStore } from "@nanostores/vue";
 import { computed, ref } from "vue";
 import { AppButton, AppIcon } from "../../shared/ui";
-import { addWeight, setHeight, setName, setNickname } from "../profile/profile.store";
+import { addWeight, setHeight, setNickname } from "../profile/profile.store";
 import { $setupStep, completeSetup, nextStep, prevStep, SETUP_STEPS } from "./setup.store";
 import IdentityStep from "./steps/IdentityStep.vue";
 import MeasuresStep from "./steps/MeasuresStep.vue";
@@ -16,7 +16,6 @@ import PermissionsStep from "./steps/PermissionsStep.vue";
 const step = useStore($setupStep);
 
 const nickname = ref("");
-const name = ref("");
 const weight = ref("");
 const height = ref("");
 
@@ -26,8 +25,6 @@ const last = computed(() => step.value === SETUP_STEPS.length - 1);
 function finish(): void {
   const nick = nickname.value.trim();
   if (nick) setNickname(nick);
-  const nm = name.value.trim();
-  if (nm) setName(nm);
 
   const h = Number(height.value);
   if (Number.isFinite(h) && h > 0) setHeight(h);
@@ -53,7 +50,7 @@ function finish(): void {
 
       <div class="content">
         <PermissionsStep v-if="step === 0" />
-        <IdentityStep v-else-if="step === 1" v-model:nickname="nickname" v-model:name="name" />
+        <IdentityStep v-else-if="step === 1" v-model:nickname="nickname" />
         <MeasuresStep v-else v-model:weight="weight" v-model:height="height" />
       </div>
 
