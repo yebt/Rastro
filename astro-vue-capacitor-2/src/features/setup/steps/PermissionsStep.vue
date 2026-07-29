@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AppIcon } from "../../../shared/ui";
+import { Logo } from "../../../shared/ui";
 import PermissionList from "../../permissions/PermissionList.vue";
 
 /** Step 1 — explain and grant the permissions Rastro needs to record. */
@@ -8,8 +8,8 @@ import PermissionList from "../../permissions/PermissionList.vue";
 <template>
   <div class="step">
     <div class="hero">
-      <div class="badge"><AppIcon name="location" size="30px" /></div>
-      <h2>Permisos</h2>
+      <div class="badge"><Logo size="36px" /></div>
+      <h2>Bienvenido a Rastro</h2>
       <p>
         Rastro funciona en tu dispositivo, sin cuenta. Para registrar bien tus salidas necesita
         esto. Podés concederlo ahora o después desde Más.
@@ -32,8 +32,8 @@ import PermissionList from "../../permissions/PermissionList.vue";
   width: 56px;
   height: 56px;
   border-radius: var(--r-lg);
-  background: var(--ink);
-  color: var(--bg);
+  background: var(--surface);
+  border: 1px solid var(--line);
   display: grid;
   place-items: center;
   margin: 0 auto var(--sp-3);

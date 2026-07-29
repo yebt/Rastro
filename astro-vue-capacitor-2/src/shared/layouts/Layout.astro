@@ -1,4 +1,5 @@
 ---
+import { Font } from 'astro:assets';
 import '../ui/tokens.css';
 ---
 
@@ -8,10 +9,13 @@ import '../ui/tokens.css';
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#0a0c0d" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
     <meta name="generator" content={Astro.generator} />
     <title>Rastro</title>
+    <Font cssVariable="--font-roboto" preload />
+    <Font cssVariable="--font-barlow" preload />
+    <Font cssVariable="--font-roboto-mono" />
   </head>
   <body>
     <slot />

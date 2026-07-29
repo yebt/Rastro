@@ -46,6 +46,12 @@ export interface Geolocation {
   /** Prompt for permission if needed; resolves to the resulting state. */
   requestPermission(): Promise<PermissionState>;
   /**
+   * One-shot current position. Rejects with a GeoError — used to detect whether
+   * the system location service is actually on (a granted permission is not
+   * enough; the OS toggle can still be off).
+   */
+  getCurrentPosition(): Promise<GeoSample>;
+  /**
    * Stream high-accuracy positions until the returned watch is stopped.
    * Errors are delivered to `onError`; the stream stays open unless stopped.
    */

@@ -44,12 +44,13 @@
   --sp-5: 24px;
   --sp-6: 32px;
 
-  /* ---- Type ---- */
-  --font-sans: -apple-system, system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, monospace;
-  /* Condensed display face — falls back to sans until a self-hosted font
-     (e.g. Barlow Condensed) is wired via the Astro Fonts API. */
-  --font-cond: "Barlow Condensed", var(--font-sans);
+  /* ---- Type ----
+     Self-hosted via the Astro Fonts API (see astro.config + Layout <Font>).
+     The --font-roboto / --font-barlow / --font-roboto-mono vars are emitted by
+     the <Font> components; these fall back to system stacks if a face fails. */
+  --font-sans: var(--font-roboto, system-ui), -apple-system, sans-serif;
+  --font-mono: var(--font-roboto-mono, ui-monospace), "SF Mono", Menlo, monospace;
+  --font-cond: var(--font-barlow, var(--font-sans)), sans-serif;
 
   /* ---- Elevation ---- */
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.06);

@@ -68,6 +68,16 @@ export function createWebGeolocation(): Geolocation {
       });
     },
 
+    async getCurrentPosition() {
+      return new Promise<GeoSample>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => resolve(toSample(position)),
+          (error) => reject(toError(error)),
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 },
+        );
+      });
+    },
+
     async watch(onSample, onError) {
       const id = navigator.geolocation.watchPosition(
         (position) => onSample(toSample(position)),

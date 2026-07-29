@@ -10,7 +10,10 @@ defineEmits<{ "update:weight": [value: string]; "update:height": [value: string]
   <div class="step">
     <header class="head">
       <h2>Tus medidas</h2>
-      <p>Opcional. El peso se guarda como historial — volvé a pesarte para ver el cambio.</p>
+      <p>
+        Opcional. El peso se guarda como historial — volvé a pesarte para ver el cambio. Podés
+        corregir estas medidas iniciales más tarde desde Más › Perfil.
+      </p>
     </header>
     <Field
       :model-value="weight"

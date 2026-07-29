@@ -44,6 +44,19 @@ export function createCapacitorGeolocation(): Geolocation {
       return mapState(status.location);
     },
 
+    async getCurrentPosition() {
+      try {
+        const position = await Native.getCurrentPosition({
+          enableHighAccuracy: true,
+          timeout: 8000,
+        });
+        return toSample(position);
+      } catch (e) {
+        // Services off or no fix — surface as unavailable so the UI can prompt.
+        throw { kind: "unavailable", message: e instanceof Error ? e.message : String(e) };
+      }
+    },
+
     async watch(onSample, onError) {
       const id = await Native.watchPosition(
         { enableHighAccuracy: true, timeout: 20_000 },

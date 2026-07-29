@@ -16,3 +16,17 @@ export function geolocation(): Geolocation {
   instance ??= Capacitor.isNativePlatform() ? createCapacitorGeolocation() : createWebGeolocation();
   return instance;
 }
+
+/**
+ * Whether a position can actually be obtained right now. A granted permission
+ * is not enough — the OS location toggle can still be off. Call this only once
+ * the permission is granted; a rejection means "turn the location service on".
+ */
+export async function isLocationEnabled(): Promise<boolean> {
+  try {
+    await geolocation().getCurrentPosition();
+    return true;
+  } catch {
+    return false;
+  }
+}

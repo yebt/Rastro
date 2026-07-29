@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { onMounted, reactive } from "vue";
-import { AppIcon } from "../../shared/ui";
-import type { PermissionState } from "../geolocation";
+import { onMounted, reactive, ref } from "vue";
+import { AppButton, AppIcon } from "../../shared/ui";
+import { isLocationEnabled, type PermissionState } from "../geolocation";
 import { checkPermission, PERMISSIONS, type PermissionId, requestPermission } from "./permissions";
 
 /**
@@ -28,15 +28,27 @@ onMounted(async () => {
   );
 });
 
-async function ask(id: PermissionId): Promise<void> {
-  // Already granted → nothing to ask. Re-check live in case it changed in
-  // system settings since mount, so we never prompt for something already OK.
-  state[id] = await checkPermission(id);
-  if (state[id] === "granted" || state[id] === "unsupported") return;
+// Location can be granted yet unusable when the OS location toggle is off.
+const locationOff = ref(false);
+const probing = ref(false);
 
-  busy[id] = true;
-  state[id] = await requestPermission(id);
-  busy[id] = false;
+async function probeLocation(): Promise<void> {
+  probing.value = true;
+  locationOff.value = !(await isLocationEnabled());
+  probing.value = false;
+}
+
+async function ask(id: PermissionId): Promise<void> {
+  // Re-check live so we never prompt for something already granted.
+  const current = await checkPermission(id);
+  state[id] = current;
+  if (current !== "granted" && current !== "unsupported") {
+    busy[id] = true;
+    state[id] = await requestPermission(id);
+    busy[id] = false;
+  }
+  // A granted location permission still needs the system service on.
+  if (id === "location" && state[id] === "granted") await probeLocation();
 }
 </script>
 
@@ -64,6 +76,18 @@ async function ask(id: PermissionId): Promise<void> {
       >
         {{ busy[perm.id] ? "…" : LABEL[state[perm.id]] }}
       </button>
+    </div>
+
+    <div v-if="locationOff" class="warn">
+      <AppIcon name="location" size="20px" class="warn-ic" />
+      <div class="warn-body">
+        <div class="warn-title">Encendé la ubicación</div>
+        <p class="warn-why">
+          El permiso está concedido, pero la ubicación del sistema está apagada. Encendela en los
+          ajustes rápidos del teléfono y reintentá.
+        </p>
+      </div>
+      <AppButton variant="ghost" :disabled="probing" @press="probeLocation">Reintentar</AppButton>
     </div>
   </div>
 </template>
@@ -123,5 +147,32 @@ async function ask(id: PermissionId): Promise<void> {
 }
 .perm-chip:disabled {
   opacity: 0.9;
+}
+.warn {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--danger);
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+}
+.warn-ic {
+  color: var(--danger);
+  margin-top: 2px;
+}
+.warn-body {
+  flex: 1;
+  min-width: 0;
+}
+.warn-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+.warn-why {
+  margin: 3px 0 var(--sp-3);
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.45;
 }
 </style>

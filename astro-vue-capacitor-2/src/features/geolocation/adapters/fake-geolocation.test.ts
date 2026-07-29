@@ -64,4 +64,12 @@ describe("fake geolocation", () => {
       spd: 2.4,
     });
   });
+
+  it("getCurrentPosition reflects whether the service is on", async () => {
+    const geo = createFakeGeolocation();
+    await expect(geo.getCurrentPosition()).resolves.toMatchObject({ lat: -34.6 });
+
+    geo.setEnabled(false);
+    await expect(geo.getCurrentPosition()).rejects.toMatchObject({ kind: "unavailable" });
+  });
 });

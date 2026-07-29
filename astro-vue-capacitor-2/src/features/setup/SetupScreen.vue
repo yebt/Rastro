@@ -22,6 +22,9 @@ const height = ref("");
 const first = computed(() => step.value === 0);
 const last = computed(() => step.value === SETUP_STEPS.length - 1);
 
+// The name (step 1) is required — can't advance past it while empty.
+const canAdvance = computed(() => step.value !== 1 || nickname.value.trim().length > 0);
+
 function finish(): void {
   const nick = nickname.value.trim();
   if (nick) setNickname(nick);
@@ -59,7 +62,9 @@ function finish(): void {
           <AppIcon name="back" size="20px" /> Atrás
         </button>
         <div class="spacer" />
-        <AppButton v-if="!last" size="lg" @press="nextStep()">Siguiente</AppButton>
+        <AppButton v-if="!last" size="lg" :disabled="!canAdvance" @press="nextStep()">
+          Siguiente
+        </AppButton>
         <AppButton v-else size="lg" @press="finish">Empezar</AppButton>
       </div>
     </div>

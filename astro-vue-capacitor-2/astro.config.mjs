@@ -48,11 +48,36 @@ export default defineConfig({
   server: lan ? { host: true } : {},
 
   integrations: [vue(), ...(mobile ? [mobileQr()] : [])],
+
+  // Self-hosted fonts via fontsource (offline-first, no CDN at runtime). Files
+  // are downloaded at build time and served locally; tokens.css maps them.
   fonts: [
     {
       provider: fontProviders.fontsource(),
       name: "Roboto",
       cssVariable: "--font-roboto",
+      weights: [400, 500, 700],
+      styles: ["normal"],
+      subsets: ["latin"],
+      fallbacks: ["system-ui", "-apple-system", "sans-serif"],
+    },
+    {
+      provider: fontProviders.fontsource(),
+      name: "Barlow Condensed",
+      cssVariable: "--font-barlow",
+      weights: [600, 700],
+      styles: ["normal"],
+      subsets: ["latin"],
+      fallbacks: ["sans-serif"],
+    },
+    {
+      provider: fontProviders.fontsource(),
+      name: "Roboto Mono",
+      cssVariable: "--font-roboto-mono",
+      weights: [400, 500],
+      styles: ["normal"],
+      subsets: ["latin"],
+      fallbacks: ["ui-monospace", "monospace"],
     },
   ],
 

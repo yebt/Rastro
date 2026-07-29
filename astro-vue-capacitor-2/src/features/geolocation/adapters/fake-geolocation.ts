@@ -24,10 +24,13 @@ export interface FakeGeolocation extends Geolocation {
   isWatching(): boolean;
   /** Preset the permission returned by check/request. */
   setPermission(state: PermissionState): void;
+  /** Toggle whether the system location service is "on" (getCurrentPosition). */
+  setEnabled(enabled: boolean): void;
 }
 
 export function createFakeGeolocation(): FakeGeolocation {
   let permission: PermissionState = "prompt";
+  let enabled = true;
   let onSample: ((sample: GeoSample) => void) | null = null;
   let onError: ((error: GeoError) => void) | null = null;
 
@@ -42,6 +45,10 @@ export function createFakeGeolocation(): FakeGeolocation {
       // Modelling a user granting when asked from the neutral prompt state.
       if (permission === "prompt") permission = "granted";
       return permission;
+    },
+    async getCurrentPosition() {
+      if (!enabled) throw { kind: "unavailable", message: "location off" } satisfies GeoError;
+      return { t: 0, lat: -34.6, lng: -58.4, alt: null, acc: 5, altAcc: null, spd: null };
     },
     async watch(sampleCb, errorCb) {
       onSample = sampleCb;
@@ -66,6 +73,9 @@ export function createFakeGeolocation(): FakeGeolocation {
     },
     setPermission(state) {
       permission = state;
+    },
+    setEnabled(value) {
+      enabled = value;
     },
   };
 }

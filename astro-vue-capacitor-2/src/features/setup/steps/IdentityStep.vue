@@ -10,7 +10,7 @@ defineEmits<{ "update:nickname": [value: string] }>();
   <div class="step">
     <header class="head">
       <h2>¿Cómo te llamás?</h2>
-      <p>Opcional. Se usa para saludarte. Todo queda en tu dispositivo.</p>
+      <p>Se usa para saludarte. Queda solo en tu dispositivo.</p>
     </header>
     <Field
       :model-value="nickname"

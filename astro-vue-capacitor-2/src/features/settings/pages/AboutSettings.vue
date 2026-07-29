@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AppIcon, AppSubScreen, Card } from "../../../shared/ui";
+import { AppSubScreen, Card, Logo } from "../../../shared/ui";
 import { APP_NAME, APP_TAGLINE, APP_VERSION } from "../../../shared/app-meta";
 
 defineEmits<{ back: [] }>();
@@ -9,7 +9,7 @@ defineEmits<{ back: [] }>();
   <AppSubScreen title="Acerca de" @back="$emit('back')">
     <Card>
       <div class="about">
-        <AppIcon name="shield" size="26px" class="about-ic" />
+        <Logo size="30px" class="about-ic" />
         <div>
           <div class="about-name">
             {{ APP_NAME }} <span class="about-ver">v{{ APP_VERSION }}</span>
