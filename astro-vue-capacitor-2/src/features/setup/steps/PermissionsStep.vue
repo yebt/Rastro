@@ -15,7 +15,7 @@ import PermissionList from "../../permissions/PermissionList.vue";
         esto. Podés concederlo ahora o después desde Más.
       </p>
     </div>
-    <PermissionList />
+    <PermissionList auto-request />
   </div>
 </template>
 

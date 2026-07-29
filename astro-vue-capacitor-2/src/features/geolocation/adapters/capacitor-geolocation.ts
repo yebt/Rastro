@@ -6,13 +6,23 @@
  * same (it still needs to ask).
  */
 
-import { Geolocation as Native, type Position } from "@capacitor/geolocation";
+import { Geolocation as Native, type PermissionStatus } from "@capacitor/geolocation";
+import type { Position } from "@capacitor/geolocation";
 import type { Geolocation, GeoSample, GeoWatch, PermissionState } from "../ports/geolocation";
 
 function mapState(state: string): PermissionState {
   if (state === "granted") return "granted";
   if (state === "denied") return "denied";
   return "prompt";
+}
+
+/**
+ * Collapse the plugin's fine + coarse status into one state. Approximate
+ * location ("coarseLocation") granted counts as granted — enough to record.
+ */
+function mergeState(status: PermissionStatus): PermissionState {
+  if (status.location === "granted" || status.coarseLocation === "granted") return "granted";
+  return mapState(status.location);
 }
 
 function toSample(position: Position): GeoSample {
@@ -35,13 +45,25 @@ export function createCapacitorGeolocation(): Geolocation {
     },
 
     async checkPermission() {
-      const status = await Native.checkPermissions();
-      return mapState(status.location);
+      try {
+        return mergeState(await Native.checkPermissions());
+      } catch {
+        // @capacitor/geolocation (v8, OutSystems rewrite) THROWS "Location
+        // services are not enabled" (OS-PLUG-GLOC-0007) when the OS location
+        // toggle is off. The runtime permission can still be requested, so treat
+        // this as undecided ('prompt') instead of letting it abort the flow.
+        return "prompt";
+      }
     },
 
     async requestPermission() {
-      const status = await Native.requestPermissions({ permissions: ["location"] });
-      return mapState(status.location);
+      try {
+        // No args → requests both fine and coarse, matching the old app's flow.
+        return mergeState(await Native.requestPermissions());
+      } catch {
+        // Same services-off throw as above — don't crash the request path.
+        return "prompt";
+      }
     },
 
     async getCurrentPosition() {

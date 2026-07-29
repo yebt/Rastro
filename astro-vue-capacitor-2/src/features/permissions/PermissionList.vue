@@ -3,14 +3,24 @@ import { App } from "@capacitor/app";
 import type { PluginListenerHandle } from "@capacitor/core";
 import { onMounted, onUnmounted, reactive, ref } from "vue";
 import { AppButton, AppIcon } from "../../shared/ui";
-import { isLocationEnabled, openLocationSettings, type PermissionState } from "../geolocation";
+import {
+  isLocationEnabled,
+  openLocationSettings,
+  type PermissionState,
+  requestLocationOn,
+} from "../geolocation";
 import { checkPermission, PERMISSIONS, type PermissionId, requestPermission } from "./permissions";
 
 /**
  * Renders every registered permission with its live state and an ask button.
  * Self-contained (checks on mount, requests on tap) so both the first-run setup
  * and the settings page reuse it without wiring.
+ *
+ * `autoRequest` prompts for any still-undecided permission right on mount — used
+ * by the first-run setup so entering it asks immediately, like the old app.
+ * Settings leaves it off: there you're only reviewing, not being prompted.
  */
+const props = withDefaults(defineProps<{ autoRequest?: boolean }>(), { autoRequest: false });
 
 const state = reactive<Record<PermissionId, PermissionState>>({ location: "prompt" });
 const busy = reactive<Record<PermissionId, boolean>>({ location: false });
@@ -32,9 +42,16 @@ async function probeLocation(): Promise<void> {
   probing.value = false;
 }
 
-/** Open the OS location settings; the resume listener re-probes on return. */
+/**
+ * Turn location on. Prefer the in-app Play Services dialog; only bounce to the
+ * settings app when that dialog can't run (no Play Services). Re-probe after so
+ * the warning clears the moment location is usable.
+ */
 async function activateLocation(): Promise<void> {
-  await openLocationSettings();
+  probing.value = true;
+  const result = await requestLocationOn();
+  if (result === "unavailable") await openLocationSettings();
+  await probeLocation();
 }
 
 let resumeListener: PluginListenerHandle | null = null;
@@ -45,6 +62,13 @@ onMounted(async () => {
       state[p.id] = await checkPermission(p.id);
     }),
   );
+  // First-run setup: ask for anything undecided right away. Sequential so the
+  // native dialogs queue one after another instead of racing.
+  if (props.autoRequest) {
+    for (const p of PERMISSIONS) {
+      if (state[p.id] === "prompt") await ask(p.id);
+    }
+  }
   // Coming back from the settings screen: re-check only while we're waiting for
   // the user to switch the service on, so we don't probe on every app resume.
   resumeListener = await App.addListener("resume", () => {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useStore } from "@nanostores/vue";
 import { computed, onBeforeUnmount, onMounted } from "vue";
+import { requestPendingPermissions } from "../permissions/permissions";
 import { applyTheme } from "../settings/settings.store";
 import SettingsRoot from "../settings/SettingsRoot.vue";
 import { $setupDone } from "../setup/setup.store";
@@ -26,6 +27,9 @@ let disposeBack: (() => void) | null = null;
 onMounted(() => {
   applyTheme();
   disposeBack = registerBackButton();
+  // First run asks inside the setup; once it's done the setup never shows again,
+  // so ask here on entry for anything still undecided (v1 behaviour).
+  if (setupDone.value) void requestPendingPermissions();
 });
 
 onBeforeUnmount(() => {
