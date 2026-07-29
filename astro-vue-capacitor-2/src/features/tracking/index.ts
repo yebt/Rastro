@@ -12,6 +12,14 @@ export type {
   MoveType,
 } from "./domain/activity";
 export { newId, startExercise, startMove } from "./domain/activity";
+export {
+  avgPaceSecPerKm,
+  avgSpeedMps,
+  distanceMeters,
+  haversineMeters,
+  movingDurationMs,
+  spanMs,
+} from "./domain/metrics";
 export { CURRENT_SCHEMA_VERSION, migrate } from "./domain/schema";
 export { toTrackPoint, type TrackPoint } from "./domain/track-point";
 export type { ActivityRepository } from "./ports/activity-repository";
