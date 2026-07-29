@@ -2,15 +2,12 @@
 import { useStore } from "@nanostores/vue";
 import { computed } from "vue";
 import { AppIcon, AppScreen, Card, Row, RowGroup } from "../../shared/ui";
-import { $name, $nickname } from "../profile/profile.store";
+import { $name } from "../profile/profile.store";
 import { SETTINGS_CATEGORIES, type SettingsPage } from "./settings.nav";
 
 const emit = defineEmits<{ open: [page: SettingsPage] }>();
 
-const name = useStore($name);
-const nickname = useStore($nickname);
-
-const displayName = computed(() => nickname.value || name.value);
+const displayName = useStore($name);
 const initial = computed(() => displayName.value.trim().charAt(0).toUpperCase() || "·");
 </script>
 

@@ -6,6 +6,7 @@
  */
 
 import { Capacitor } from "@capacitor/core";
+import { AndroidSettings, IOSSettings, NativeSettings } from "capacitor-native-settings";
 import { createCapacitorGeolocation } from "./adapters/capacitor-geolocation";
 import { createWebGeolocation } from "./adapters/web-geolocation";
 import type { Geolocation } from "./ports/geolocation";
@@ -29,4 +30,17 @@ export async function isLocationEnabled(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Open the OS location settings so the user can switch the service on. Native
+ * only — a no-op on the web, where there is no such screen. Re-probe with
+ * isLocationEnabled() when the user comes back.
+ */
+export async function openLocationSettings(): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return;
+  await NativeSettings.open({
+    optionAndroid: AndroidSettings.Location,
+    optionIOS: IOSSettings.LocationServices,
+  });
 }

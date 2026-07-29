@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { AppSubScreen, Card, Logo } from "../../../shared/ui";
-import { APP_NAME, APP_TAGLINE, APP_VERSION } from "../../../shared/app-meta";
+import { APP_COMMIT, APP_NAME, APP_TAGLINE, APP_VERSION } from "../../../shared/app-meta";
 
 defineEmits<{ back: [] }>();
 </script>
@@ -12,7 +12,8 @@ defineEmits<{ back: [] }>();
         <Logo size="30px" class="about-ic" />
         <div>
           <div class="about-name">
-            {{ APP_NAME }} <span class="about-ver">v{{ APP_VERSION }}</span>
+            {{ APP_NAME }}
+            <span class="about-ver">v{{ APP_VERSION }} · {{ APP_COMMIT }}</span>
           </div>
           <div class="about-tag">{{ APP_TAGLINE }}</div>
         </div>

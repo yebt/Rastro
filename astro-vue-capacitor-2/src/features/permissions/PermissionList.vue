@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from "vue";
+import { App } from "@capacitor/app";
+import type { PluginListenerHandle } from "@capacitor/core";
+import { onMounted, onUnmounted, reactive, ref } from "vue";
 import { AppButton, AppIcon } from "../../shared/ui";
-import { isLocationEnabled, type PermissionState } from "../geolocation";
+import { isLocationEnabled, openLocationSettings, type PermissionState } from "../geolocation";
 import { checkPermission, PERMISSIONS, type PermissionId, requestPermission } from "./permissions";
 
 /**
@@ -20,14 +22,6 @@ const LABEL: Record<PermissionState, string> = {
   unsupported: "No aplica",
 };
 
-onMounted(async () => {
-  await Promise.all(
-    PERMISSIONS.map(async (p) => {
-      state[p.id] = await checkPermission(p.id);
-    }),
-  );
-});
-
 // Location can be granted yet unusable when the OS location toggle is off.
 const locationOff = ref(false);
 const probing = ref(false);
@@ -37,6 +31,30 @@ async function probeLocation(): Promise<void> {
   locationOff.value = !(await isLocationEnabled());
   probing.value = false;
 }
+
+/** Open the OS location settings; the resume listener re-probes on return. */
+async function activateLocation(): Promise<void> {
+  await openLocationSettings();
+}
+
+let resumeListener: PluginListenerHandle | null = null;
+
+onMounted(async () => {
+  await Promise.all(
+    PERMISSIONS.map(async (p) => {
+      state[p.id] = await checkPermission(p.id);
+    }),
+  );
+  // Coming back from the settings screen: re-check only while we're waiting for
+  // the user to switch the service on, so we don't probe on every app resume.
+  resumeListener = await App.addListener("resume", () => {
+    if (locationOff.value) void probeLocation();
+  });
+});
+
+onUnmounted(() => {
+  void resumeListener?.remove();
+});
 
 async function ask(id: PermissionId): Promise<void> {
   // Re-check live so we never prompt for something already granted.
@@ -83,11 +101,14 @@ async function ask(id: PermissionId): Promise<void> {
       <div class="warn-body">
         <div class="warn-title">Encendé la ubicación</div>
         <p class="warn-why">
-          El permiso está concedido, pero la ubicación del sistema está apagada. Encendela en los
-          ajustes rápidos del teléfono y reintentá.
+          El permiso está concedido, pero la ubicación del sistema está apagada. Activala para poder
+          registrar tus salidas.
         </p>
+        <div class="warn-actions">
+          <AppButton :disabled="probing" @press="activateLocation">Activar ubicación</AppButton>
+          <AppButton variant="ghost" :disabled="probing" @press="probeLocation">Reintentar</AppButton>
+        </div>
       </div>
-      <AppButton variant="ghost" :disabled="probing" @press="probeLocation">Reintentar</AppButton>
     </div>
   </div>
 </template>
@@ -174,5 +195,10 @@ async function ask(id: PermissionId): Promise<void> {
   font-size: 12px;
   color: var(--muted);
   line-height: 1.45;
+}
+.warn-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
 }
 </style>

@@ -1,5 +1,19 @@
 apply plugin: 'com.android.application'
 
+// Version derived from git so every build points at a distinct commit:
+// commit count -> versionCode (monotonic), short hash -> readable versionName.
+// Falls back safely outside a git checkout (e.g. a source tarball / CI shallow).
+def gitVersion = { ->
+    try {
+        def count = 'git rev-list --count HEAD'.execute(null, rootDir).text.trim()
+        def hash = 'git rev-parse --short HEAD'.execute(null, rootDir).text.trim()
+        return [code: count.toInteger(), name: "2.0.${count} (${hash})".toString()]
+    } catch (ignored) {
+        return [code: 1, name: "2.0.0-dev".toString()]
+    }
+}
+def appVersion = gitVersion()
+
 android {
     namespace = "com.rastro.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +21,8 @@ android {
         applicationId "com.rastro.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode appVersion.code
+        versionName appVersion.name
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

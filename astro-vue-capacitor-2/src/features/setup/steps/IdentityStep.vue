@@ -2,8 +2,8 @@
 import { Field } from "../../../shared/ui";
 
 /** Step 2 — a single optional name. Parent owns the value (props down, events up). */
-defineProps<{ nickname: string }>();
-defineEmits<{ "update:nickname": [value: string] }>();
+defineProps<{ name: string }>();
+defineEmits<{ "update:name": [value: string] }>();
 </script>
 
 <template>
@@ -13,10 +13,10 @@ defineEmits<{ "update:nickname": [value: string] }>();
       <p>Se usa para saludarte. Queda solo en tu dispositivo.</p>
     </header>
     <Field
-      :model-value="nickname"
+      :model-value="name"
       label="Nombre o apodo"
       placeholder="Cómo te dicen"
-      @update:model-value="$emit('update:nickname', $event)"
+      @update:model-value="$emit('update:name', $event)"
     />
   </div>
 </template>

@@ -10,7 +10,8 @@
 import { atom } from "nanostores";
 
 const NAME_KEY = "rastro.name";
-const NICK_KEY = "rastro.nickname";
+/** Legacy key — folded into NAME_KEY on load (identity is one field now). */
+const LEGACY_NICK_KEY = "rastro.nickname";
 const HEIGHT_KEY = "rastro.heightCm";
 const WEIGHTS_KEY = "rastro.weights";
 
@@ -39,6 +40,23 @@ function write(key: string, value: string | null): void {
   }
 }
 
+/**
+ * The name, migrating a legacy nickname the first time it's read. Older installs
+ * stored the identity under `rastro.nickname`; there's only one field now, so we
+ * fold that value into NAME_KEY once and drop the old key.
+ */
+function readName(): string {
+  const name = read(NAME_KEY);
+  if (name) return name;
+  const legacy = read(LEGACY_NICK_KEY);
+  if (legacy) {
+    write(NAME_KEY, legacy);
+    write(LEGACY_NICK_KEY, null);
+    return legacy;
+  }
+  return "";
+}
+
 function readHeight(): number | null {
   const raw = read(HEIGHT_KEY);
   const n = Number(raw);
@@ -56,19 +74,13 @@ function readWeights(): WeightEntry[] {
   }
 }
 
-export const $name = atom<string>(read(NAME_KEY));
-export const $nickname = atom<string>(read(NICK_KEY));
+export const $name = atom<string>(readName());
 export const $heightCm = atom<number | null>(readHeight());
 export const $weights = atom<WeightEntry[]>(readWeights());
 
 export function setName(name: string): void {
   $name.set(name);
   write(NAME_KEY, name || null);
-}
-
-export function setNickname(nickname: string): void {
-  $nickname.set(nickname);
-  write(NICK_KEY, nickname || null);
 }
 
 export function setHeight(cm: number | null): void {
@@ -79,6 +91,21 @@ export function setHeight(cm: number | null): void {
 /** Append a weight measurement; the log stays sorted oldest-first by time. */
 export function addWeight(kg: number, t: number): void {
   const next = [...$weights.get(), { t, kg }].toSorted((a, b) => a.t - b.t);
+  $weights.set(next);
+  write(WEIGHTS_KEY, JSON.stringify(next));
+}
+
+/** Correct a logged measurement, matched by its timestamp. No-op if kg invalid. */
+export function updateWeight(t: number, kg: number): void {
+  if (!Number.isFinite(kg) || kg <= 0) return;
+  const next = $weights.get().map((w) => (w.t === t ? { t, kg } : w));
+  $weights.set(next);
+  write(WEIGHTS_KEY, JSON.stringify(next));
+}
+
+/** Remove a logged measurement by its timestamp. */
+export function removeWeight(t: number): void {
+  const next = $weights.get().filter((w) => w.t !== t);
   $weights.set(next);
   write(WEIGHTS_KEY, JSON.stringify(next));
 }

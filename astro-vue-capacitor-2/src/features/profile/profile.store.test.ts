@@ -5,8 +5,10 @@ import {
   $weights,
   addWeight,
   latestWeight,
+  removeWeight,
   setHeight,
   setName,
+  updateWeight,
 } from "./profile.store";
 
 // Minimal in-memory localStorage — we don't rely on the test env providing one.
@@ -56,6 +58,31 @@ describe("profile store", () => {
 
   it("latestWeight is null with no measurements", () => {
     expect(latestWeight()).toBeNull();
+  });
+
+  it("updateWeight corrects the entry matched by timestamp", () => {
+    addWeight(70, 1000);
+    addWeight(72, 2000);
+    updateWeight(2000, 71.5);
+    expect($weights.get()).toEqual([
+      { t: 1000, kg: 70 },
+      { t: 2000, kg: 71.5 },
+    ]);
+    expect(store.getItem("rastro.weights")).toContain("71.5");
+  });
+
+  it("updateWeight ignores non-positive values", () => {
+    addWeight(70, 1000);
+    updateWeight(1000, 0);
+    updateWeight(1000, -5);
+    expect(latestWeight()).toBe(70);
+  });
+
+  it("removeWeight deletes the entry matched by timestamp", () => {
+    addWeight(70, 1000);
+    addWeight(72, 2000);
+    removeWeight(1000);
+    expect($weights.get()).toEqual([{ t: 2000, kg: 72 }]);
   });
 
   it("persists name to storage", () => {

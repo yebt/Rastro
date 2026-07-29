@@ -34,6 +34,7 @@
     "@capacitor/geolocation": "^8.2.0",
     "@nanostores/vue": "^1.1.0",
     "astro": "^7.1.3",
+    "capacitor-native-settings": "^8.1.0",
     "idb": "^8.0.3",
     "nanostores": "^1.4.1",
     "vue": "^3.5.40"

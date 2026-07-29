@@ -3,7 +3,7 @@
  */
 
 export { createFakeGeolocation, type FakeGeolocation } from "./adapters/fake-geolocation";
-export { geolocation, isLocationEnabled } from "./geolocation";
+export { geolocation, isLocationEnabled, openLocationSettings } from "./geolocation";
 export type {
   GeoError,
   Geolocation,

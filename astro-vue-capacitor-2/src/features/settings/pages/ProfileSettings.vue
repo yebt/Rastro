@@ -5,12 +5,12 @@ import { AppButton, AppSubScreen, Card, Field, Label } from "../../../shared/ui"
 import {
   $heightCm,
   $name,
-  $nickname,
   $weights,
   addWeight,
+  removeWeight,
   setHeight,
   setName,
-  setNickname,
+  updateWeight,
 } from "../../profile/profile.store";
 
 defineEmits<{ back: [] }>();
@@ -19,23 +19,21 @@ const weights = useStore($weights);
 
 // Local input mirrors; committed to the store on change / action.
 const name = ref($name.get());
-const nickname = ref($nickname.get());
 const height = ref($heightCm.get() === null ? "" : String($heightCm.get()));
 const weightDraft = ref("");
 
-const latest = computed<number | null>(() => {
-  const list = weights.value;
-  return list.length ? list[list.length - 1]!.kg : null;
+// Most recent first — the top row is the current weight.
+const history = computed(() => [...weights.value].reverse());
+
+const dateFmt = new Intl.DateTimeFormat("es", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
 });
 
 function commitName(value: string): void {
   name.value = value;
   setName(value.trim());
-}
-
-function commitNickname(value: string): void {
-  nickname.value = value;
-  setNickname(value.trim());
 }
 
 function commitHeight(value: string): void {
@@ -44,11 +42,21 @@ function commitHeight(value: string): void {
   setHeight(value.trim() && Number.isFinite(n) && n > 0 ? n : null);
 }
 
+function parseKg(value: string): number | null {
+  const kg = Number(value.replace(",", "."));
+  return Number.isFinite(kg) && kg > 0 ? kg : null;
+}
+
 function registerWeight(): void {
-  const kg = Number(weightDraft.value.replace(",", "."));
-  if (!Number.isFinite(kg) || kg <= 0) return;
+  const kg = parseKg(weightDraft.value);
+  if (kg === null) return;
   addWeight(kg, Date.now());
   weightDraft.value = "";
+}
+
+function editWeight(t: number, value: string): void {
+  const kg = parseKg(value);
+  if (kg !== null) updateWeight(t, kg);
 }
 </script>
 
@@ -58,16 +66,10 @@ function registerWeight(): void {
       <div class="stack">
         <Field
           :model-value="name"
-          label="Nombre"
-          placeholder="Tu nombre"
+          label="Nombre o apodo"
+          placeholder="Cómo te dicen"
           autocomplete="name"
           @update:model-value="commitName"
-        />
-        <Field
-          :model-value="nickname"
-          label="Apodo"
-          placeholder="Cómo te dicen"
-          @update:model-value="commitNickname"
         />
         <Field
           :model-value="height"
@@ -79,11 +81,10 @@ function registerWeight(): void {
         />
         <Field
           v-model="weightDraft"
-          label="Peso (kg)"
+          label="Registrar peso (kg)"
           type="number"
           inputmode="decimal"
-          placeholder="Registrar nuevo"
-          :hint="latest !== null ? `actual ${latest} kg` : undefined"
+          placeholder="Nueva medición"
           @keyup.enter="registerWeight"
         >
           <template #action>
@@ -92,7 +93,34 @@ function registerWeight(): void {
         </Field>
       </div>
     </Card>
-    <Label>El peso se guarda como historial — volvé a pesarte para ver el cambio.</Label>
+
+    <template v-if="history.length">
+      <Label>Historial de peso</Label>
+      <Card>
+        <div class="stack">
+          <Field
+            v-for="w in history"
+            :key="w.t"
+            :model-value="String(w.kg)"
+            :label="dateFmt.format(w.t)"
+            type="number"
+            inputmode="decimal"
+            @update:model-value="editWeight(w.t, $event)"
+          >
+            <template #action>
+              <AppButton
+                icon="trash"
+                square
+                variant="ghost"
+                aria-label="Borrar medición"
+                @press="removeWeight(w.t)"
+              />
+            </template>
+          </Field>
+        </div>
+      </Card>
+      <Label>Tocá un valor para corregirlo. El más reciente es tu peso actual.</Label>
+    </template>
   </AppSubScreen>
 </template>
 

@@ -2,7 +2,7 @@
 import { useStore } from "@nanostores/vue";
 import { computed, ref } from "vue";
 import { AppButton, AppIcon } from "../../shared/ui";
-import { addWeight, setHeight, setNickname } from "../profile/profile.store";
+import { addWeight, setHeight, setName } from "../profile/profile.store";
 import { $setupStep, completeSetup, nextStep, prevStep, SETUP_STEPS } from "./setup.store";
 import IdentityStep from "./steps/IdentityStep.vue";
 import MeasuresStep from "./steps/MeasuresStep.vue";
@@ -15,7 +15,7 @@ import PermissionsStep from "./steps/PermissionsStep.vue";
  */
 const step = useStore($setupStep);
 
-const nickname = ref("");
+const name = ref("");
 const weight = ref("");
 const height = ref("");
 
@@ -23,11 +23,11 @@ const first = computed(() => step.value === 0);
 const last = computed(() => step.value === SETUP_STEPS.length - 1);
 
 // The name (step 1) is required — can't advance past it while empty.
-const canAdvance = computed(() => step.value !== 1 || nickname.value.trim().length > 0);
+const canAdvance = computed(() => step.value !== 1 || name.value.trim().length > 0);
 
 function finish(): void {
-  const nick = nickname.value.trim();
-  if (nick) setNickname(nick);
+  const trimmed = name.value.trim();
+  if (trimmed) setName(trimmed);
 
   const h = Number(height.value);
   if (Number.isFinite(h) && h > 0) setHeight(h);
@@ -53,7 +53,7 @@ function finish(): void {
 
       <div class="content">
         <PermissionsStep v-if="step === 0" />
-        <IdentityStep v-else-if="step === 1" v-model:nickname="nickname" />
+        <IdentityStep v-else-if="step === 1" v-model:name="name" />
         <MeasuresStep v-else v-model:weight="weight" v-model:height="height" />
       </div>
 

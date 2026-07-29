@@ -1,10 +1,35 @@
 // @ts-check
+import { execSync } from "node:child_process";
 import os from "node:os";
 import vue from "@astrojs/vue";
 import basicSsl from "@vitejs/plugin-basic-ssl";
 import { defineConfig, fontProviders } from "astro/config";
 import qrcode from "qrcode-terminal";
 import Icons from "unplugin-icons/vite";
+
+/**
+ * Build identity from git, resolved when Astro loads this config (dev start or
+ * build). The commit COUNT is a monotonic build number; the short HASH pins the
+ * exact commit. Both fall back to safe values outside a git checkout so a source
+ * tarball still builds.
+ */
+function gitVersion() {
+  const run = (/** @type {string} */ cmd) => {
+    try {
+      return execSync(cmd, { stdio: ["ignore", "pipe", "ignore"] })
+        .toString()
+        .trim();
+    } catch {
+      return "";
+    }
+  };
+  return {
+    commit: run("git rev-parse --short HEAD") || "dev",
+    build: run("git rev-list --count HEAD") || "0",
+  };
+}
+
+const git = gitVersion();
 
 // `MOBILE=1` (via `bun run dev:mobile`) serves the LAN over HTTPS + prints a QR,
 // so the phone loads in a SECURE context and GPS / service worker actually work.
@@ -82,6 +107,12 @@ export default defineConfig({
   ],
 
   vite: {
+    // Bake the git build id in at compile time so the About screen can show
+    // exactly which commit an APK was cut from. Replaced literally by Vite.
+    define: {
+      __APP_BUILD__: JSON.stringify(git.build),
+      __APP_COMMIT__: JSON.stringify(git.commit),
+    },
     // Lucide icons compiled to Vue components. All access goes through the
     // AppIcon design-system primitive, never `~icons/*` imports in features.
     plugins: [Icons({ compiler: "vue3" }), ...(mobile ? [basicSsl()] : [])],
