@@ -7,6 +7,7 @@ import SettingsRoot from "../settings/SettingsRoot.vue";
 import { $setupDone } from "../setup/setup.store";
 import SetupScreen from "../setup/SetupScreen.vue";
 import HomeScreen from "../home/HomeScreen.vue";
+import WorkoutScreen from "../tracking/ui/WorkoutScreen.vue";
 import { registerBackButton } from "./back";
 import BottomNav from "./BottomNav.vue";
 import { $activeTab, TABS } from "./nav.store";
@@ -42,6 +43,7 @@ onBeforeUnmount(() => {
   <div v-else class="app">
     <main class="app-main">
       <HomeScreen v-if="active === 'home'" />
+      <WorkoutScreen v-else-if="active === 'workout'" />
       <SettingsRoot v-else-if="active === 'more'" />
       <PlaceholderScreen v-else :key="active" :title="activeLabel" />
     </main>
