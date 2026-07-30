@@ -1,44 +1,45 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { AppButton, AppScreen, Card } from "../../../shared/ui";
-import { useRecorder } from "../../recording";
-import type { MoveType } from "../domain/activity";
-import { avgPaceSecPerKm, avgSpeedMps, distanceMeters, pausedMs } from "../domain/metrics";
-import { distanceParts, formatDuration, formatPace, formatSpeed } from "./format";
+import { AppButton, AppSubScreen, Card } from "../../shared/ui";
+import {
+  avgPaceSecPerKm,
+  avgSpeedMps,
+  distanceMeters,
+  distanceParts,
+  formatActivityDate,
+  formatDuration,
+  formatPace,
+  formatSpeed,
+  type MoveActivity,
+  MOVE_LABEL,
+  pausedMs,
+} from "../tracking";
+import { deleteActivity } from "./history.store";
 
-/** Post-finish summary. The activity is already saved; "Listo" clears the
- *  recorder back to idle. */
-const { activity, elapsedMs, discard } = useRecorder();
+const props = defineProps<{ activity: MoveActivity }>();
+const emit = defineEmits<{ back: [] }>();
 
-const VERB: Record<MoveType, string> = {
-  walk: "Caminaste",
-  jog: "Trotaste",
-  run: "Corriste",
-};
-
-const points = computed(() => activity.value?.points ?? []);
-const verb = computed(() => (activity.value ? VERB[activity.value.type] : "Registraste"));
-const distance = computed(() => distanceParts(distanceMeters(points.value)));
-const duration = computed(() => formatDuration(elapsedMs.value));
-const paused = computed(() => {
-  const a = activity.value;
-  return a ? formatDuration(pausedMs(a.startedAt, a.endedAt, a.movingMs ?? 0)) : "0:00";
-});
+const points = computed(() => props.activity.points);
+const dist = computed(() => distanceParts(distanceMeters(points.value)));
+const duration = computed(() => formatDuration(props.activity.movingMs ?? 0));
+const paused = computed(() =>
+  formatDuration(pausedMs(props.activity.startedAt, props.activity.endedAt, props.activity.movingMs ?? 0)),
+);
 const pace = computed(() => formatPace(avgPaceSecPerKm(points.value)));
 const speed = computed(() => formatSpeed(avgSpeedMps(points.value)));
-const steps = computed(() => activity.value?.steps ?? null);
 
-function done(): void {
-  void discard();
+async function onDelete(): Promise<void> {
+  await deleteActivity(props.activity.id);
+  emit("back");
 }
 </script>
 
 <template>
-  <AppScreen title="Resumen">
+  <AppSubScreen :title="MOVE_LABEL[activity.type]" @back="emit('back')">
     <Card>
       <div class="headline">
-        <span class="hl-verb">{{ verb }}</span>
-        <span class="hl-dist">{{ distance.value }} <small>{{ distance.unit }}</small></span>
+        <span class="hl-dist">{{ dist.value }} <small>{{ dist.unit }}</small></span>
+        <span class="hl-date">{{ formatActivityDate(activity.startedAt) }}</span>
       </div>
     </Card>
 
@@ -62,7 +63,7 @@ function done(): void {
         </div>
         <div class="row">
           <dt>Pasos</dt>
-          <dd>{{ steps ?? "—" }}</dd>
+          <dd>{{ activity.steps ?? "—" }}</dd>
         </div>
         <div class="row">
           <dt>Puntos GPS</dt>
@@ -71,8 +72,8 @@ function done(): void {
       </dl>
     </Card>
 
-    <AppButton size="lg" block @press="done">Listo</AppButton>
-  </AppScreen>
+    <AppButton block variant="danger" @press="onDelete">Borrar actividad</AppButton>
+  </AppSubScreen>
 </template>
 
 <style scoped>
@@ -80,10 +81,6 @@ function done(): void {
   display: flex;
   flex-direction: column;
   gap: var(--sp-1);
-}
-.hl-verb {
-  font-size: 13px;
-  color: var(--muted);
 }
 .hl-dist {
   font-family: var(--font-mono);
@@ -94,6 +91,10 @@ function done(): void {
 }
 .hl-dist small {
   font-size: 16px;
+  color: var(--muted);
+}
+.hl-date {
+  font-size: 13px;
   color: var(--muted);
 }
 .stats {

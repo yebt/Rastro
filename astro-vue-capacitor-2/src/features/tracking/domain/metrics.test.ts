@@ -5,6 +5,7 @@ import {
   distanceMeters,
   haversineMeters,
   movingDurationMs,
+  pausedMs,
   spanMs,
 } from "./metrics";
 import type { TrackPoint } from "./track-point";
@@ -45,6 +46,13 @@ describe("tracking metrics", () => {
     // 111.195 m in 1s of moving time -> ~111.2 m/s.
     const pts = [p(0, 0, 0), p(0, 0.001, 1000)];
     expect(avgSpeedMps(pts)).toBeCloseTo(111.2, 0);
+  });
+
+  it("pausedMs is total wall time minus moving time", () => {
+    expect(pausedMs(1000, 11_000, 7000)).toBe(3000); // 10s span, 7s moving → 3s paused
+    expect(pausedMs(1000, 11_000, 10_000)).toBe(0); // never paused
+    expect(pausedMs(1000, null, 5000)).toBe(0); // still open
+    expect(pausedMs(1000, 6000, 9000)).toBe(0); // clamps, never negative
   });
 
   it("avgPace is null when there is no distance or no movement", () => {

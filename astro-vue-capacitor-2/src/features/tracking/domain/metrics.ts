@@ -59,6 +59,15 @@ export function avgSpeedMps(points: TrackPoint[]): number {
 }
 
 /**
+ * Time spent paused, in ms: total wall time (end − start) minus moving time.
+ * 0 while the activity is still open (no end) or when nothing was paused.
+ */
+export function pausedMs(startedAt: number, endedAt: number | null, movingMs: number): number {
+  if (endedAt === null) return 0;
+  return Math.max(0, endedAt - startedAt - movingMs);
+}
+
+/**
  * Average pace in seconds per kilometre, or null when there's nothing to pace
  * (no distance or no moving time) — callers render that as "—" rather than ∞.
  */

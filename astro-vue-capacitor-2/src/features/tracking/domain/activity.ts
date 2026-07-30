@@ -32,8 +32,10 @@ export interface MoveActivity extends BaseActivity {
   kind: "move";
   type: MoveType;
   points: TrackPoint[];
-  /** Accelerometer step count for the session; absent on older records. */
+  /** Step count for the session; absent on older records. */
   steps?: number;
+  /** Moving time in ms (excludes pauses); absent on older records. */
+  movingMs?: number;
 }
 
 export interface ExerciseSet {

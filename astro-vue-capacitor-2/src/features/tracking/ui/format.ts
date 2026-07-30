@@ -37,3 +37,19 @@ export function formatPace(secPerKm: number | null): string {
 export function formatSpeed(mps: number): string {
   return (mps * 3.6).toFixed(1);
 }
+
+/** Friendly date+time for an activity: "Hoy 14:30", "Ayer 09:12", "12 jun 14:30". */
+export function formatActivityDate(t: number, now: number = Date.now()): string {
+  const d = new Date(t);
+  const time = new Intl.DateTimeFormat("es", { hour: "2-digit", minute: "2-digit" }).format(d);
+  const startOfDay = (ms: number): number => {
+    const x = new Date(ms);
+    x.setHours(0, 0, 0, 0);
+    return x.getTime();
+  };
+  const days = Math.round((startOfDay(now) - startOfDay(t)) / 86_400_000);
+  if (days === 0) return `Hoy ${time}`;
+  if (days === 1) return `Ayer ${time}`;
+  const date = new Intl.DateTimeFormat("es", { day: "numeric", month: "short" }).format(d);
+  return `${date} ${time}`;
+}

@@ -122,12 +122,13 @@ export function createRecorder(deps: RecorderDeps): Recorder {
         accumulatedMs += deps.now() - movingSince;
       }
       movingSince = null;
+      const movingMs = accumulatedMs;
       await stopWatch();
       const steps = await deps.pedometer.stop();
 
       const act = $activity.get();
       if (!act) return null;
-      const finished: MoveActivity = { ...act, endedAt: deps.now(), steps };
+      const finished: MoveActivity = { ...act, endedAt: deps.now(), steps, movingMs };
       await deps.repo.save(finished);
       $activity.set(finished);
       $status.set("finished");

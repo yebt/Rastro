@@ -18,9 +18,18 @@ export {
   distanceMeters,
   haversineMeters,
   movingDurationMs,
+  pausedMs,
   spanMs,
 } from "./domain/metrics";
 export { CURRENT_SCHEMA_VERSION, migrate } from "./domain/schema";
 export { toTrackPoint, type TrackPoint } from "./domain/track-point";
 export type { ActivityRepository } from "./ports/activity-repository";
 export { activityRepository } from "./repository";
+export {
+  distanceParts,
+  formatActivityDate,
+  formatDuration,
+  formatPace,
+  formatSpeed,
+} from "./ui/format";
+export { MOVE_LABEL } from "./ui/labels";
