@@ -38,12 +38,16 @@ export function createHardwarePedometer(): Pedometer {
   let handle: PluginListenerHandle | null = null;
   let unsubs: (() => void)[] = [];
   let baseline: number | null = null;
+  let lastTotal: number | null = null;
+  let resync = false;
   let sessionSteps = 0;
   let stepTimes: number[] = [];
   let paused = false;
 
   function reset(): void {
     baseline = null;
+    lastTotal = null;
+    resync = false;
     sessionSteps = 0;
     stepTimes = [];
     paused = false;
@@ -82,7 +86,14 @@ export function createHardwarePedometer(): Pedometer {
           const total = e.numberOfSteps;
           if (baseline === null) {
             baseline = total; // first reading is the cumulative offset
+            lastTotal = total;
             return;
+          }
+          if (resync) {
+            // The hardware counter kept ticking while paused. Advance the baseline
+            // past that gap so paused steps aren't lumped in on resume.
+            baseline += total - lastTotal!;
+            resync = false;
           }
           const steps = Math.max(0, total - baseline);
           const now = Date.now();
@@ -93,6 +104,7 @@ export function createHardwarePedometer(): Pedometer {
             stepTimes = stepTimes.filter((ts) => ts >= now - WINDOW_MS * 2);
           }
           $cadence.set(cadenceFromSteps(stepTimes, now, WINDOW_MS));
+          lastTotal = total;
         });
         await CapacitorPedometer.startMeasurementUpdates();
         mode = "hardware";
@@ -109,6 +121,7 @@ export function createHardwarePedometer(): Pedometer {
 
     resume() {
       paused = false;
+      resync = true; // re-baseline on the next reading (see the listener)
       if (mode === "accel") accel.resume();
     },
 

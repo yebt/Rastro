@@ -36,6 +36,8 @@ export interface MoveActivity extends BaseActivity {
   steps?: number;
   /** Moving time in ms (excludes pauses); absent on older records. */
   movingMs?: number;
+  /** How many times the recording was paused; absent on older records. */
+  pauses?: number;
 }
 
 export interface ExerciseSet {

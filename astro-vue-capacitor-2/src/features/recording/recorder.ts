@@ -56,6 +56,7 @@ export function createRecorder(deps: RecorderDeps): Recorder {
   // Elapsed = accumulated (from finished moving spans) + current span if moving.
   let accumulatedMs = 0;
   let movingSince: number | null = null;
+  let pauseCount = 0;
 
   async function startWatch(): Promise<void> {
     watch = await deps.geo.watch(
@@ -89,6 +90,7 @@ export function createRecorder(deps: RecorderDeps): Recorder {
       const at = deps.now();
       accumulatedMs = 0;
       movingSince = at;
+      pauseCount = 0;
       $error.set(null);
       $activity.set(startMove(type, at));
       $status.set("recording");
@@ -98,6 +100,7 @@ export function createRecorder(deps: RecorderDeps): Recorder {
 
     async pause() {
       if ($status.get() !== "recording") return;
+      pauseCount++;
       if (movingSince !== null) {
         accumulatedMs += deps.now() - movingSince;
         movingSince = null;
@@ -128,7 +131,13 @@ export function createRecorder(deps: RecorderDeps): Recorder {
 
       const act = $activity.get();
       if (!act) return null;
-      const finished: MoveActivity = { ...act, endedAt: deps.now(), steps, movingMs };
+      const finished: MoveActivity = {
+        ...act,
+        endedAt: deps.now(),
+        steps,
+        movingMs,
+        pauses: pauseCount,
+      };
       await deps.repo.save(finished);
       $activity.set(finished);
       $status.set("finished");
@@ -140,6 +149,7 @@ export function createRecorder(deps: RecorderDeps): Recorder {
       await deps.pedometer.stop();
       accumulatedMs = 0;
       movingSince = null;
+      pauseCount = 0;
       $activity.set(null);
       $error.set(null);
       $status.set("idle");

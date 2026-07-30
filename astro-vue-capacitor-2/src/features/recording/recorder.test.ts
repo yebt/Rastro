@@ -89,6 +89,16 @@ describe("recorder", () => {
     expect(((await repo.get(done!.id)) as MoveActivity).steps).toBe(1234);
   });
 
+  it("counts pauses and stores the total on finish", async () => {
+    await rec.start("jog");
+    await rec.pause();
+    await rec.resume();
+    await rec.pause();
+    await rec.resume();
+    const done = await rec.finish();
+    expect(done?.pauses).toBe(2);
+  });
+
   it("discard drops the session without saving", async () => {
     await rec.start("jog");
     geo.emit(sample(1000));

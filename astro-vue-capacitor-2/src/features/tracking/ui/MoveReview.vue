@@ -24,6 +24,7 @@ const paused = computed(() => {
   const a = activity.value;
   return a ? formatDuration(pausedMs(a.startedAt, a.endedAt, a.movingMs ?? 0)) : "0:00";
 });
+const pauses = computed(() => activity.value?.pauses ?? 0);
 const pace = computed(() => formatPace(avgPaceSecPerKm(points.value)));
 const speed = computed(() => formatSpeed(avgSpeedMps(points.value)));
 const steps = computed(() => activity.value?.steps ?? null);
@@ -50,7 +51,7 @@ function done(): void {
         </div>
         <div class="row">
           <dt>En pausa</dt>
-          <dd>{{ paused }}</dd>
+          <dd>{{ paused }} · {{ pauses }}×</dd>
         </div>
         <div class="row">
           <dt>Ritmo medio</dt>

@@ -51,7 +51,7 @@ async function onDelete(): Promise<void> {
         </div>
         <div class="row">
           <dt>En pausa</dt>
-          <dd>{{ paused }}</dd>
+          <dd>{{ paused }} · {{ activity.pauses ?? 0 }}×</dd>
         </div>
         <div class="row">
           <dt>Ritmo medio</dt>
