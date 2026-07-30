@@ -17,6 +17,7 @@ let rec: Recorder;
 
 beforeEach(() => {
   geo = createFakeGeolocation();
+  geo.setEnabled(false); // off by default so the start-seed one-shot is a no-op
   repo = createMemoryRepository();
   ped = createFakePedometer();
   clock = 0;
@@ -29,6 +30,13 @@ describe("recorder", () => {
     expect(rec.$status.get()).toBe("recording");
     expect(rec.$activity.get()?.type).toBe("jog");
     expect(geo.isWatching()).toBe(true);
+  });
+
+  it("seeds a first point from a one-shot fix on start", async () => {
+    geo.setEnabled(true); // getCurrentPosition now returns a fix
+    await rec.start("walk");
+    await new Promise((r) => setTimeout(r, 0)); // let the async seed resolve
+    expect(rec.$activity.get()?.points).toHaveLength(1);
   });
 
   it("appends each fix as a point", async () => {

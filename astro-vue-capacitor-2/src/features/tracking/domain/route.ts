@@ -18,13 +18,33 @@ export interface ProjectedRoute {
   end: { x: number; y: number };
 }
 
+/**
+ * Smallest span the viewport ever shows, in degrees (~100 m). Without it, a
+ * near-stationary track zooms in so far that a couple of metres of GPS wander
+ * fill the whole box — the route looks huge when you've barely moved.
+ */
+const MIN_SPAN_DEG = 0.0009;
+
+/** Widen a [min, max] range to at least MIN_SPAN_DEG, keeping its centre. */
+function atLeastMinSpan(min: number, max: number): [number, number] {
+  if (max - min >= MIN_SPAN_DEG) return [min, max];
+  const c = (min + max) / 2;
+  return [c - MIN_SPAN_DEG / 2, c + MIN_SPAN_DEG / 2];
+}
+
 export function projectRoute(
   points: TrackPoint[],
   width: number,
   height: number,
   pad = 10,
 ): ProjectedRoute | null {
-  if (points.length < 2) return null;
+  if (points.length === 0) return null;
+  // A single fix: mark "you are here" at the centre so the map shows the start
+  // point immediately instead of an empty box.
+  if (points.length === 1) {
+    const c = { x: width / 2, y: height / 2 };
+    return { d: `M${c.x} ${c.y}`, start: c, end: c };
+  }
 
   let minLat = Infinity;
   let maxLat = -Infinity;
@@ -44,8 +64,10 @@ export function projectRoute(
     if (x > maxX) maxX = x;
   }
 
-  const spanX = maxX - minX || 1e-9;
-  const spanY = maxLat - minLat || 1e-9;
+  [minX, maxX] = atLeastMinSpan(minX, maxX);
+  [minLat, maxLat] = atLeastMinSpan(minLat, maxLat);
+  const spanX = maxX - minX;
+  const spanY = maxLat - minLat;
   const availW = width - 2 * pad;
   const availH = height - 2 * pad;
   const scale = Math.min(availW / spanX, availH / spanY);

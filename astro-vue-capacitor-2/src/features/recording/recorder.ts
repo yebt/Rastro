@@ -94,6 +94,18 @@ export function createRecorder(deps: RecorderDeps): Recorder {
       $error.set(null);
       $activity.set(startMove(type, at));
       $status.set("recording");
+      // Seed the first fix so the map shows the start point right away instead of
+      // "waiting for signal". Non-blocking; ignored if it fails or arrives after
+      // the watch already delivered a point.
+      void deps.geo
+        .getCurrentPosition()
+        .then((sample) => {
+          const a = $activity.get();
+          if (a && $status.get() === "recording" && a.points.length === 0) {
+            $activity.set({ ...a, points: [toTrackPoint(sample)] });
+          }
+        })
+        .catch(() => {});
       await deps.pedometer.start();
       await startWatch();
     },

@@ -7,9 +7,21 @@ function p(lat: number, lng: number): TrackPoint {
 }
 
 describe("projectRoute", () => {
-  it("returns null for fewer than two points", () => {
+  it("returns null only with no points", () => {
     expect(projectRoute([], 300, 180)).toBeNull();
-    expect(projectRoute([p(0, 0)], 300, 180)).toBeNull();
+  });
+
+  it("marks a single fix at the centre", () => {
+    const r = projectRoute([p(1.23, 4.56)], 300, 180)!;
+    expect(r.start).toEqual({ x: 150, y: 90 });
+    expect(r.end).toEqual({ x: 150, y: 90 });
+  });
+
+  it("does not zoom a near-stationary track to fill the box", () => {
+    // Two points ~2 m apart: with a ~100 m minimum span they stay near centre.
+    const r = projectRoute([p(0, 0), p(0, 0.00002)], 300, 180)!;
+    expect(r.start.x).toBeGreaterThan(120);
+    expect(r.end.x).toBeLessThan(180);
   });
 
   it("emits one move + one line-to per subsequent point", () => {
