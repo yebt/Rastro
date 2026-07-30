@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { AppButton, AppScreen, Card } from "../../../shared/ui";
 import { useRecorder } from "../../recording";
 import type { MoveType } from "../domain/activity";
+import { cleanTrack } from "../domain/clean";
 import { avgPaceSecPerKm, avgSpeedMps, distanceMeters, pausedMs } from "../domain/metrics";
 import { distanceParts, formatDuration, formatPace, formatSpeed } from "./format";
 
@@ -17,16 +18,17 @@ const VERB: Record<MoveType, string> = {
 };
 
 const points = computed(() => activity.value?.points ?? []);
+const clean = computed(() => cleanTrack(points.value));
 const verb = computed(() => (activity.value ? VERB[activity.value.type] : "Registraste"));
-const distance = computed(() => distanceParts(distanceMeters(points.value)));
+const distance = computed(() => distanceParts(distanceMeters(clean.value)));
 const duration = computed(() => formatDuration(elapsedMs.value));
 const paused = computed(() => {
   const a = activity.value;
   return a ? formatDuration(pausedMs(a.startedAt, a.endedAt, a.movingMs ?? 0)) : "0:00";
 });
 const pauses = computed(() => activity.value?.pauses ?? 0);
-const pace = computed(() => formatPace(avgPaceSecPerKm(points.value)));
-const speed = computed(() => formatSpeed(avgSpeedMps(points.value)));
+const pace = computed(() => formatPace(avgPaceSecPerKm(clean.value)));
+const speed = computed(() => formatSpeed(avgSpeedMps(clean.value)));
 const steps = computed(() => activity.value?.steps ?? null);
 
 function done(): void {

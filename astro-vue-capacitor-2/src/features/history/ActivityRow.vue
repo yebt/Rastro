@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { AppIcon } from "../../shared/ui";
 import {
+  cleanTrack,
   distanceMeters,
   distanceParts,
   formatActivityDate,
@@ -13,7 +14,7 @@ import {
 const props = defineProps<{ activity: MoveActivity }>();
 defineEmits<{ open: [] }>();
 
-const dist = computed(() => distanceParts(distanceMeters(props.activity.points)));
+const dist = computed(() => distanceParts(distanceMeters(cleanTrack(props.activity.points))));
 const dur = computed(() => formatDuration(props.activity.movingMs ?? 0));
 const date = computed(() => formatActivityDate(props.activity.startedAt));
 </script>

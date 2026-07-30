@@ -3,8 +3,10 @@ import { computed, ref } from "vue";
 import { AppButton, AppScreen } from "../../../shared/ui";
 import { useRecorder } from "../../recording";
 import type { MoveType } from "../domain/activity";
+import { cleanTrack } from "../domain/clean";
 import { avgPaceSecPerKm, avgSpeedMps, distanceMeters } from "../domain/metrics";
 import { distanceParts, formatDuration, formatPace, formatSpeed } from "./format";
+import RouteMap from "./RouteMap.vue";
 
 /** Live recording screen — stats tick from the recorder while it captures GPS. */
 const { status, activity, error, steps, cadence, elapsedMs, pause, resume, finish, discard } =
@@ -16,9 +18,12 @@ const title = computed(() => (activity.value ? LABEL[activity.value.type] : "Act
 const paused = computed(() => status.value === "paused");
 
 const points = computed(() => activity.value?.points ?? []);
-const distance = computed(() => distanceParts(distanceMeters(points.value)));
-const pace = computed(() => formatPace(avgPaceSecPerKm(points.value)));
-const speed = computed(() => formatSpeed(avgSpeedMps(points.value)));
+// Distance and the route are derived from the drift-filtered track, so GPS
+// jitter while standing still doesn't invent movement.
+const clean = computed(() => cleanTrack(points.value));
+const distance = computed(() => distanceParts(distanceMeters(clean.value)));
+const pace = computed(() => formatPace(avgPaceSecPerKm(clean.value)));
+const speed = computed(() => formatSpeed(avgSpeedMps(clean.value)));
 const fixes = computed(() => points.value.length);
 
 // A very short recording is usually a false start, so confirm before saving it.
@@ -53,6 +58,8 @@ function discardShort(): void {
         <div class="clock-time">{{ formatDuration(elapsedMs) }}</div>
         <div class="clock-label">Tiempo en movimiento</div>
       </div>
+
+      <RouteMap :points="clean" />
 
       <div class="grid">
         <div class="tile">

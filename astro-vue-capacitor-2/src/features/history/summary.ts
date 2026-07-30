@@ -5,7 +5,7 @@
  */
 
 import type { Activity, MoveActivity } from "../tracking";
-import { distanceMeters } from "../tracking";
+import { cleanTrack, distanceMeters } from "../tracking";
 
 const DAY_MS = 86_400_000;
 
@@ -32,7 +32,7 @@ export function weekSummary(activities: Activity[], now: number): WeekSummary {
   return recent.reduce<WeekSummary>(
     (acc, a) => ({
       count: acc.count + 1,
-      distanceM: acc.distanceM + distanceMeters(a.points),
+      distanceM: acc.distanceM + distanceMeters(cleanTrack(a.points)),
       movingMs: acc.movingMs + (a.movingMs ?? 0),
     }),
     { count: 0, distanceM: 0, movingMs: 0 },

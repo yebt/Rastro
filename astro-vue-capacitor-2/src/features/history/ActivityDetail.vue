@@ -4,6 +4,7 @@ import { AppButton, AppSubScreen, Card } from "../../shared/ui";
 import {
   avgPaceSecPerKm,
   avgSpeedMps,
+  cleanTrack,
   distanceMeters,
   distanceParts,
   formatActivityDate,
@@ -14,19 +15,21 @@ import {
   MOVE_LABEL,
   pausedMs,
 } from "../tracking";
+import RouteMap from "../tracking/ui/RouteMap.vue";
 import { deleteActivity } from "./history.store";
 
 const props = defineProps<{ activity: MoveActivity }>();
 const emit = defineEmits<{ back: [] }>();
 
 const points = computed(() => props.activity.points);
-const dist = computed(() => distanceParts(distanceMeters(points.value)));
+const clean = computed(() => cleanTrack(points.value));
+const dist = computed(() => distanceParts(distanceMeters(clean.value)));
 const duration = computed(() => formatDuration(props.activity.movingMs ?? 0));
 const paused = computed(() =>
   formatDuration(pausedMs(props.activity.startedAt, props.activity.endedAt, props.activity.movingMs ?? 0)),
 );
-const pace = computed(() => formatPace(avgPaceSecPerKm(points.value)));
-const speed = computed(() => formatSpeed(avgSpeedMps(points.value)));
+const pace = computed(() => formatPace(avgPaceSecPerKm(clean.value)));
+const speed = computed(() => formatSpeed(avgSpeedMps(clean.value)));
 
 async function onDelete(): Promise<void> {
   await deleteActivity(props.activity.id);
@@ -36,6 +39,8 @@ async function onDelete(): Promise<void> {
 
 <template>
   <AppSubScreen :title="MOVE_LABEL[activity.type]" @back="emit('back')">
+    <RouteMap :points="clean" />
+
     <Card>
       <div class="headline">
         <span class="hl-dist">{{ dist.value }} <small>{{ dist.unit }}</small></span>
