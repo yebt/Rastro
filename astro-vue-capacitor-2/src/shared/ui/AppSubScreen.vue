@@ -29,11 +29,12 @@ const emit = defineEmits<{ back: [] }>();
   height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: calc(var(--safe-t) + var(--sp-2)) var(--sp-4) var(--sp-5);
+  padding: calc(var(--safe-t) + var(--sp-4)) var(--sp-4) var(--sp-5);
 }
 .sub-head {
   display: flex;
   align-items: center;
+  min-height: 36px;
   gap: var(--sp-2);
   margin-bottom: var(--sp-4);
 }
@@ -52,7 +53,7 @@ const emit = defineEmits<{ back: [] }>();
 .sub-title {
   margin: 0;
   font-family: var(--font-cond);
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 600;
   letter-spacing: -0.01em;
   text-transform: uppercase;

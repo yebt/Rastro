@@ -34,7 +34,9 @@ withDefaults(defineProps<{ title?: string; flush?: boolean }>(), {
   padding: 0;
 }
 .screen-head {
-  padding-top: var(--sp-1);
+  display: flex;
+  align-items: center;
+  min-height: 36px;
   margin-bottom: var(--sp-4);
 }
 .screen-title {
