@@ -22,8 +22,15 @@ import { checkPermission, PERMISSIONS, type PermissionId, requestPermission } fr
  */
 const props = withDefaults(defineProps<{ autoRequest?: boolean }>(), { autoRequest: false });
 
-const state = reactive<Record<PermissionId, PermissionState>>({ location: "prompt" });
-const busy = reactive<Record<PermissionId, boolean>>({ location: false });
+const state = reactive(
+  Object.fromEntries(PERMISSIONS.map((p) => [p.id, "prompt"])) as Record<
+    PermissionId,
+    PermissionState
+  >,
+);
+const busy = reactive(
+  Object.fromEntries(PERMISSIONS.map((p) => [p.id, false])) as Record<PermissionId, boolean>,
+);
 
 const LABEL: Record<PermissionState, string> = {
   granted: "Concedido",

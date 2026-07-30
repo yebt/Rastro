@@ -1,17 +1,23 @@
 /**
  * Permission registry.
  *
- * A single place that describes the permissions Rastro asks for and how to
- * check/request each. Today only location is live — wired straight to the
- * geolocation port, so there's no second source of truth. Notifications and
- * physical-activity join this list when their plugins land; the setup screen
- * and settings render whatever is registered here.
+ * One place describing the permissions Rastro asks for and how to check/request
+ * each. The setup screen and the app-entry flow render/prompt whatever is
+ * registered here. Non-native platforms report "unsupported" so the app still
+ * works on the web — the prompts just don't apply.
  */
 
-import { geolocation, type PermissionState, requestLocationOn } from "../geolocation";
+import { Capacitor } from "@capacitor/core";
+import { LocalNotifications } from "@capacitor/local-notifications";
+import { CapacitorPedometer } from "@capgo/capacitor-pedometer";
+import {
+  geolocation,
+  type PermissionState,
+  requestLocationOn,
+} from "../geolocation";
 import type { IconName } from "../../shared/ui";
 
-export type PermissionId = "location";
+export type PermissionId = "location" | "notifications" | "activity";
 
 export interface PermissionDescriptor {
   id: PermissionId;
@@ -28,12 +34,61 @@ export const PERMISSIONS: PermissionDescriptor[] = [
     why: 'Para registrar tu recorrido con GPS. Elegí "Permitir siempre" para que siga con la pantalla apagada.',
     icon: "location",
   },
+  {
+    id: "notifications",
+    title: "Notificaciones",
+    why: "Para mostrar el estado del registro mientras rastreás, incluso con la pantalla apagada.",
+    icon: "bell",
+  },
+  {
+    id: "activity",
+    title: "Actividad física",
+    why: "Para contar tus pasos con el sensor de movimiento del teléfono.",
+    icon: "steps",
+  },
 ];
+
+function norm(state: string): PermissionState {
+  if (state === "granted") return "granted";
+  if (state === "denied") return "denied";
+  if (state === "unsupported") return "unsupported";
+  return "prompt"; // includes prompt-with-rationale
+}
+
+async function checkNotifications(mode: "check" | "request"): Promise<PermissionState> {
+  if (!Capacitor.isNativePlatform()) return "unsupported";
+  try {
+    const status =
+      mode === "check"
+        ? await LocalNotifications.checkPermissions()
+        : await LocalNotifications.requestPermissions();
+    return norm(status.display);
+  } catch {
+    return "unsupported";
+  }
+}
+
+async function checkActivity(mode: "check" | "request"): Promise<PermissionState> {
+  if (!Capacitor.isNativePlatform()) return "unsupported";
+  try {
+    const status =
+      mode === "check"
+        ? await CapacitorPedometer.checkPermissions()
+        : await CapacitorPedometer.requestPermissions();
+    return norm(status.activityRecognition);
+  } catch {
+    return "unsupported";
+  }
+}
 
 export function checkPermission(id: PermissionId): Promise<PermissionState> {
   switch (id) {
     case "location":
       return geolocation().checkPermission();
+    case "notifications":
+      return checkNotifications("check");
+    case "activity":
+      return checkActivity("check");
   }
 }
 
@@ -48,6 +103,10 @@ export async function requestPermission(id: PermissionId): Promise<PermissionSta
       await requestLocationOn();
       return geolocation().requestPermission();
     }
+    case "notifications":
+      return checkNotifications("request");
+    case "activity":
+      return checkActivity("request");
   }
 }
 
