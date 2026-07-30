@@ -7,7 +7,7 @@ import type { TrackPoint } from "../domain/track-point";
  * Offline route drawing: the GPS track as an SVG polyline, no basemap and no
  * dependency. A street basemap can later sit behind this same path.
  */
-const props = defineProps<{ points: TrackPoint[] }>();
+const props = defineProps<{ points: TrackPoint[]; fill?: boolean }>();
 
 const W = 300;
 const H = 180;
@@ -15,7 +15,7 @@ const route = computed(() => projectRoute(props.points, W, H));
 </script>
 
 <template>
-  <div class="map">
+  <div class="map" :class="{ fill }">
     <svg
       v-if="route"
       :viewBox="`0 0 ${W} ${H}`"
@@ -44,6 +44,13 @@ const route = computed(() => projectRoute(props.points, W, H));
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
   overflow: hidden;
+}
+.map.fill {
+  aspect-ratio: auto;
+  height: 100%;
+  background: transparent;
+  border: none;
+  border-radius: 0;
 }
 .svg {
   display: block;

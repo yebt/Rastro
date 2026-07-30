@@ -3,7 +3,6 @@ import { useStore } from "@nanostores/vue";
 import { ref } from "vue";
 import { recorder } from "../../recording";
 import type { MoveType } from "../domain/activity";
-import LiveMove from "./LiveMove.vue";
 import MoveReview from "./MoveReview.vue";
 import ReadyMove from "./ReadyMove.vue";
 import StartMove from "./StartMove.vue";
@@ -43,5 +42,6 @@ function onCancel(): void {
   />
   <StartMove v-else-if="status === 'idle'" @select="onSelect" />
   <MoveReview v-else-if="status === 'finished'" />
-  <LiveMove v-else />
+  <!-- recording / paused: the global LiveMove overlay (in AppRoot) covers the screen -->
+
 </template>

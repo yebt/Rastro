@@ -8,11 +8,14 @@
 
 import { App } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
+import { handleRecordingBack } from "../recording";
 import { closeSettingsPage, $settingsPage } from "../settings/settings.nav";
 import { $setupDone, prevStep } from "../setup/setup.store";
 import { $activeTab, setTab } from "./nav.store";
 
 export function handleBack(): void {
+  // 0) Recording: never leave mid-run — arm, then ask to finish on a 2nd press.
+  if (handleRecordingBack()) return;
   // 1) First-run wizard: step back; from the first step, leave the app.
   if (!$setupDone.get()) {
     if (!prevStep()) void App.minimizeApp();

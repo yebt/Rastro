@@ -1,57 +1,82 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { AppButton, AppScreen } from "../../../shared/ui";
-import { useRecorder } from "../../recording";
-import type { MoveType } from "../domain/activity";
+import { useStore } from "@nanostores/vue";
+import { computed, ref, watch } from "vue";
+import { AppButton, AppIcon } from "../../../shared/ui";
+import { $backArmed, $finishRequested, clearFinishRequest, useRecorder } from "../../recording";
 import { cleanTrack } from "../domain/clean";
 import { avgPaceSecPerKm, avgSpeedMps, distanceMeters } from "../domain/metrics";
 import { distanceParts, formatDuration, formatPace, formatSpeed } from "./format";
+import { MOVE_LABEL } from "./labels";
 import RouteMap from "./RouteMap.vue";
 
-/** Live recording screen — stats tick from the recorder while it captures GPS. */
+/**
+ * Immersive recording screen: a full-bleed route map with the stats as a
+ * toggleable blur panel (hide it to watch the map and see if you're moving), and
+ * the controls pinned to the bottom so they're always reachable — no scrolling.
+ */
 const { status, activity, error, steps, cadence, elapsedMs, pause, resume, finish, discard } =
   useRecorder();
 
-const LABEL: Record<MoveType, string> = { walk: "Caminar", jog: "Trotar", run: "Correr" };
+const backArmed = useStore($backArmed);
+const finishRequested = useStore($finishRequested);
 
-const title = computed(() => (activity.value ? LABEL[activity.value.type] : "Actividad"));
 const paused = computed(() => status.value === "paused");
+const title = computed(() => (activity.value ? MOVE_LABEL[activity.value.type] : "Actividad"));
 
 const points = computed(() => activity.value?.points ?? []);
-// Distance and the route are derived from the drift-filtered track, so GPS
-// jitter while standing still doesn't invent movement.
 const clean = computed(() => cleanTrack(points.value));
 const distance = computed(() => distanceParts(distanceMeters(clean.value)));
 const pace = computed(() => formatPace(avgPaceSecPerKm(clean.value)));
 const speed = computed(() => formatSpeed(avgSpeedMps(clean.value)));
-const fixes = computed(() => points.value.length);
 
-// A very short recording is usually a false start, so confirm before saving it.
-const SHORT_MS = 10_000;
+const showStats = ref(true);
 const confirming = ref(false);
+const isShort = computed(() => elapsedMs.value < 10_000);
 
 function onFinish(): void {
-  if (elapsedMs.value < SHORT_MS) confirming.value = true;
-  else void finish();
+  confirming.value = true;
 }
-function saveShort(): void {
+function keepGoing(): void {
+  confirming.value = false;
+}
+function confirmFinish(): void {
   confirming.value = false;
   void finish();
 }
-function discardShort(): void {
+function confirmDiscard(): void {
   confirming.value = false;
   void discard();
 }
+
+// Second hardware-back press asks to finish.
+watch(finishRequested, (requested) => {
+  if (requested) {
+    confirming.value = true;
+    clearFinishRequest();
+  }
+});
 </script>
 
 <template>
-  <AppScreen>
-    <div class="live">
-      <header class="live-head">
-        <span class="live-type">{{ title }}</span>
-        <span class="live-status" :class="{ paused }">
-          <i class="dot" />{{ paused ? "En pausa" : "Registrando" }}
+  <div class="live">
+    <RouteMap :points="clean" fill class="map-bg" />
+
+    <div class="overlay">
+      <header class="top">
+        <span class="meta">
+          <span class="type">{{ title }}</span>
+          <span class="status" :class="{ paused }">
+            <i class="dot" />{{ paused ? "En pausa" : "Registrando" }}
+          </span>
         </span>
+        <button
+          type="button"
+          class="toggle"
+          :aria-label="showStats ? 'Ocultar datos' : 'Ver datos'"
+          @click="showStats = !showStats"
+        >
+          <AppIcon :name="showStats ? 'eyeOff' : 'eye'" size="20px" />
+        </button>
       </header>
 
       <div class="clock">
@@ -59,82 +84,97 @@ function discardShort(): void {
         <div class="clock-label">Tiempo en movimiento</div>
       </div>
 
-      <RouteMap :points="clean" />
+      <div class="spacer" />
 
-      <div class="grid">
-        <div class="tile">
-          <div class="tile-val">{{ distance.value }}</div>
-          <div class="tile-unit">{{ distance.unit }}</div>
+      <transition name="rise">
+        <div v-if="showStats" class="stats">
+          <div class="tile">
+            <b>{{ distance.value }}</b><small>{{ distance.unit }}</small>
+          </div>
+          <div class="tile"><b>{{ pace }}</b><small>/km</small></div>
+          <div class="tile"><b>{{ speed }}</b><small>km/h</small></div>
+          <div class="tile"><b>{{ steps }}</b><small>pasos</small></div>
+          <div class="tile"><b>{{ cadence }}</b><small>p/min</small></div>
+          <div class="tile"><b>{{ points.length }}</b><small>puntos</small></div>
         </div>
-        <div class="tile">
-          <div class="tile-val">{{ pace }}</div>
-          <div class="tile-unit">/km</div>
-        </div>
-        <div class="tile">
-          <div class="tile-val">{{ speed }}</div>
-          <div class="tile-unit">km/h</div>
-        </div>
-        <div class="tile">
-          <div class="tile-val">{{ steps }}</div>
-          <div class="tile-unit">pasos</div>
-        </div>
-        <div class="tile">
-          <div class="tile-val">{{ cadence }}</div>
-          <div class="tile-unit">p/min</div>
-        </div>
-        <div class="tile">
-          <div class="tile-val">{{ fixes }}</div>
-          <div class="tile-unit">puntos</div>
-        </div>
-      </div>
+      </transition>
 
-      <p v-if="error" class="err">
-        Problema con el GPS: {{ error.message }}. Seguí registrando; se reanuda solo cuando vuelve
-        la señal.
-      </p>
+      <p v-if="error" class="err">GPS: {{ error.message }}</p>
 
-      <div class="controls">
+      <transition name="fade">
+        <div v-if="backArmed" class="hint">Tocá atrás otra vez para finalizar</div>
+      </transition>
+
+      <div class="actions">
         <AppButton v-if="paused" size="lg" block @press="resume()">Reanudar</AppButton>
         <AppButton v-else size="lg" block variant="ghost" @press="pause()">Pausar</AppButton>
         <AppButton size="lg" block variant="danger" @press="onFinish">Finalizar</AppButton>
       </div>
     </div>
 
-    <div v-if="confirming" class="sheet-backdrop" @click.self="confirming = false">
-      <div class="sheet" role="alertdialog" aria-label="Recorrido muy corto">
-        <div class="sheet-title">Recorrido muy corto</div>
-        <p class="sheet-text">
-          Este recorrido dura menos de 10 segundos. ¿Querés guardarlo igual o descartarlo?
+    <div v-if="confirming" class="sheet-backdrop" @click.self="keepGoing">
+      <div class="sheet" role="alertdialog" aria-label="Finalizar actividad">
+        <div class="sheet-title">¿Finalizar la actividad?</div>
+        <p v-if="isShort" class="sheet-text">
+          Es muy corta (menos de 10 segundos). Quizá fue un arranque en falso.
         </p>
         <div class="sheet-actions">
-          <AppButton block variant="danger" @press="discardShort">Descartar</AppButton>
-          <AppButton block @press="saveShort">Guardar igual</AppButton>
+          <AppButton block variant="ghost" @press="keepGoing">Seguir</AppButton>
+          <AppButton v-if="isShort" block variant="danger" @press="confirmDiscard">
+            Descartar
+          </AppButton>
+          <AppButton block @press="confirmFinish">Finalizar</AppButton>
         </div>
       </div>
     </div>
-  </AppScreen>
+  </div>
 </template>
 
 <style scoped>
 .live {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: var(--bg);
+}
+.map-bg {
+  position: absolute;
+  inset: 0;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-5);
-  min-height: 100%;
+  padding: calc(var(--safe-t) + var(--sp-4)) var(--sp-4) calc(var(--safe-b) + var(--sp-4));
+  pointer-events: none;
 }
-.live-head {
+.overlay > * {
+  pointer-events: auto;
+}
+.spacer {
+  flex: 1;
+  pointer-events: none;
+}
+.top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: var(--sp-3);
 }
-.live-type {
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.type {
   font-family: var(--font-cond);
   font-size: 22px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.01em;
 }
-.live-status {
+.status {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -142,7 +182,7 @@ function discardShort(): void {
   font-weight: 600;
   color: var(--accent);
 }
-.live-status.paused {
+.status.paused {
   color: var(--muted);
 }
 .dot {
@@ -151,13 +191,25 @@ function discardShort(): void {
   border-radius: 50%;
   background: currentColor;
 }
+.toggle {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  color: var(--ink);
+  backdrop-filter: blur(8px);
+}
 .clock {
+  margin-top: var(--sp-4);
   text-align: center;
-  padding: var(--sp-4) 0;
+  text-shadow: 0 1px 12px var(--bg);
 }
 .clock-time {
   font-family: var(--font-mono);
-  font-size: 56px;
+  font-size: 52px;
   font-weight: 600;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -168,41 +220,73 @@ function discardShort(): void {
   font-size: 12px;
   color: var(--muted);
 }
-.grid {
+.stats {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-3);
-}
-.tile {
-  padding: var(--sp-4);
-  background: var(--surface);
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  margin-bottom: var(--sp-3);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--bg) 62%, transparent);
+  backdrop-filter: blur(16px);
+}
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
   text-align: center;
 }
-.tile-val {
+.tile b {
   font-family: var(--font-mono);
-  font-size: 28px;
+  font-size: 20px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
-.tile-unit {
-  margin-top: 2px;
-  font-size: 12px;
+.tile small {
+  font-size: 10px;
   color: var(--muted);
 }
 .err {
-  margin: 0;
+  margin: 0 0 var(--sp-2);
   font-size: 12px;
   color: var(--danger);
-  line-height: 1.45;
 }
-.controls {
-  margin-top: auto;
+.hint {
+  align-self: center;
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(8px);
+}
+.actions {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  padding-top: var(--sp-4);
+}
+.rise-enter-active,
+.rise-leave-active {
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+.rise-enter-from,
+.rise-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 .sheet-backdrop {
   position: fixed;
