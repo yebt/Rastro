@@ -7,7 +7,8 @@ import { avgPaceSecPerKm, avgSpeedMps, distanceMeters } from "../domain/metrics"
 import { distanceParts, formatDuration, formatPace, formatSpeed } from "./format";
 
 /** Live recording screen — stats tick from the recorder while it captures GPS. */
-const { status, activity, error, elapsedMs, pause, resume, finish, discard } = useRecorder();
+const { status, activity, error, steps, cadence, elapsedMs, pause, resume, finish, discard } =
+  useRecorder();
 
 const LABEL: Record<MoveType, string> = { walk: "Caminar", jog: "Trotar", run: "Correr" };
 
@@ -65,6 +66,14 @@ function discardShort(): void {
         <div class="tile">
           <div class="tile-val">{{ speed }}</div>
           <div class="tile-unit">km/h</div>
+        </div>
+        <div class="tile">
+          <div class="tile-val">{{ steps }}</div>
+          <div class="tile-unit">pasos</div>
+        </div>
+        <div class="tile">
+          <div class="tile-val">{{ cadence }}</div>
+          <div class="tile-unit">p/min</div>
         </div>
         <div class="tile">
           <div class="tile-val">{{ fixes }}</div>

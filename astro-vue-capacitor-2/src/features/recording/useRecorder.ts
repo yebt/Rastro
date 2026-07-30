@@ -6,12 +6,15 @@
 
 import { useStore } from "@nanostores/vue";
 import { onUnmounted, ref } from "vue";
+import { pedometer } from "../motion";
 import { recorder } from "./singleton";
 
 export function useRecorder() {
   const status = useStore(recorder.$status);
   const activity = useStore(recorder.$activity);
   const error = useStore(recorder.$error);
+  const steps = useStore(pedometer().$steps);
+  const cadence = useStore(pedometer().$cadence);
   const elapsedMs = ref(recorder.elapsedMs());
 
   let timer: ReturnType<typeof setInterval> | null = null;
@@ -43,6 +46,8 @@ export function useRecorder() {
     status,
     activity,
     error,
+    steps,
+    cadence,
     elapsedMs,
     start: recorder.start,
     pause: recorder.pause,

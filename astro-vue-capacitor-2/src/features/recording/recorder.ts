@@ -15,6 +15,7 @@
 
 import { atom, type ReadableAtom } from "nanostores";
 import type { GeoError, Geolocation, GeoWatch } from "../geolocation";
+import type { Pedometer } from "../motion";
 import type { ActivityRepository } from "../tracking";
 import { type MoveActivity, type MoveType, startMove, toTrackPoint } from "../tracking";
 
@@ -23,6 +24,8 @@ export type RecordingStatus = "idle" | "recording" | "paused" | "finished";
 export interface RecorderDeps {
   geo: Geolocation;
   repo: ActivityRepository;
+  /** Step counter, driven in lockstep with the GPS watch. */
+  pedometer: Pedometer;
   /** Injected clock — Date.now in production, controllable in tests. */
   now: () => number;
 }
@@ -89,6 +92,7 @@ export function createRecorder(deps: RecorderDeps): Recorder {
       $error.set(null);
       $activity.set(startMove(type, at));
       $status.set("recording");
+      await deps.pedometer.start();
       await startWatch();
     },
 
@@ -99,6 +103,7 @@ export function createRecorder(deps: RecorderDeps): Recorder {
         movingSince = null;
       }
       $status.set("paused");
+      deps.pedometer.pause();
       await stopWatch();
     },
 
@@ -106,6 +111,7 @@ export function createRecorder(deps: RecorderDeps): Recorder {
       if ($status.get() !== "paused") return;
       movingSince = deps.now();
       $status.set("recording");
+      deps.pedometer.resume();
       await startWatch();
     },
 
@@ -117,10 +123,11 @@ export function createRecorder(deps: RecorderDeps): Recorder {
       }
       movingSince = null;
       await stopWatch();
+      const steps = await deps.pedometer.stop();
 
       const act = $activity.get();
       if (!act) return null;
-      const finished: MoveActivity = { ...act, endedAt: deps.now() };
+      const finished: MoveActivity = { ...act, endedAt: deps.now(), steps };
       await deps.repo.save(finished);
       $activity.set(finished);
       $status.set("finished");
@@ -129,6 +136,7 @@ export function createRecorder(deps: RecorderDeps): Recorder {
 
     async discard() {
       await stopWatch();
+      await deps.pedometer.stop();
       accumulatedMs = 0;
       movingSince = null;
       $activity.set(null);

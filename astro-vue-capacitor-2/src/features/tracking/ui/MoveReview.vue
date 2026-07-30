@@ -22,6 +22,7 @@ const distance = computed(() => distanceParts(distanceMeters(points.value)));
 const duration = computed(() => formatDuration(elapsedMs.value));
 const pace = computed(() => formatPace(avgPaceSecPerKm(points.value)));
 const speed = computed(() => formatSpeed(avgSpeedMps(points.value)));
+const steps = computed(() => activity.value?.steps ?? null);
 
 function done(): void {
   void discard();
@@ -50,6 +51,10 @@ function done(): void {
         <div class="row">
           <dt>Velocidad media</dt>
           <dd>{{ speed }} km/h</dd>
+        </div>
+        <div class="row">
+          <dt>Pasos</dt>
+          <dd>{{ steps ?? "—" }}</dd>
         </div>
         <div class="row">
           <dt>Puntos GPS</dt>

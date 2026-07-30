@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createFakeGeolocation, type FakeGeolocation, type GeoSample } from "../geolocation";
+import { createFakePedometer, type FakePedometer } from "../motion";
 import { createMemoryRepository } from "../tracking/adapters/memory-repository";
 import type { ActivityRepository, MoveActivity } from "../tracking";
 import { createRecorder, type Recorder } from "./recorder";
@@ -10,14 +11,16 @@ function sample(t: number, n = 0): GeoSample {
 
 let geo: FakeGeolocation;
 let repo: ActivityRepository;
+let ped: FakePedometer;
 let clock: number;
 let rec: Recorder;
 
 beforeEach(() => {
   geo = createFakeGeolocation();
   repo = createMemoryRepository();
+  ped = createFakePedometer();
   clock = 0;
-  rec = createRecorder({ geo, repo, now: () => clock });
+  rec = createRecorder({ geo, repo, pedometer: ped, now: () => clock });
 });
 
 describe("recorder", () => {
@@ -76,6 +79,14 @@ describe("recorder", () => {
     const saved = await repo.get(done!.id);
     expect(saved?.kind).toBe("move");
     expect((saved as MoveActivity).points).toHaveLength(1);
+  });
+
+  it("stores the pedometer step total on finish", async () => {
+    await rec.start("run");
+    ped.emit(1234);
+    const done = await rec.finish();
+    expect(done?.steps).toBe(1234);
+    expect(((await repo.get(done!.id)) as MoveActivity).steps).toBe(1234);
   });
 
   it("discard drops the session without saving", async () => {
