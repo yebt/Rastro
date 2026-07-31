@@ -11,7 +11,7 @@ const KEY = "rastro.trackFilter";
 function read(): TrackFilterId {
   try {
     const v = globalThis.localStorage?.getItem(KEY);
-    return v === "raw" || v === "kalman" ? v : "drift";
+    return v === "raw" || v === "kalman" || v === "smooth" ? v : "drift";
   } catch {
     return "drift";
   }

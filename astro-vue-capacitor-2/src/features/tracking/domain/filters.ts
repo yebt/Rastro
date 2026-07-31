@@ -8,7 +8,7 @@ import { cleanTrack } from "./clean";
 import { kalmanFilter } from "./kalman";
 import type { TrackPoint } from "./track-point";
 
-export type TrackFilterId = "raw" | "drift" | "kalman";
+export type TrackFilterId = "raw" | "drift" | "kalman" | "smooth";
 
 export interface TrackFilterDef {
   id: TrackFilterId;
@@ -21,6 +21,8 @@ export const TRACK_FILTERS: TrackFilterDef[] = [
   { id: "raw", label: "Crudo", apply: (p) => p },
   { id: "drift", label: "Drift", apply: cleanTrack },
   { id: "kalman", label: "Kalman", apply: kalmanFilter },
+  // Gate stationary jitter first, then smooth the real movement.
+  { id: "smooth", label: "D+K", apply: (p) => kalmanFilter(cleanTrack(p)) },
 ];
 
 export function applyFilter(id: TrackFilterId, points: TrackPoint[]): TrackPoint[] {
