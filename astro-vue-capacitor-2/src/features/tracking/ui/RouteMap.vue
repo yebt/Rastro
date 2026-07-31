@@ -55,21 +55,13 @@ function render(): void {
     endDot!.setLatLng(end).setStyle({ color });
   }
 
-  // Fit once, then only re-fit when the growing track leaves the view — keeps
-  // the map from jittering on every live fix.
-  if (pts.length === 1) {
-    if (!fitted) {
-      map.setView(start, 16);
-      fitted = true;
-    } else {
-      map.panTo(end);
-    }
-  } else {
-    const bounds = line.getBounds();
-    if (!fitted || !map.getBounds().contains(bounds)) {
-      map.fitBounds(bounds, { padding: [24, 24], maxZoom: 17 });
-      fitted = true;
-    }
+  // Frame the route ONCE, then never touch the view again — otherwise every live
+  // fix would fight the user's zoom/pan. The polyline scales with the map on its
+  // own, so growth stays in sync; the user pans/zooms freely.
+  if (!fitted) {
+    if (pts.length === 1) map.setView(start, 16);
+    else map.fitBounds(line.getBounds(), { padding: [24, 24], maxZoom: 17 });
+    fitted = true;
   }
 }
 
@@ -132,10 +124,12 @@ onUnmounted(() => {
 .empty {
   position: absolute;
   inset: 0;
+  z-index: 500;
   display: grid;
   place-items: center;
   font-size: 12px;
   color: var(--muted);
-  pointer-events: none;
+  /* Opaque so the initial world map doesn't show before the first fix. */
+  background: var(--surface);
 }
 </style>
