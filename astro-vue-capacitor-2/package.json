@@ -41,6 +41,7 @@
     "capacitor-native-settings": "^8.1.0",
     "cordova-plugin-request-location-accuracy": "^2.3.0",
     "idb": "^8.0.3",
+    "leaflet": "^1.9.4",
     "nanostores": "^1.4.1",
     "vue": "^3.5.40"
   },
@@ -49,6 +50,7 @@
     "@capacitor/android": "^8.4.2",
     "@capacitor/cli": "^8.4.2",
     "@iconify-json/lucide": "^1.2.119",
+    "@types/leaflet": "^1.9.21",
     "@types/qrcode-terminal": "^0.12.2",
     "@vitejs/plugin-basic-ssl": "^2.3.0",
     "@vitejs/plugin-vue": "^6.0.8",
