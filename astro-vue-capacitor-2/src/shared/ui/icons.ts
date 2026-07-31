@@ -22,6 +22,7 @@ import IconEyeOff from "~icons/lucide/eye-off";
 import IconFootprints from "~icons/lucide/footprints";
 import IconHouse from "~icons/lucide/house";
 import IconInfo from "~icons/lucide/info";
+import IconLocate from "~icons/lucide/locate-fixed";
 import IconMapPin from "~icons/lucide/map-pin";
 import IconPalette from "~icons/lucide/palette";
 import IconPause from "~icons/lucide/pause";
@@ -65,6 +66,7 @@ export const ICONS = {
   walk: IconFootprints,
   jog: IconWind,
   run: IconRabbit,
+  locate: IconLocate,
 } satisfies Record<string, Component>;
 
 export type IconName = keyof typeof ICONS;

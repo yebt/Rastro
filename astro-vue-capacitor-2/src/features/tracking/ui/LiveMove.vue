@@ -22,6 +22,11 @@ const { status, activity, error, steps, cadence, elapsedMs, requestFinish, cance
 const backArmed = useStore($backArmed);
 const finishRequested = useStore($finishRequested);
 
+const routeMap = ref<InstanceType<typeof RouteMap>>();
+function recenter(): void {
+  routeMap.value?.recenter();
+}
+
 const paused = computed(() => status.value === "paused");
 const type = computed(() => activity.value?.type ?? "walk");
 const title = computed(() => (activity.value ? MOVE_LABEL[activity.value.type] : "Actividad"));
@@ -90,7 +95,7 @@ watch(finishRequested, (requested) => {
 
 <template>
   <div class="live">
-    <RouteMap :points="clean" fill class="map-bg" />
+    <RouteMap ref="routeMap" :points="clean" fill class="map-bg" />
 
     <div class="overlay">
       <header class="top">
@@ -101,14 +106,19 @@ watch(finishRequested, (requested) => {
             <i class="dot" />{{ paused ? "En pausa" : "Registrando" }}
           </span>
         </span>
-        <button
-          type="button"
-          class="toggle"
-          :aria-label="showStats ? 'Modo compacto' : 'Ver datos'"
-          @click="showStats = !showStats"
-        >
-          <AppIcon :name="showStats ? 'eyeOff' : 'eye'" size="20px" />
-        </button>
+        <div class="top-actions">
+          <button type="button" class="toggle" aria-label="Centrar en mi posición" @click="recenter">
+            <AppIcon name="locate" size="20px" />
+          </button>
+          <button
+            type="button"
+            class="toggle"
+            :aria-label="showStats ? 'Modo compacto' : 'Ver datos'"
+            @click="showStats = !showStats"
+          >
+            <AppIcon :name="showStats ? 'eyeOff' : 'eye'" size="20px" />
+          </button>
+        </div>
       </header>
 
       <div v-if="showStats" class="clock">
@@ -253,6 +263,10 @@ watch(finishRequested, (requested) => {
   height: 8px;
   border-radius: 50%;
   background: currentColor;
+}
+.top-actions {
+  display: flex;
+  gap: var(--sp-2);
 }
 .toggle {
   flex: none;

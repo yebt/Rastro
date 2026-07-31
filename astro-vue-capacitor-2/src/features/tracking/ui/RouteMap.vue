@@ -21,6 +21,10 @@ let line: L.Polyline | null = null;
 let startDot: L.CircleMarker | null = null;
 let endDot: L.CircleMarker | null = null;
 let fitted = false;
+// Touching the layers mid-pinch breaks Leaflet's zoom transform (the route jumps),
+// so hold updates while zooming and flush them once it settles.
+let zooming = false;
+let pendingRender = false;
 
 function accent(): string {
   const v = host.value && getComputedStyle(host.value).getPropertyValue("--accent").trim();
@@ -33,6 +37,10 @@ function latlngs(): [number, number][] {
 
 function render(): void {
   if (!map) return;
+  if (zooming) {
+    pendingRender = true; // don't mutate layers mid-pinch
+    return;
+  }
   const pts = latlngs();
   hasRoute.value = pts.length > 0;
   if (pts.length === 0) return;
@@ -79,6 +87,17 @@ onMounted(() => {
   }).setView([0, 0], 2);
   L.tileLayer(TILES, { subdomains: "abcd", maxZoom: 20, detectRetina: true }).addTo(map);
 
+  map.on("zoomstart", () => {
+    zooming = true;
+  });
+  map.on("zoomend", () => {
+    zooming = false;
+    if (pendingRender) {
+      pendingRender = false;
+      render();
+    }
+  });
+
   // Fit only after the container has its real size, or the projection is stale
   // and every later update lands off until a zoom recomputes it.
   requestAnimationFrame(() => {
@@ -88,6 +107,14 @@ onMounted(() => {
   resizeObs = new ResizeObserver(() => map?.invalidateSize());
   resizeObs.observe(host.value!);
 });
+
+/** Jump back to the current position (last fix), keeping a usable zoom. */
+function recenter(): void {
+  const pts = latlngs();
+  if (!map || pts.length === 0) return;
+  map.setView(pts[pts.length - 1]!, Math.max(map.getZoom(), 16));
+}
+defineExpose({ recenter });
 
 watch(() => props.points, render, { deep: false });
 
