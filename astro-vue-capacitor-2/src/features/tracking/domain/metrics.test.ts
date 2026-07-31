@@ -3,12 +3,20 @@ import {
   avgPaceSecPerKm,
   avgSpeedMps,
   distanceMeters,
+  elevationGainM,
+  elevationLossM,
+  hasElevation,
   haversineMeters,
   movingDurationMs,
   pausedMs,
   spanMs,
 } from "./metrics";
 import type { TrackPoint } from "./track-point";
+
+/** Point carrying only an altitude — the axis elevation cares about. */
+function alt(a: number | null): TrackPoint {
+  return { lat: 0, lng: 0, t: 0, alt: a, acc: null, altAcc: null, spd: null };
+}
 
 /** Terse TrackPoint builder — only lat/lng/t matter for these metrics. */
 function p(lat: number, lng: number, t: number): TrackPoint {
@@ -46,6 +54,23 @@ describe("tracking metrics", () => {
     // 111.195 m in 1s of moving time -> ~111.2 m/s.
     const pts = [p(0, 0, 0), p(0, 0.001, 1000)];
     expect(avgSpeedMps(pts)).toBeCloseTo(111.2, 0);
+  });
+
+  it("elevationGain sums real ascent and ignores noise", () => {
+    expect(elevationGainM([alt(0), alt(5), alt(10), alt(15)])).toBe(15); // steady climb
+    expect(elevationGainM([alt(0), alt(1), alt(-1), alt(2), alt(-2), alt(0)])).toBe(0); // ±<3 wobble
+    expect(elevationGainM([alt(0), alt(1), alt(4), alt(3), alt(7)])).toBe(7); // climb through noise
+  });
+
+  it("elevationLoss sums real descent", () => {
+    expect(elevationLossM([alt(20), alt(15), alt(10)])).toBe(10);
+    expect(elevationLossM([alt(0), alt(1), alt(-1)])).toBe(0);
+  });
+
+  it("elevation skips points without altitude", () => {
+    expect(elevationGainM([alt(0), alt(null), alt(5)])).toBe(5);
+    expect(hasElevation([alt(null), alt(null)])).toBe(false);
+    expect(hasElevation([alt(null), alt(3)])).toBe(true);
   });
 
   it("pausedMs is total wall time minus moving time", () => {

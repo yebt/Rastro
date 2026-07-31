@@ -59,6 +59,58 @@ export function avgSpeedMps(points: TrackPoint[]): number {
 }
 
 /**
+ * Cumulative ascent in metres from the altitude series, with hysteresis to
+ * suppress GPS altitude noise: only a rise past `minStep` from the last confirmed
+ * altitude counts, so small wobble doesn't inflate the total. A descent past
+ * `minStep` re-bases the reference. Points without altitude are skipped.
+ */
+export function elevationGainM(points: TrackPoint[], minStep = 3): number {
+  let gain = 0;
+  let ref: number | null = null;
+  for (const p of points) {
+    if (p.alt === null) continue;
+    if (ref === null) {
+      ref = p.alt;
+      continue;
+    }
+    const d = p.alt - ref;
+    if (d >= minStep) {
+      gain += d;
+      ref = p.alt;
+    } else if (d <= -minStep) {
+      ref = p.alt;
+    }
+  }
+  return gain;
+}
+
+/** Cumulative descent in metres, same hysteresis as elevationGainM. */
+export function elevationLossM(points: TrackPoint[], minStep = 3): number {
+  let loss = 0;
+  let ref: number | null = null;
+  for (const p of points) {
+    if (p.alt === null) continue;
+    if (ref === null) {
+      ref = p.alt;
+      continue;
+    }
+    const d = p.alt - ref;
+    if (d <= -minStep) {
+      loss += -d;
+      ref = p.alt;
+    } else if (d >= minStep) {
+      ref = p.alt;
+    }
+  }
+  return loss;
+}
+
+/** Whether any point carries an altitude reading (so the UI can show "—"). */
+export function hasElevation(points: TrackPoint[]): boolean {
+  return points.some((p) => p.alt !== null);
+}
+
+/**
  * Time spent paused, in ms: total wall time (end − start) minus moving time.
  * 0 while the activity is still open (no end) or when nothing was paused.
  */

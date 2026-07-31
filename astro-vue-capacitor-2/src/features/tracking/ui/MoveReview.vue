@@ -4,7 +4,14 @@ import { AppButton, AppScreen, Card } from "../../../shared/ui";
 import { useRecorder } from "../../recording";
 import type { MoveType } from "../domain/activity";
 import { cleanTrack } from "../domain/clean";
-import { avgPaceSecPerKm, avgSpeedMps, distanceMeters, pausedMs } from "../domain/metrics";
+import {
+  avgPaceSecPerKm,
+  avgSpeedMps,
+  distanceMeters,
+  elevationGainM,
+  hasElevation,
+  pausedMs,
+} from "../domain/metrics";
 import { distanceParts, formatDuration, formatPace, formatSpeed } from "./format";
 
 /** Post-finish summary. The activity is already saved; "Listo" clears the
@@ -30,6 +37,9 @@ const pauses = computed(() => activity.value?.pauses ?? 0);
 const pace = computed(() => formatPace(avgPaceSecPerKm(clean.value)));
 const speed = computed(() => formatSpeed(avgSpeedMps(clean.value)));
 const steps = computed(() => activity.value?.steps ?? null);
+const elevation = computed(() =>
+  hasElevation(points.value) ? `+${Math.round(elevationGainM(points.value))} m` : "—",
+);
 
 function done(): void {
   void discard();
@@ -62,6 +72,10 @@ function done(): void {
         <div class="row">
           <dt>Velocidad media</dt>
           <dd>{{ speed }} km/h</dd>
+        </div>
+        <div class="row">
+          <dt>Desnivel +</dt>
+          <dd>{{ elevation }}</dd>
         </div>
         <div class="row">
           <dt>Pasos</dt>

@@ -8,8 +8,10 @@ import {
   avgSpeedMps,
   distanceMeters,
   distanceParts,
+  elevationGainM,
   formatActivityDate,
   formatDuration,
+  hasElevation,
   formatPace,
   formatSpeed,
   type MoveActivity,
@@ -37,6 +39,9 @@ const paused = computed(() =>
 );
 const pace = computed(() => formatPace(avgPaceSecPerKm(clean.value)));
 const speed = computed(() => formatSpeed(avgSpeedMps(clean.value)));
+const elevation = computed(() =>
+  hasElevation(points.value) ? `+${Math.round(elevationGainM(points.value))} m` : "—",
+);
 
 async function onDelete(): Promise<void> {
   await deleteActivity(props.activity.id);
@@ -81,6 +86,10 @@ async function onDelete(): Promise<void> {
         <div class="row">
           <dt>Velocidad media</dt>
           <dd>{{ speed }} km/h</dd>
+        </div>
+        <div class="row">
+          <dt>Desnivel +</dt>
+          <dd>{{ elevation }}</dd>
         </div>
         <div class="row">
           <dt>Pasos</dt>
