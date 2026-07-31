@@ -104,6 +104,9 @@ onUnmounted(() => {
 <style scoped>
 .map {
   position: relative;
+  /* Contain Leaflet's internal pane z-indexes so they can't paint over sibling
+     overlays (e.g. the live controls). */
+  isolation: isolate;
   aspect-ratio: 3 / 2;
   width: 100%;
   background: var(--surface);
