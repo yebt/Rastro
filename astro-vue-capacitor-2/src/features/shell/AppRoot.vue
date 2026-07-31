@@ -7,6 +7,7 @@ import { applyTheme } from "../settings/settings.store";
 import SettingsRoot from "../settings/SettingsRoot.vue";
 import { $setupDone } from "../setup/setup.store";
 import SetupScreen from "../setup/SetupScreen.vue";
+import ProfileScreen from "../history/ProfileScreen.vue";
 import HomeScreen from "../home/HomeScreen.vue";
 import LiveMove from "../tracking/ui/LiveMove.vue";
 import WorkoutScreen from "../tracking/ui/WorkoutScreen.vue";
@@ -50,6 +51,7 @@ onBeforeUnmount(() => {
       <main class="app-main">
         <HomeScreen v-if="active === 'home'" />
         <WorkoutScreen v-else-if="active === 'workout'" />
+        <ProfileScreen v-else-if="active === 'profile'" />
         <SettingsRoot v-else-if="active === 'more'" />
         <PlaceholderScreen v-else :key="active" :title="activeLabel" />
       </main>
