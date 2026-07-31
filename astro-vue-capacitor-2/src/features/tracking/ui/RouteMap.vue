@@ -65,21 +65,35 @@ function render(): void {
   }
 }
 
+let resizeObs: ResizeObserver | null = null;
+
 onMounted(() => {
   map = L.map(host.value!, {
     zoomControl: false,
     attributionControl: false,
     dragging: true,
+    // Inside the fixed immersive overlay, Leaflet's animated transforms glitch
+    // (the layer jumps on zoom); instant zoom keeps everything aligned.
+    zoomAnimation: false,
+    fadeAnimation: false,
   }).setView([0, 0], 2);
   L.tileLayer(TILES, { subdomains: "abcd", maxZoom: 20, detectRetina: true }).addTo(map);
-  // The container may have been sized after Leaflet measured it.
-  requestAnimationFrame(() => map?.invalidateSize());
-  render();
+
+  // Fit only after the container has its real size, or the projection is stale
+  // and every later update lands off until a zoom recomputes it.
+  requestAnimationFrame(() => {
+    map?.invalidateSize();
+    render();
+  });
+  resizeObs = new ResizeObserver(() => map?.invalidateSize());
+  resizeObs.observe(host.value!);
 });
 
 watch(() => props.points, render, { deep: false });
 
 onUnmounted(() => {
+  resizeObs?.disconnect();
+  resizeObs = null;
   map?.remove();
   map = null;
   line = startDot = endDot = null;
