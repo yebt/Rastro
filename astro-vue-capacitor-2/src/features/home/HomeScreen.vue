@@ -84,6 +84,7 @@ const weekTime = computed(() => formatDuration(summary.value.movingMs));
 .wk {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 2px;
   text-align: center;
 }

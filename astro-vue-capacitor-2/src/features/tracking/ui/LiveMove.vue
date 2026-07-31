@@ -10,17 +10,18 @@ import { MOVE_LABEL } from "./labels";
 import RouteMap from "./RouteMap.vue";
 
 /**
- * Immersive recording screen: a full-bleed route map with the stats as a
- * toggleable blur panel (hide it to watch the map and see if you're moving), and
- * the controls pinned to the bottom so they're always reachable — no scrolling.
+ * Immersive recording screen: a full-bleed route map with the stats in a
+ * toggleable blur panel (hide it for a compact time+distance readout and a clear
+ * view of the map), and pause/finish pinned to the bottom — no scrolling.
  */
-const { status, activity, error, steps, cadence, elapsedMs, pause, resume, finish, discard } =
+const { status, activity, error, steps, cadence, elapsedMs, pauseForFinish, pause, resume, finish, discard } =
   useRecorder();
 
 const backArmed = useStore($backArmed);
 const finishRequested = useStore($finishRequested);
 
 const paused = computed(() => status.value === "paused");
+const type = computed(() => activity.value?.type ?? "walk");
 const title = computed(() => (activity.value ? MOVE_LABEL[activity.value.type] : "Actividad"));
 
 const points = computed(() => activity.value?.points ?? []);
@@ -32,12 +33,18 @@ const speed = computed(() => formatSpeed(avgSpeedMps(clean.value)));
 const showStats = ref(true);
 const confirming = ref(false);
 const isShort = computed(() => elapsedMs.value < 10_000);
+// Whether opening the confirm actually paused (vs. the user had already paused),
+// so "keep going" only resumes when it should.
+const didPauseForFinish = ref(false);
 
-function onFinish(): void {
+async function openFinishConfirm(): Promise<void> {
+  didPauseForFinish.value = status.value === "recording";
+  if (didPauseForFinish.value) await pauseForFinish();
   confirming.value = true;
 }
 function keepGoing(): void {
   confirming.value = false;
+  if (didPauseForFinish.value) void resume();
 }
 function confirmFinish(): void {
   confirming.value = false;
@@ -48,10 +55,10 @@ function confirmDiscard(): void {
   void discard();
 }
 
-// Second hardware-back press asks to finish.
+// Second hardware-back press asks to finish (freezing the stats too).
 watch(finishRequested, (requested) => {
   if (requested) {
-    confirming.value = true;
+    void openFinishConfirm();
     clearFinishRequest();
   }
 });
@@ -64,6 +71,7 @@ watch(finishRequested, (requested) => {
     <div class="overlay">
       <header class="top">
         <span class="meta">
+          <AppIcon :name="type" size="20px" class="type-ic" />
           <span class="type">{{ title }}</span>
           <span class="status" :class="{ paused }">
             <i class="dot" />{{ paused ? "En pausa" : "Registrando" }}
@@ -72,16 +80,21 @@ watch(finishRequested, (requested) => {
         <button
           type="button"
           class="toggle"
-          :aria-label="showStats ? 'Ocultar datos' : 'Ver datos'"
+          :aria-label="showStats ? 'Modo compacto' : 'Ver datos'"
           @click="showStats = !showStats"
         >
           <AppIcon :name="showStats ? 'eyeOff' : 'eye'" size="20px" />
         </button>
       </header>
 
-      <div class="clock">
+      <div v-if="showStats" class="clock">
         <div class="clock-time">{{ formatDuration(elapsedMs) }}</div>
         <div class="clock-label">Tiempo en movimiento</div>
+      </div>
+      <div v-else class="clock-compact">
+        <span class="ct-time">{{ formatDuration(elapsedMs) }}</span>
+        <span class="ct-sep">·</span>
+        <span class="ct-dist">{{ distance.value }} {{ distance.unit }}</span>
       </div>
 
       <div class="spacer" />
@@ -106,24 +119,37 @@ watch(finishRequested, (requested) => {
       </transition>
 
       <div class="actions">
-        <AppButton v-if="paused" size="lg" block @press="resume()">Reanudar</AppButton>
-        <AppButton v-else size="lg" block variant="ghost" @press="pause()">Pausar</AppButton>
-        <AppButton size="lg" block variant="danger" @press="onFinish">Finalizar</AppButton>
+        <div class="act">
+          <AppButton v-if="paused" size="lg" block icon="play" @press="resume()">Reanudar</AppButton>
+          <AppButton v-else size="lg" block variant="ghost" icon="pause" @press="pause()">
+            Pausar
+          </AppButton>
+        </div>
+        <div class="act">
+          <AppButton size="lg" block variant="danger" icon="stop" @press="openFinishConfirm">
+            Finalizar
+          </AppButton>
+        </div>
       </div>
     </div>
 
     <div v-if="confirming" class="sheet-backdrop" @click.self="keepGoing">
       <div class="sheet" role="alertdialog" aria-label="Finalizar actividad">
         <div class="sheet-title">¿Finalizar la actividad?</div>
-        <p v-if="isShort" class="sheet-text">
-          Es muy corta (menos de 10 segundos). Quizá fue un arranque en falso.
+        <p class="sheet-text">
+          <template v-if="isShort">
+            Es muy corta (menos de 10 segundos). Quizá fue un arranque en falso.
+          </template>
+          <template v-else>Guardás tu recorrido y ves el resumen.</template>
         </p>
         <div class="sheet-actions">
-          <AppButton block variant="ghost" @press="keepGoing">Seguir</AppButton>
-          <AppButton v-if="isShort" block variant="danger" @press="confirmDiscard">
+          <AppButton size="lg" block variant="danger" icon="stop" @press="confirmFinish">
+            Finalizar
+          </AppButton>
+          <AppButton v-if="isShort" size="lg" block variant="ghost" icon="trash" @press="confirmDiscard">
             Descartar
           </AppButton>
-          <AppButton block @press="confirmFinish">Finalizar</AppButton>
+          <AppButton size="lg" block variant="ghost" @press="keepGoing">Seguir grabando</AppButton>
         </div>
       </div>
     </div>
@@ -164,8 +190,12 @@ watch(finishRequested, (requested) => {
 }
 .meta {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px var(--sp-2);
+}
+.type-ic {
+  color: var(--accent);
 }
 .type {
   font-family: var(--font-cond);
@@ -192,6 +222,7 @@ watch(finishRequested, (requested) => {
   background: currentColor;
 }
 .toggle {
+  flex: none;
   display: grid;
   place-items: center;
   width: 40px;
@@ -219,6 +250,24 @@ watch(finishRequested, (requested) => {
   margin-top: var(--sp-2);
   font-size: 12px;
   color: var(--muted);
+}
+.clock-compact {
+  margin-top: var(--sp-3);
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: 30px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 12px var(--bg);
+}
+.ct-sep {
+  color: var(--muted);
+}
+.ct-dist {
+  color: var(--accent);
 }
 .stats {
   display: grid;
@@ -266,8 +315,11 @@ watch(finishRequested, (requested) => {
 }
 .actions {
   display: flex;
-  flex-direction: column;
   gap: var(--sp-3);
+}
+.act {
+  flex: 1;
+  min-width: 0;
 }
 .rise-enter-active,
 .rise-leave-active {
@@ -294,33 +346,35 @@ watch(finishRequested, (requested) => {
   z-index: 1300;
   display: flex;
   align-items: flex-end;
-  background: color-mix(in srgb, black 45%, transparent);
+  background: color-mix(in srgb, black 55%, transparent);
   padding: var(--sp-4);
   padding-bottom: calc(var(--safe-b) + var(--sp-4));
+  backdrop-filter: blur(2px);
 }
 .sheet {
   width: 100%;
   max-width: 520px;
   margin: 0 auto;
-  background: var(--bg);
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
   padding: var(--sp-5);
 }
 .sheet-title {
   font-family: var(--font-cond);
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 600;
   text-transform: uppercase;
 }
 .sheet-text {
-  margin: var(--sp-2) 0 var(--sp-4);
+  margin: var(--sp-2) 0 var(--sp-5);
   font-size: 13px;
   color: var(--muted);
   line-height: 1.5;
 }
 .sheet-actions {
   display: flex;
+  flex-direction: column;
   gap: var(--sp-3);
 }
 </style>

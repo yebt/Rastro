@@ -24,14 +24,18 @@ import IconHouse from "~icons/lucide/house";
 import IconInfo from "~icons/lucide/info";
 import IconMapPin from "~icons/lucide/map-pin";
 import IconPalette from "~icons/lucide/palette";
+import IconPause from "~icons/lucide/pause";
 import IconPlay from "~icons/lucide/play";
 import IconPlus from "~icons/lucide/plus";
+import IconRabbit from "~icons/lucide/rabbit";
 import IconSettings from "~icons/lucide/settings";
 import IconShield from "~icons/lucide/shield-check";
+import IconSquare from "~icons/lucide/square";
 import IconTheme from "~icons/lucide/sun-moon";
 import IconTrash from "~icons/lucide/trash-2";
 import IconUpload from "~icons/lucide/upload";
 import IconUser from "~icons/lucide/user";
+import IconWind from "~icons/lucide/wind";
 
 export const ICONS = {
   home: IconHouse,
@@ -56,6 +60,11 @@ export const ICONS = {
   trash: IconTrash,
   eye: IconEye,
   eyeOff: IconEyeOff,
+  pause: IconPause,
+  stop: IconSquare,
+  walk: IconFootprints,
+  jog: IconWind,
+  run: IconRabbit,
 } satisfies Record<string, Component>;
 
 export type IconName = keyof typeof ICONS;

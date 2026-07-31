@@ -97,6 +97,30 @@ describe("recorder", () => {
     expect(((await repo.get(done!.id)) as MoveActivity).steps).toBe(1234);
   });
 
+  it("pauseForFinish freezes the finish instant despite a slow confirm", async () => {
+    clock = 0;
+    await rec.start("run");
+    clock = 5000;
+    await rec.pauseForFinish(); // finish instant = 5000
+    clock = 20_000; // user takes a while to confirm
+    const done = await rec.finish();
+    expect(done?.endedAt).toBe(5000);
+    expect(done?.movingMs).toBe(5000);
+  });
+
+  it("resume after pauseForFinish drops the frozen instant and doesn't count a pause", async () => {
+    clock = 0;
+    await rec.start("jog");
+    clock = 4000;
+    await rec.pauseForFinish();
+    clock = 6000;
+    await rec.resume();
+    clock = 9000;
+    const done = await rec.finish();
+    expect(done?.endedAt).toBe(9000); // normal end, not the frozen 4000
+    expect(done?.pauses).toBe(0); // pauseForFinish is not a real pause
+  });
+
   it("counts pauses and stores the total on finish", async () => {
     await rec.start("jog");
     await rec.pause();

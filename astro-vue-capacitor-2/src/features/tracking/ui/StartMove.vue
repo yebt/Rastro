@@ -24,11 +24,12 @@ const TYPES: { type: MoveType; label: string; hint: string }[] = [
         class="choice"
         @click="emit('select', t.type)"
       >
+        <AppIcon :name="t.type" size="24px" class="choice-lead" />
         <span class="choice-text">
           <b>{{ t.label }}</b>
           <small>{{ t.hint }}</small>
         </span>
-        <AppIcon name="play" size="20px" class="choice-ic" />
+        <AppIcon name="play" size="18px" class="choice-ic" />
       </button>
     </div>
   </AppScreen>
@@ -58,6 +59,10 @@ const TYPES: { type: MoveType; label: string; hint: string }[] = [
 }
 .choice:active {
   border-color: var(--ink);
+}
+.choice-lead {
+  flex: none;
+  color: var(--ink);
 }
 .choice-text {
   flex: 1;

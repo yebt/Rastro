@@ -40,6 +40,12 @@ export interface Recorder {
   elapsedMs(): number;
   start(type: MoveType): Promise<void>;
   pause(): Promise<void>;
+  /**
+   * Freeze for a finish decision: like pause but it doesn't count as a pause and
+   * it stamps the finish instant, so a slow confirmation keeps the stats as they
+   * were when the user hit finish. resume() undoes it if they keep going.
+   */
+  pauseForFinish(): Promise<void>;
   resume(): Promise<void>;
   /** Stop, stamp the end time, and persist. Returns the saved activity. */
   finish(): Promise<MoveActivity | null>;
@@ -57,6 +63,9 @@ export function createRecorder(deps: RecorderDeps): Recorder {
   let accumulatedMs = 0;
   let movingSince: number | null = null;
   let pauseCount = 0;
+  // Set when finishing was requested, so finish() stamps that instant, not the
+  // (possibly later) moment the user confirms.
+  let finishAt: number | null = null;
 
   async function startWatch(): Promise<void> {
     watch = await deps.geo.watch(
@@ -91,6 +100,7 @@ export function createRecorder(deps: RecorderDeps): Recorder {
       accumulatedMs = 0;
       movingSince = at;
       pauseCount = 0;
+      finishAt = null;
       $error.set(null);
       $activity.set(startMove(type, at));
       $status.set("recording");
@@ -122,8 +132,21 @@ export function createRecorder(deps: RecorderDeps): Recorder {
       await stopWatch();
     },
 
+    async pauseForFinish() {
+      if ($status.get() !== "recording") return;
+      if (movingSince !== null) {
+        accumulatedMs += deps.now() - movingSince;
+        movingSince = null;
+      }
+      finishAt = deps.now(); // the stats freeze at this instant
+      $status.set("paused");
+      deps.pedometer.pause();
+      await stopWatch();
+    },
+
     async resume() {
       if ($status.get() !== "paused") return;
+      finishAt = null; // kept going — drop the pending finish instant
       movingSince = deps.now();
       $status.set("recording");
       deps.pedometer.resume();
@@ -145,11 +168,12 @@ export function createRecorder(deps: RecorderDeps): Recorder {
       if (!act) return null;
       const finished: MoveActivity = {
         ...act,
-        endedAt: deps.now(),
+        endedAt: finishAt ?? deps.now(),
         steps,
         movingMs,
         pauses: pauseCount,
       };
+      finishAt = null;
       await deps.repo.save(finished);
       $activity.set(finished);
       $status.set("finished");
@@ -162,6 +186,7 @@ export function createRecorder(deps: RecorderDeps): Recorder {
       accumulatedMs = 0;
       movingSince = null;
       pauseCount = 0;
+      finishAt = null;
       $activity.set(null);
       $error.set(null);
       $status.set("idle");

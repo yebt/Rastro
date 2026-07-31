@@ -51,6 +51,7 @@ export function useRecorder() {
     elapsedMs,
     start: recorder.start,
     pause: recorder.pause,
+    pauseForFinish: recorder.pauseForFinish,
     resume: recorder.resume,
     finish: recorder.finish,
     discard: recorder.discard,
