@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { useStore } from "@nanostores/vue";
 import { computed, ref, watch } from "vue";
-import { AppButton, AppIcon } from "../../../shared/ui";
+import { AppButton, AppIcon, SegmentedControl } from "../../../shared/ui";
 import { $backArmed, $finishRequested, clearFinishRequest, useRecorder } from "../../recording";
-import { cleanTrack } from "../domain/clean";
+import { applyFilter, TRACK_FILTERS } from "../domain/filters";
 import { avgPaceSecPerKm, avgSpeedMps, distanceMeters } from "../domain/metrics";
+import { $trackFilter, setTrackFilter } from "../track-filter.store";
 import { distanceParts, formatDuration, formatPace, formatSpeed } from "./format";
 import { MOVE_LABEL } from "./labels";
 import RouteMap from "./RouteMap.vue";
@@ -24,8 +25,11 @@ const paused = computed(() => status.value === "paused");
 const type = computed(() => activity.value?.type ?? "walk");
 const title = computed(() => (activity.value ? MOVE_LABEL[activity.value.type] : "Actividad"));
 
+const trackFilter = useStore($trackFilter);
+const filterOptions = TRACK_FILTERS.map((f) => ({ value: f.id, label: f.label }));
+
 const points = computed(() => activity.value?.points ?? []);
-const clean = computed(() => cleanTrack(points.value));
+const clean = computed(() => applyFilter(trackFilter.value, points.value));
 const distance = computed(() => distanceParts(distanceMeters(clean.value)));
 const pace = computed(() => formatPace(avgPaceSecPerKm(clean.value)));
 const speed = computed(() => formatSpeed(avgSpeedMps(clean.value)));
@@ -101,14 +105,21 @@ watch(finishRequested, (requested) => {
 
       <transition name="rise">
         <div v-if="showStats" class="stats">
-          <div class="tile">
-            <b>{{ distance.value }}</b><small>{{ distance.unit }}</small>
+          <div class="grid">
+            <div class="tile">
+              <b>{{ distance.value }}</b><small>{{ distance.unit }}</small>
+            </div>
+            <div class="tile"><b>{{ pace }}</b><small>/km</small></div>
+            <div class="tile"><b>{{ speed }}</b><small>km/h</small></div>
+            <div class="tile"><b>{{ steps }}</b><small>pasos</small></div>
+            <div class="tile"><b>{{ cadence }}</b><small>p/min</small></div>
+            <div class="tile"><b>{{ points.length }}</b><small>puntos</small></div>
           </div>
-          <div class="tile"><b>{{ pace }}</b><small>/km</small></div>
-          <div class="tile"><b>{{ speed }}</b><small>km/h</small></div>
-          <div class="tile"><b>{{ steps }}</b><small>pasos</small></div>
-          <div class="tile"><b>{{ cadence }}</b><small>p/min</small></div>
-          <div class="tile"><b>{{ points.length }}</b><small>puntos</small></div>
+          <SegmentedControl
+            :options="filterOptions"
+            :model-value="trackFilter"
+            @update:model-value="setTrackFilter"
+          />
         </div>
       </transition>
 
@@ -270,15 +281,20 @@ watch(finishRequested, (requested) => {
   color: var(--accent);
 }
 .stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: var(--sp-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
   padding: var(--sp-3);
   margin-bottom: var(--sp-3);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
   background: color-mix(in srgb, var(--bg) 62%, transparent);
   backdrop-filter: blur(16px);
+}
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--sp-2);
 }
 .tile {
   display: flex;

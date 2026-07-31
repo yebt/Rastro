@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import { useStore } from "@nanostores/vue";
 import { computed } from "vue";
-import { AppButton, AppSubScreen, Card } from "../../shared/ui";
+import { AppButton, AppSubScreen, Card, Label, SegmentedControl } from "../../shared/ui";
 import {
+  applyFilter,
   avgPaceSecPerKm,
   avgSpeedMps,
-  cleanTrack,
   distanceMeters,
   distanceParts,
   formatActivityDate,
@@ -14,6 +15,9 @@ import {
   type MoveActivity,
   MOVE_LABEL,
   pausedMs,
+  setTrackFilter,
+  $trackFilter,
+  TRACK_FILTERS,
 } from "../tracking";
 import RouteMap from "../tracking/ui/RouteMap.vue";
 import { deleteActivity } from "./history.store";
@@ -21,8 +25,11 @@ import { deleteActivity } from "./history.store";
 const props = defineProps<{ activity: MoveActivity }>();
 const emit = defineEmits<{ back: [] }>();
 
+const trackFilter = useStore($trackFilter);
+const filterOptions = TRACK_FILTERS.map((f) => ({ value: f.id, label: f.label }));
+
 const points = computed(() => props.activity.points);
-const clean = computed(() => cleanTrack(points.value));
+const clean = computed(() => applyFilter(trackFilter.value, points.value));
 const dist = computed(() => distanceParts(distanceMeters(clean.value)));
 const duration = computed(() => formatDuration(props.activity.movingMs ?? 0));
 const paused = computed(() =>
@@ -40,6 +47,15 @@ async function onDelete(): Promise<void> {
 <template>
   <AppSubScreen :title="MOVE_LABEL[activity.type]" @back="emit('back')">
     <RouteMap :points="clean" />
+
+    <div class="filter">
+      <Label>Filtro de traza (test)</Label>
+      <SegmentedControl
+        :options="filterOptions"
+        :model-value="trackFilter"
+        @update:model-value="setTrackFilter"
+      />
+    </div>
 
     <Card>
       <div class="headline">
@@ -82,6 +98,11 @@ async function onDelete(): Promise<void> {
 </template>
 
 <style scoped>
+.filter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
 .headline {
   display: flex;
   flex-direction: column;

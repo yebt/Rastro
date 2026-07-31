@@ -14,6 +14,14 @@ export type {
 export { newId, startExercise, startMove } from "./domain/activity";
 export { cleanTrack } from "./domain/clean";
 export {
+  applyFilter,
+  type TrackFilterDef,
+  type TrackFilterId,
+  TRACK_FILTERS,
+} from "./domain/filters";
+export { kalmanFilter } from "./domain/kalman";
+export { $trackFilter, setTrackFilter } from "./track-filter.store";
+export {
   avgPaceSecPerKm,
   avgSpeedMps,
   distanceMeters,
