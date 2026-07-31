@@ -97,28 +97,41 @@ describe("recorder", () => {
     expect(((await repo.get(done!.id)) as MoveActivity).steps).toBe(1234);
   });
 
-  it("pauseForFinish freezes the finish instant despite a slow confirm", async () => {
+  it("requestFinish ends at the finish instant despite a slow confirm", async () => {
     clock = 0;
     await rec.start("run");
     clock = 5000;
-    await rec.pauseForFinish(); // finish instant = 5000
+    rec.requestFinish(); // finish instant = 5000
     clock = 20_000; // user takes a while to confirm
     const done = await rec.finish();
     expect(done?.endedAt).toBe(5000);
     expect(done?.movingMs).toBe(5000);
   });
 
-  it("resume after pauseForFinish drops the frozen instant and doesn't count a pause", async () => {
+  it("cancelFinish (keep going) loses no time and counts no pause", async () => {
     clock = 0;
     await rec.start("jog");
     clock = 4000;
-    await rec.pauseForFinish();
+    rec.requestFinish();
     clock = 6000;
-    await rec.resume();
+    rec.cancelFinish(); // kept going — the 4000–6000 confirm window must survive
     clock = 9000;
     const done = await rec.finish();
-    expect(done?.endedAt).toBe(9000); // normal end, not the frozen 4000
-    expect(done?.pauses).toBe(0); // pauseForFinish is not a real pause
+    expect(done?.endedAt).toBe(9000);
+    expect(done?.movingMs).toBe(9000); // nothing lost
+    expect(done?.pauses).toBe(0);
+  });
+
+  it("finish drops fixes captured after the finish instant", async () => {
+    clock = 0;
+    await rec.start("run");
+    geo.emit(sample(1000));
+    geo.emit(sample(2000, 1));
+    clock = 2500;
+    rec.requestFinish(); // instant = 2500
+    geo.emit(sample(3000, 2)); // arrives while the confirm is open — after the instant
+    const done = await rec.finish();
+    expect((done as MoveActivity).points.map((p) => p.t)).toEqual([1000, 2000]);
   });
 
   it("counts pauses and stores the total on finish", async () => {

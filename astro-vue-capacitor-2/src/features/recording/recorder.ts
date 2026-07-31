@@ -41,11 +41,13 @@ export interface Recorder {
   start(type: MoveType): Promise<void>;
   pause(): Promise<void>;
   /**
-   * Freeze for a finish decision: like pause but it doesn't count as a pause and
-   * it stamps the finish instant, so a slow confirmation keeps the stats as they
-   * were when the user hit finish. resume() undoes it if they keep going.
+   * Mark the finish instant WITHOUT pausing: recording keeps running behind the
+   * confirmation, so a later finish() ends exactly here (points after it dropped),
+   * while cancelFinish() (keep going) loses nothing — the time and fixes during
+   * the confirmation were still recorded. The UI freezes its own display.
    */
-  pauseForFinish(): Promise<void>;
+  requestFinish(): void;
+  cancelFinish(): void;
   resume(): Promise<void>;
   /** Stop, stamp the end time, and persist. Returns the saved activity. */
   finish(): Promise<MoveActivity | null>;
@@ -132,21 +134,18 @@ export function createRecorder(deps: RecorderDeps): Recorder {
       await stopWatch();
     },
 
-    async pauseForFinish() {
+    requestFinish() {
       if ($status.get() !== "recording") return;
-      if (movingSince !== null) {
-        accumulatedMs += deps.now() - movingSince;
-        movingSince = null;
-      }
-      finishAt = deps.now(); // the stats freeze at this instant
-      $status.set("paused");
-      deps.pedometer.pause();
-      await stopWatch();
+      finishAt = deps.now(); // finish() will end here; recording keeps running
+    },
+
+    cancelFinish() {
+      finishAt = null; // kept going — nothing was paused, so nothing is lost
     },
 
     async resume() {
       if ($status.get() !== "paused") return;
-      finishAt = null; // kept going — drop the pending finish instant
+      finishAt = null;
       movingSince = deps.now();
       $status.set("recording");
       deps.pedometer.resume();
@@ -156,8 +155,11 @@ export function createRecorder(deps: RecorderDeps): Recorder {
     async finish() {
       const status = $status.get();
       if (status !== "recording" && status !== "paused") return null;
+      // End at the requested finish instant (if any), so points captured while
+      // the user weighed the confirmation don't count once they confirm.
+      const end = finishAt ?? deps.now();
       if (status === "recording" && movingSince !== null) {
-        accumulatedMs += deps.now() - movingSince;
+        accumulatedMs += Math.max(0, end - movingSince);
       }
       movingSince = null;
       const movingMs = accumulatedMs;
@@ -168,7 +170,8 @@ export function createRecorder(deps: RecorderDeps): Recorder {
       if (!act) return null;
       const finished: MoveActivity = {
         ...act,
-        endedAt: finishAt ?? deps.now(),
+        points: act.points.filter((p) => p.t <= end),
+        endedAt: end,
         steps,
         movingMs,
         pauses: pauseCount,

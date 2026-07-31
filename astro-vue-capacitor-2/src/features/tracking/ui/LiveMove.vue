@@ -5,6 +5,7 @@ import { AppButton, AppIcon, SegmentedControl } from "../../../shared/ui";
 import { $backArmed, $finishRequested, clearFinishRequest, useRecorder } from "../../recording";
 import { applyFilter, TRACK_FILTERS } from "../domain/filters";
 import { avgPaceSecPerKm, avgSpeedMps, distanceMeters } from "../domain/metrics";
+import type { TrackPoint } from "../domain/track-point";
 import { $trackFilter, setTrackFilter } from "../track-filter.store";
 import { distanceParts, formatDuration, formatPace, formatSpeed } from "./format";
 import { MOVE_LABEL } from "./labels";
@@ -15,7 +16,7 @@ import RouteMap from "./RouteMap.vue";
  * toggleable blur panel (hide it for a compact time+distance readout and a clear
  * view of the map), and pause/finish pinned to the bottom — no scrolling.
  */
-const { status, activity, error, steps, cadence, elapsedMs, pauseForFinish, pause, resume, finish, discard } =
+const { status, activity, error, steps, cadence, elapsedMs, requestFinish, cancelFinish, pause, resume, finish, discard } =
   useRecorder();
 
 const backArmed = useStore($backArmed);
@@ -28,7 +29,19 @@ const title = computed(() => (activity.value ? MOVE_LABEL[activity.value.type] :
 const trackFilter = useStore($trackFilter);
 const filterOptions = TRACK_FILTERS.map((f) => ({ value: f.id, label: f.label }));
 
-const points = computed(() => activity.value?.points ?? []);
+const rawPoints = computed(() => activity.value?.points ?? []);
+
+// While the confirm sheet is open, show a snapshot from the finish instant even
+// though recording keeps running behind it — so "keep going" loses nothing.
+const frozen = ref<{ points: TrackPoint[]; elapsed: number; steps: number; cadence: number } | null>(
+  null,
+);
+
+const points = computed(() => frozen.value?.points ?? rawPoints.value);
+const elapsed = computed(() => frozen.value?.elapsed ?? elapsedMs.value);
+const liveSteps = computed(() => frozen.value?.steps ?? steps.value);
+const liveCadence = computed(() => frozen.value?.cadence ?? cadence.value);
+
 const clean = computed(() => applyFilter(trackFilter.value, points.value));
 const distance = computed(() => distanceParts(distanceMeters(clean.value)));
 const pace = computed(() => formatPace(avgPaceSecPerKm(clean.value)));
@@ -36,33 +49,40 @@ const speed = computed(() => formatSpeed(avgSpeedMps(clean.value)));
 
 const showStats = ref(true);
 const confirming = ref(false);
-const isShort = computed(() => elapsedMs.value < 10_000);
-// Whether opening the confirm actually paused (vs. the user had already paused),
-// so "keep going" only resumes when it should.
-const didPauseForFinish = ref(false);
+const isShort = computed(() => elapsed.value < 10_000);
 
-async function openFinishConfirm(): Promise<void> {
-  didPauseForFinish.value = status.value === "recording";
-  if (didPauseForFinish.value) await pauseForFinish();
+function openFinishConfirm(): void {
+  if (status.value === "recording") {
+    frozen.value = {
+      points: rawPoints.value.slice(),
+      elapsed: elapsedMs.value,
+      steps: steps.value,
+      cadence: cadence.value,
+    };
+    requestFinish(); // mark the instant; recording keeps running behind the sheet
+  }
   confirming.value = true;
 }
 function keepGoing(): void {
   confirming.value = false;
-  if (didPauseForFinish.value) void resume();
+  frozen.value = null;
+  cancelFinish(); // nothing was paused, so nothing is lost
 }
 function confirmFinish(): void {
   confirming.value = false;
+  frozen.value = null;
   void finish();
 }
 function confirmDiscard(): void {
   confirming.value = false;
+  frozen.value = null;
   void discard();
 }
 
-// Second hardware-back press asks to finish (freezing the stats too).
+// Second hardware-back press asks to finish (freezing the display too).
 watch(finishRequested, (requested) => {
   if (requested) {
-    void openFinishConfirm();
+    openFinishConfirm();
     clearFinishRequest();
   }
 });
@@ -92,11 +112,11 @@ watch(finishRequested, (requested) => {
       </header>
 
       <div v-if="showStats" class="clock">
-        <div class="clock-time">{{ formatDuration(elapsedMs) }}</div>
+        <div class="clock-time">{{ formatDuration(elapsed) }}</div>
         <div class="clock-label">Tiempo en movimiento</div>
       </div>
       <div v-else class="clock-compact">
-        <span class="ct-time">{{ formatDuration(elapsedMs) }}</span>
+        <span class="ct-time">{{ formatDuration(elapsed) }}</span>
         <span class="ct-sep">·</span>
         <span class="ct-dist">{{ distance.value }} {{ distance.unit }}</span>
       </div>
@@ -111,8 +131,8 @@ watch(finishRequested, (requested) => {
             </div>
             <div class="tile"><b>{{ pace }}</b><small>/km</small></div>
             <div class="tile"><b>{{ speed }}</b><small>km/h</small></div>
-            <div class="tile"><b>{{ steps }}</b><small>pasos</small></div>
-            <div class="tile"><b>{{ cadence }}</b><small>p/min</small></div>
+            <div class="tile"><b>{{ liveSteps }}</b><small>pasos</small></div>
+            <div class="tile"><b>{{ liveCadence }}</b><small>p/min</small></div>
             <div class="tile"><b>{{ points.length }}</b><small>puntos</small></div>
           </div>
           <SegmentedControl
