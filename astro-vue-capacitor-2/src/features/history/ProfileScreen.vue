@@ -1,26 +1,38 @@
 <script setup lang="ts">
 import { useStore } from "@nanostores/vue";
 import { computed, ref } from "vue";
-import { AppScreen, Card, Row, RowGroup } from "../../shared/ui";
-import { $name } from "../profile/profile.store";
-import { $activities } from "./history.store";
-import { cleanTrack, distanceMeters, distanceParts, type MoveActivity } from "../tracking";
+import { AppScreen, Card, Label, Row, RowGroup } from "../../shared/ui";
+import {
+  type Activity,
+  cleanTrack,
+  distanceMeters,
+  distanceParts,
+  formatDuration,
+  type MoveActivity,
+  totalReps,
+} from "../tracking";
 import CalendarScreen from "./CalendarScreen.vue";
 import HistoryScreen from "./HistoryScreen.vue";
+import { $activities } from "./history.store";
+import { currentStreak } from "./summary";
 
-/**
- * Perfil tab — a hub: who you are, lifetime totals (Home already shows the week),
- * and ways into the calendar and the full history.
- */
+/** Info tab — lifetime data plus ways into the calendar and full history. */
 type View = "menu" | "calendar" | "history";
 const view = ref<View>("menu");
 
-const name = useStore($name);
 const activities = useStore($activities);
 
 const moves = computed(() => activities.value.filter((a): a is MoveActivity => a.kind === "move"));
-const totalDist = computed(() =>
+const salidas = computed(() => moves.value.length);
+const distance = computed(() =>
   distanceParts(moves.value.reduce((sum, a) => sum + distanceMeters(cleanTrack(a.points)), 0)),
+);
+const time = computed(() =>
+  formatDuration(moves.value.reduce((sum, a) => sum + (a.movingMs ?? 0), 0)),
+);
+const streak = computed(() => currentStreak(activities.value, Date.now()));
+const reps = computed(() =>
+  activities.value.reduce((sum, a: Activity) => sum + (a.kind === "exercise" ? totalReps(a.sets) : 0), 0),
 );
 </script>
 
@@ -28,61 +40,49 @@ const totalDist = computed(() =>
   <CalendarScreen v-if="view === 'calendar'" @back="view = 'menu'" />
   <HistoryScreen v-else-if="view === 'history'" @back="view = 'menu'" />
 
-  <AppScreen v-else title="Perfil">
+  <AppScreen v-else title="Info">
     <Card>
-      <div class="identity">
-        <span class="badge">{{ (name.trim().charAt(0) || "·").toUpperCase() }}</span>
-        <span class="id-text">
-          <b v-if="name">{{ name }}</b>
-          <b v-else class="id-empty">Sin nombre</b>
-          <small>
-            {{ moves.length }} {{ moves.length === 1 ? "salida" : "salidas" }} ·
-            {{ totalDist.value }} {{ totalDist.unit }} en total
-          </small>
-        </span>
+      <Label>Totales</Label>
+      <div class="grid">
+        <div class="stat">
+          <b>{{ salidas }}</b><small>{{ salidas === 1 ? "salida" : "salidas" }}</small>
+        </div>
+        <div class="stat"><b>{{ distance.value }}</b><small>{{ distance.unit }}</small></div>
+        <div class="stat"><b>{{ time }}</b><small>tiempo</small></div>
+        <div class="stat"><b>{{ streak }}</b><small>racha (días)</small></div>
+        <div class="stat"><b>{{ reps }}</b><small>reps</small></div>
       </div>
     </Card>
 
     <RowGroup>
       <Row icon="calendar" label="Calendario" value="Días activos" @press="view = 'calendar'" />
-      <Row icon="list" label="Historial" value="Todas tus salidas" @press="view = 'history'" />
+      <Row icon="list" label="Historial" value="Todas tus actividades" @press="view = 'history'" />
     </RowGroup>
   </AppScreen>
 </template>
 
 <style scoped>
-.identity {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-}
-.badge {
-  flex: none;
-  width: 46px;
-  height: 46px;
-  border-radius: var(--r-md);
-  border: 1px solid var(--line-2);
+.grid {
   display: grid;
-  place-items: center;
-  font-size: 19px;
-  font-weight: 600;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-4) var(--sp-3);
+  margin-top: var(--sp-3);
 }
-.id-text {
+.stat {
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
 }
-.id-text b {
-  font-size: 16px;
+.stat b {
+  font-family: var(--font-mono);
+  font-size: 24px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
 }
-.id-empty {
+.stat small {
+  font-size: 11px;
   color: var(--muted);
-}
-.id-text small {
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 2px;
 }
 </style>

@@ -22,7 +22,7 @@ export interface TabDef {
 export const TABS: TabDef[] = [
   { id: "home", label: "Inicio", icon: "home" },
   { id: "workout", label: "Actividad", icon: "workout" },
-  { id: "profile", label: "Perfil", icon: "profile" },
+  { id: "profile", label: "Info", icon: "info" },
   { id: "more", label: "Más", icon: "more" },
 ];
 
