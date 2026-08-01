@@ -3,15 +3,14 @@ import { useStore } from "@nanostores/vue";
 import { computed, ref } from "vue";
 import { AppScreen, Card, Row, RowGroup } from "../../shared/ui";
 import { $name } from "../profile/profile.store";
-import { currentStreak, weekSummary } from "./summary";
 import { $activities } from "./history.store";
-import { distanceParts } from "../tracking";
+import { cleanTrack, distanceMeters, distanceParts, type MoveActivity } from "../tracking";
 import CalendarScreen from "./CalendarScreen.vue";
 import HistoryScreen from "./HistoryScreen.vue";
 
 /**
- * Perfil tab — a hub: who you are, a quick month glance, and ways into the
- * calendar and the full history.
+ * Perfil tab — a hub: who you are, lifetime totals (Home already shows the week),
+ * and ways into the calendar and the full history.
  */
 type View = "menu" | "calendar" | "history";
 const view = ref<View>("menu");
@@ -19,9 +18,10 @@ const view = ref<View>("menu");
 const name = useStore($name);
 const activities = useStore($activities);
 
-const summary = computed(() => weekSummary(activities.value, Date.now()));
-const streak = computed(() => currentStreak(activities.value, Date.now()));
-const weekDist = computed(() => distanceParts(summary.value.distanceM));
+const moves = computed(() => activities.value.filter((a): a is MoveActivity => a.kind === "move"));
+const totalDist = computed(() =>
+  distanceParts(moves.value.reduce((sum, a) => sum + distanceMeters(cleanTrack(a.points)), 0)),
+);
 </script>
 
 <template>
@@ -35,9 +35,11 @@ const weekDist = computed(() => distanceParts(summary.value.distanceM));
         <span class="id-text">
           <b v-if="name">{{ name }}</b>
           <b v-else class="id-empty">Sin nombre</b>
-          <small>{{ summary.count }} esta semana · {{ weekDist.value }} {{ weekDist.unit }}</small>
+          <small>
+            {{ moves.length }} {{ moves.length === 1 ? "salida" : "salidas" }} ·
+            {{ totalDist.value }} {{ totalDist.unit }} en total
+          </small>
         </span>
-        <span v-if="streak > 0" class="streak">{{ streak }}d</span>
       </div>
     </Card>
 
@@ -82,12 +84,5 @@ const weekDist = computed(() => distanceParts(summary.value.distanceM));
   font-size: 12px;
   color: var(--muted);
   margin-top: 2px;
-}
-.streak {
-  margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--accent);
 }
 </style>
