@@ -2,10 +2,12 @@
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { AppButton, AppIcon, AppScreen, Card, Label } from "../../../shared/ui";
 import {
+  type Activity,
   activityRepository,
   type ExerciseActivity,
   type ExerciseSet,
   exerciseLabel,
+  exerciseStats,
   startExercise,
   totalReps,
 } from "../../tracking";
@@ -24,12 +26,16 @@ const label = exerciseLabel(props.exerciseId);
 const sets = ref<ExerciseSet[]>([]);
 const draft = ref(""); // reps for the set being entered
 const elapsed = ref(0);
+const saved = ref<Activity[]>([]);
+
+const stats = computed(() => exerciseStats(saved.value, props.exerciseId, Date.now()));
 
 let timer: ReturnType<typeof setInterval> | null = null;
-onMounted(() => {
+onMounted(async () => {
   timer = setInterval(() => {
     elapsed.value = Date.now() - base.startedAt;
   }, 1000);
+  saved.value = await activityRepository().list();
 });
 onUnmounted(() => {
   if (timer) clearInterval(timer);
@@ -74,6 +80,15 @@ async function finish(): Promise<void> {
       <span class="reg">Registrando</span>
       <span class="time">{{ formatDuration(elapsed) }}</span>
     </div>
+
+    <Card>
+      <div class="hstats">
+        <div class="hstat"><b>{{ stats.allTime }}</b><small>total</small></div>
+        <div class="hstat"><b>{{ stats.today }}</b><small>hoy</small></div>
+        <div class="hstat"><b>{{ stats.bestSession }}</b><small>mejor sesión</small></div>
+        <div class="hstat"><b>{{ stats.bestSet }}</b><small>mejor serie</small></div>
+      </div>
+    </Card>
 
     <Card>
       <Label>Repeticiones · serie {{ sets.length + 1 }}</Label>
@@ -130,6 +145,29 @@ async function finish(): Promise<void> {
   font-size: 15px;
   font-variant-numeric: tabular-nums;
   color: var(--muted);
+}
+.hstats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-2);
+}
+.hstat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+.hstat b {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.hstat small {
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.2;
 }
 .stepper {
   display: grid;

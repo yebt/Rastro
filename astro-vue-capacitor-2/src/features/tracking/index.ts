@@ -12,7 +12,14 @@ export type {
   MoveType,
 } from "./domain/activity";
 export { newId, startExercise, startMove } from "./domain/activity";
-export { EXERCISES, type ExerciseDef, exerciseLabel, totalReps } from "./domain/exercises";
+export {
+  EXERCISES,
+  type ExerciseDef,
+  exerciseLabel,
+  exerciseStats,
+  type ExerciseStats,
+  totalReps,
+} from "./domain/exercises";
 export {
   newRoutine,
   type Routine,
