@@ -11,8 +11,10 @@ apply from: "../capacitor-cordova-android-plugins/cordova.variables.gradle"
 dependencies {
     implementation project(':capacitor-community-background-geolocation')
     implementation project(':capacitor-app')
+    implementation project(':capacitor-filesystem')
     implementation project(':capacitor-geolocation')
     implementation project(':capacitor-local-notifications')
+    implementation project(':capacitor-share')
     implementation project(':capgo-capacitor-pedometer')
     implementation project(':capacitor-native-settings')
     implementation "com.google.android.gms:play-services-location:16.+"

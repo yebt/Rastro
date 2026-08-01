@@ -23,6 +23,7 @@ import {
   totalReps,
   TRACK_FILTERS,
 } from "../tracking";
+import { shareRoute } from "../share/share-route";
 import RouteMap from "../tracking/ui/RouteMap.vue";
 import { deleteActivity } from "./history.store";
 
@@ -57,6 +58,10 @@ const elevation = computed(() =>
 );
 
 const exReps = computed(() => (ex.value ? totalReps(ex.value.sets) : 0));
+
+function onShare(): void {
+  if (move.value) void shareRoute(move.value);
+}
 
 async function onDelete(): Promise<void> {
   await deleteActivity(props.activity.id);
@@ -96,6 +101,8 @@ async function onDelete(): Promise<void> {
           <div class="row"><dt>Puntos GPS</dt><dd>{{ points.length }}</dd></div>
         </dl>
       </Card>
+
+      <AppButton block variant="ghost" icon="export" @press="onShare">Compartir</AppButton>
     </template>
 
     <template v-else-if="ex">
