@@ -12,6 +12,7 @@ export type {
   MoveType,
 } from "./domain/activity";
 export { newId, startExercise, startMove } from "./domain/activity";
+export { EXERCISES, type ExerciseDef, exerciseLabel, totalReps } from "./domain/exercises";
 export { cleanTrack } from "./domain/clean";
 export {
   applyFilter,

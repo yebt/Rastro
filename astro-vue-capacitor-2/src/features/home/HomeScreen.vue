@@ -6,7 +6,7 @@ import ActivityDetail from "../history/ActivityDetail.vue";
 import ActivityRow from "../history/ActivityRow.vue";
 import { $activities, loadActivities } from "../history/history.store";
 import { currentStreak, weekSummary } from "../history/summary";
-import { distanceParts, formatDuration, type MoveActivity } from "../tracking";
+import { distanceParts, formatDuration } from "../tracking";
 
 /**
  * Home dashboard: this week's totals, the active-day streak, and recent
@@ -20,11 +20,8 @@ onMounted(() => {
   void loadActivities();
 });
 
-const moves = computed(() =>
-  activities.value.filter((a): a is MoveActivity => a.kind === "move"),
-);
-const recent = computed(() => moves.value.slice(0, 20));
-const selected = computed(() => moves.value.find((a) => a.id === selectedId.value) ?? null);
+const recent = computed(() => activities.value.slice(0, 20));
+const selected = computed(() => activities.value.find((a) => a.id === selectedId.value) ?? null);
 
 const summary = computed(() => weekSummary(activities.value, Date.now()));
 const streak = computed(() => currentStreak(activities.value, Date.now()));

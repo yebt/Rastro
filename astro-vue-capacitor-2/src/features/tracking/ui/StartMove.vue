@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { AppIcon, AppScreen } from "../../../shared/ui";
+import { AppIcon, AppScreen, Label } from "../../../shared/ui";
 import type { MoveType } from "../domain/activity";
+import { EXERCISES } from "../domain/exercises";
 
-/** Idle state of the Actividad tab — pick a movement type. Recording doesn't
- *  begin until the user confirms on the ready screen. */
-const emit = defineEmits<{ select: [type: MoveType] }>();
+/** Idle state of the Actividad tab — pick a movement type or an exercise. GPS
+ *  recording doesn't begin until the user confirms on the ready screen. */
+const emit = defineEmits<{ select: [type: MoveType]; exercise: [id: string] }>();
 
 const TYPES: { type: MoveType; label: string; hint: string }[] = [
   { type: "walk", label: "Caminar", hint: "Paso tranquilo" },
@@ -30,6 +31,20 @@ const TYPES: { type: MoveType; label: string; hint: string }[] = [
           <small>{{ t.hint }}</small>
         </span>
         <AppIcon name="play" size="18px" class="choice-ic" />
+      </button>
+    </div>
+
+    <Label>Ejercicios</Label>
+    <div class="exercises">
+      <button
+        v-for="e in EXERCISES"
+        :key="e.id"
+        type="button"
+        class="ex"
+        @click="emit('exercise', e.id)"
+      >
+        <AppIcon name="dumbbell" size="20px" />
+        <span>{{ e.label }}</span>
       </button>
     </div>
   </AppScreen>
@@ -85,5 +100,32 @@ const TYPES: { type: MoveType; label: string; hint: string }[] = [
 .choice-ic {
   flex: none;
   color: var(--accent);
+}
+.exercises {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+}
+.ex {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  color: var(--ink);
+  font-family: var(--font-cond);
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+.ex:active {
+  border-color: var(--ink);
+}
+.ex :deep(svg) {
+  color: var(--accent);
+  flex: none;
 }
 </style>

@@ -3,6 +3,7 @@ import { useStore } from "@nanostores/vue";
 import { ref } from "vue";
 import { recorder } from "../../recording";
 import type { MoveType } from "../domain/activity";
+import ExerciseLive from "./ExerciseLive.vue";
 import MoveReview from "./MoveReview.vue";
 import ReadyMove from "./ReadyMove.vue";
 import StartMove from "./StartMove.vue";
@@ -17,9 +18,13 @@ import StartMove from "./StartMove.vue";
  */
 const status = useStore(recorder.$status);
 const pending = ref<MoveType | null>(null);
+const exerciseId = ref<string | null>(null);
 
 function onSelect(type: MoveType): void {
   pending.value = type;
+}
+function onExercise(id: string): void {
+  exerciseId.value = id;
 }
 
 function onStart(): void {
@@ -34,13 +39,18 @@ function onCancel(): void {
 </script>
 
 <template>
+  <ExerciseLive
+    v-if="status === 'idle' && exerciseId"
+    :exercise-id="exerciseId"
+    @done="exerciseId = null"
+  />
   <ReadyMove
-    v-if="status === 'idle' && pending"
+    v-else-if="status === 'idle' && pending"
     :type="pending"
     @start="onStart"
     @cancel="onCancel"
   />
-  <StartMove v-else-if="status === 'idle'" @select="onSelect" />
+  <StartMove v-else-if="status === 'idle'" @select="onSelect" @exercise="onExercise" />
   <MoveReview v-else-if="status === 'finished'" />
   <!-- recording / paused: the global LiveMove overlay (in AppRoot) covers the screen -->
 

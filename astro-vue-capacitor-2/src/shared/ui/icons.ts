@@ -18,6 +18,7 @@ import IconChevron from "~icons/lucide/chevron-right";
 import IconList from "~icons/lucide/list";
 import IconDatabase from "~icons/lucide/database";
 import IconDownload from "~icons/lucide/download";
+import IconDumbbell from "~icons/lucide/dumbbell";
 import IconEllipsis from "~icons/lucide/ellipsis";
 import IconEye from "~icons/lucide/eye";
 import IconEyeOff from "~icons/lucide/eye-off";
@@ -71,6 +72,7 @@ export const ICONS = {
   locate: IconLocate,
   calendar: IconCalendar,
   list: IconList,
+  dumbbell: IconDumbbell,
 } satisfies Record<string, Component>;
 
 export type IconName = keyof typeof ICONS;

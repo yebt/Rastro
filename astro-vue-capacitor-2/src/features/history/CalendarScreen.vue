@@ -2,7 +2,6 @@
 import { useStore } from "@nanostores/vue";
 import { computed, onMounted, ref } from "vue";
 import { AppIcon, AppSubScreen, Card } from "../../shared/ui";
-import type { MoveActivity } from "../tracking";
 import ActivityDetail from "./ActivityDetail.vue";
 import ActivityRow from "./ActivityRow.vue";
 import { buildMonth } from "./calendar";
@@ -32,8 +31,6 @@ const monthLabel = computed(() =>
 );
 const grid = computed(() => buildMonth(viewYear.value, viewMonth.value, activities.value));
 
-const moves = computed(() => activities.value.filter((a): a is MoveActivity => a.kind === "move"));
-
 const isThisMonth = computed(
   () => viewYear.value === now.getFullYear() && viewMonth.value === now.getMonth(),
 );
@@ -41,7 +38,7 @@ const today = now.getDate();
 
 const dayActivities = computed(() => {
   if (selectedDay.value === null) return [];
-  return moves.value.filter((a) => {
+  return activities.value.filter((a) => {
     const d = new Date(a.startedAt);
     return (
       d.getFullYear() === viewYear.value &&
@@ -51,7 +48,7 @@ const dayActivities = computed(() => {
   });
 });
 
-const selected = computed(() => moves.value.find((a) => a.id === selectedId.value) ?? null);
+const selected = computed(() => activities.value.find((a) => a.id === selectedId.value) ?? null);
 
 function step(delta: number): void {
   selectedDay.value = null;

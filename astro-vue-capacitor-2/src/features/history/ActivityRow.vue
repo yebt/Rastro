@@ -2,32 +2,53 @@
 import { computed } from "vue";
 import { AppIcon } from "../../shared/ui";
 import {
+  type Activity,
   cleanTrack,
   distanceMeters,
   distanceParts,
+  exerciseLabel,
   formatActivityDate,
   formatDuration,
-  type MoveActivity,
   MOVE_LABEL,
+  totalReps,
 } from "../tracking";
 
-const props = defineProps<{ activity: MoveActivity }>();
+const props = defineProps<{ activity: Activity }>();
 defineEmits<{ open: [] }>();
 
-const dist = computed(() => distanceParts(distanceMeters(cleanTrack(props.activity.points))));
-const dur = computed(() => formatDuration(props.activity.movingMs ?? 0));
 const date = computed(() => formatActivityDate(props.activity.startedAt));
+
+const title = computed(() =>
+  props.activity.kind === "move"
+    ? MOVE_LABEL[props.activity.type]
+    : exerciseLabel(props.activity.exercise),
+);
+
+const primary = computed(() => {
+  const a = props.activity;
+  if (a.kind === "move") {
+    const d = distanceParts(distanceMeters(cleanTrack(a.points)));
+    return `${d.value} ${d.unit}`;
+  }
+  return `${totalReps(a.sets)} reps`;
+});
+
+const secondary = computed(() => {
+  const a = props.activity;
+  if (a.kind === "move") return formatDuration(a.movingMs ?? 0);
+  return `${a.sets.length} ${a.sets.length === 1 ? "serie" : "series"}`;
+});
 </script>
 
 <template>
   <button type="button" class="row" @click="$emit('open')">
     <span class="main">
-      <b class="type">{{ MOVE_LABEL[activity.type] }}</b>
+      <b class="type">{{ title }}</b>
       <small class="date">{{ date }}</small>
     </span>
     <span class="stats">
-      <b class="dist">{{ dist.value }} {{ dist.unit }}</b>
-      <small class="dur">{{ dur }}</small>
+      <b class="dist">{{ primary }}</b>
+      <small class="dur">{{ secondary }}</small>
     </span>
     <AppIcon name="chevron" size="16px" class="chev" />
   </button>
