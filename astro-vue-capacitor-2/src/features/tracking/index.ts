@@ -13,6 +13,13 @@ export type {
 } from "./domain/activity";
 export { newId, startExercise, startMove } from "./domain/activity";
 export { EXERCISES, type ExerciseDef, exerciseLabel, totalReps } from "./domain/exercises";
+export {
+  newRoutine,
+  type Routine,
+  type RoutineExercise,
+  routineTotalReps,
+} from "./domain/routine";
+export { $routines, deleteRoutine, getRoutine, saveRoutine } from "./routines.store";
 export { cleanTrack } from "./domain/clean";
 export {
   applyFilter,

@@ -1,11 +1,21 @@
 <script setup lang="ts">
+import { useStore } from "@nanostores/vue";
 import { AppIcon, AppScreen, Label } from "../../../shared/ui";
 import type { MoveType } from "../domain/activity";
 import { EXERCISES } from "../domain/exercises";
+import { $routines, type Routine } from "../../tracking";
 
-/** Idle state of the Actividad tab — pick a movement type or an exercise. GPS
- *  recording doesn't begin until the user confirms on the ready screen. */
-const emit = defineEmits<{ select: [type: MoveType]; exercise: [id: string] }>();
+/** Idle state of the Actividad tab — pick a movement type, an exercise, or a
+ *  routine. GPS recording doesn't begin until the user confirms on the ready
+ *  screen. */
+const emit = defineEmits<{
+  select: [type: MoveType];
+  exercise: [id: string];
+  openRoutine: [routine: Routine];
+  newRoutine: [];
+}>();
+
+const routines = useStore($routines);
 
 const TYPES: { type: MoveType; label: string; hint: string }[] = [
   { type: "walk", label: "Caminar", hint: "Paso tranquilo" },
@@ -45,6 +55,27 @@ const TYPES: { type: MoveType; label: string; hint: string }[] = [
       >
         <AppIcon name="dumbbell" size="20px" />
         <span>{{ e.label }}</span>
+      </button>
+    </div>
+
+    <Label>Rutinas</Label>
+    <div class="routines">
+      <button
+        v-for="r in routines"
+        :key="r.id"
+        type="button"
+        class="routine"
+        @click="emit('openRoutine', r)"
+      >
+        <span class="r-text">
+          <b>{{ r.name }}</b>
+          <small>{{ r.exercises.length }} ejercicios · {{ r.rounds }} vueltas</small>
+        </span>
+        <AppIcon name="chevron" size="16px" class="r-chev" />
+      </button>
+      <button type="button" class="routine new" @click="emit('newRoutine')">
+        <AppIcon name="plus" size="18px" />
+        <span>Nueva rutina</span>
       </button>
     </div>
   </AppScreen>
@@ -127,5 +158,53 @@ const TYPES: { type: MoveType; label: string; hint: string }[] = [
 .ex :deep(svg) {
   color: var(--accent);
   flex: none;
+}
+.routines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.routine {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  color: var(--ink);
+  text-align: left;
+}
+.routine:active {
+  border-color: var(--ink);
+}
+.r-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.r-text b {
+  font-family: var(--font-cond);
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.r-text small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.r-chev {
+  color: var(--muted);
+}
+.routine.new {
+  justify-content: center;
+  color: var(--muted);
+  font-weight: 600;
+  border-style: dashed;
+}
+.routine.new :deep(svg) {
+  color: var(--accent);
 }
 </style>
