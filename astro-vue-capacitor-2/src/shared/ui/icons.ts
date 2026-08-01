@@ -13,7 +13,9 @@ import type { Component } from "vue";
 import IconActivity from "~icons/lucide/activity";
 import IconBack from "~icons/lucide/chevron-left";
 import IconBell from "~icons/lucide/bell";
+import IconCalendar from "~icons/lucide/calendar-days";
 import IconChevron from "~icons/lucide/chevron-right";
+import IconList from "~icons/lucide/list";
 import IconDatabase from "~icons/lucide/database";
 import IconDownload from "~icons/lucide/download";
 import IconEllipsis from "~icons/lucide/ellipsis";
@@ -67,6 +69,8 @@ export const ICONS = {
   jog: IconWind,
   run: IconRabbit,
   locate: IconLocate,
+  calendar: IconCalendar,
+  list: IconList,
 } satisfies Record<string, Component>;
 
 export type IconName = keyof typeof ICONS;
