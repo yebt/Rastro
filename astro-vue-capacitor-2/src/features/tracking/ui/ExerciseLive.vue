@@ -57,7 +57,12 @@ async function finish(): Promise<void> {
     emit("done"); // nothing logged
     return;
   }
-  const activity: ExerciseActivity = { ...base, endedAt: Date.now(), sets: sets.value };
+  // Plain objects only — a reactive Proxy can't be structured-cloned into IndexedDB.
+  const activity: ExerciseActivity = {
+    ...base,
+    endedAt: Date.now(),
+    sets: sets.value.map((s) => ({ reps: s.reps })),
+  };
   await activityRepository().save(activity);
   emit("done");
 }
