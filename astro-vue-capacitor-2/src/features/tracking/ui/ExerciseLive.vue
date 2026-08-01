@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
-import { AppButton, AppScreen, Card } from "../../../shared/ui";
+import { AppButton, AppIcon, AppScreen, Card, Label } from "../../../shared/ui";
 import {
   activityRepository,
   type ExerciseActivity,
@@ -12,8 +12,8 @@ import {
 import { formatDuration } from "./format";
 
 /**
- * Log an exercise: count reps into sets, no GPS. Tap +1 as you go, "Nueva serie"
- * banks the current set, finish saves it as an ExerciseActivity.
+ * Log an exercise: type the reps for a set (with +/- to nudge), add it, repeat.
+ * Finish saves it as an ExerciseActivity. No GPS.
  */
 const props = defineProps<{ exerciseId: string }>();
 const emit = defineEmits<{ done: [] }>();
@@ -22,7 +22,7 @@ const base = startExercise(props.exerciseId, Date.now());
 const label = exerciseLabel(props.exerciseId);
 
 const sets = ref<ExerciseSet[]>([]);
-const reps = ref(0);
+const draft = ref(""); // reps for the set being entered
 const elapsed = ref(0);
 
 let timer: ReturnType<typeof setInterval> | null = null;
@@ -35,25 +35,26 @@ onUnmounted(() => {
   if (timer) clearInterval(timer);
 });
 
-const total = computed(() => totalReps(sets.value) + reps.value);
+const draftReps = computed(() => Math.max(0, Math.floor(Number(draft.value) || 0)));
+const total = computed(() => totalReps(sets.value) + draftReps.value);
 
-function inc(): void {
-  reps.value++;
+function nudge(by: number): void {
+  draft.value = String(Math.max(0, draftReps.value + by));
 }
-function dec(): void {
-  if (reps.value > 0) reps.value--;
-}
-function bankSet(): void {
-  if (reps.value > 0) {
-    sets.value.push({ reps: reps.value });
-    reps.value = 0;
+function addSet(): void {
+  if (draftReps.value > 0) {
+    sets.value.push({ reps: draftReps.value });
+    draft.value = "";
   }
+}
+function removeSet(i: number): void {
+  sets.value.splice(i, 1);
 }
 
 async function finish(): Promise<void> {
-  bankSet();
+  addSet(); // bank a pending draft so nothing is lost
   if (sets.value.length === 0) {
-    emit("done"); // nothing logged — nothing to save
+    emit("done"); // nothing logged
     return;
   }
   const activity: ExerciseActivity = { ...base, endedAt: Date.now(), sets: sets.value };
@@ -70,33 +71,40 @@ async function finish(): Promise<void> {
     </div>
 
     <Card>
-      <div class="counter">
-        <div class="count">{{ reps }}</div>
-        <div class="count-label">repeticiones · serie {{ sets.length + 1 }}</div>
+      <Label>Repeticiones · serie {{ sets.length + 1 }}</Label>
+      <div class="stepper">
+        <button type="button" class="step" aria-label="Restar" @click="nudge(-1)">−</button>
+        <input
+          v-model="draft"
+          class="reps"
+          type="number"
+          inputmode="numeric"
+          placeholder="0"
+          @keyup.enter="addSet"
+        />
+        <button type="button" class="step" aria-label="Sumar" @click="nudge(1)">+</button>
       </div>
-      <div class="pad">
-        <AppButton size="lg" variant="ghost" icon="trash" square aria-label="Quitar" @press="dec" />
-        <button type="button" class="plus" @click="inc">+1</button>
-        <AppButton size="lg" variant="ghost" @press="bankSet">Nueva serie</AppButton>
-      </div>
+      <AppButton block size="lg" icon="plus" :disabled="draftReps === 0" @press="addSet">
+        Agregar serie
+      </AppButton>
     </Card>
 
-    <Card v-if="sets.length || total">
+    <Card v-if="sets.length">
       <div class="sets">
-        <div v-for="(s, i) in sets" :key="i" class="set-row">
-          <span>Serie {{ i + 1 }}</span>
-          <b>{{ s.reps }}</b>
-        </div>
-        <div class="set-row total">
-          <span>Total</span>
-          <b>{{ total }}</b>
+        <div v-for="(s, i) in sets" :key="i" class="chip">
+          <span class="s">S{{ i + 1 }}</span>
+          <b class="n">{{ s.reps }}</b>
+          <button type="button" class="rm" aria-label="Quitar serie" @click="removeSet(i)">
+            <AppIcon name="trash" size="14px" />
+          </button>
         </div>
       </div>
+      <div class="total">Total: <b>{{ total }}</b> reps</div>
     </Card>
 
     <div class="actions">
       <AppButton size="lg" block variant="ghost" @press="emit('done')">Descartar</AppButton>
-      <AppButton size="lg" block @press="finish">Finalizar</AppButton>
+      <AppButton size="lg" block @press="finish">Guardar</AppButton>
     </div>
   </AppScreen>
 </template>
@@ -118,60 +126,77 @@ async function finish(): Promise<void> {
   font-variant-numeric: tabular-nums;
   color: var(--muted);
 }
-.counter {
-  text-align: center;
-  padding: var(--sp-3) 0 var(--sp-4);
-}
-.count {
-  font-family: var(--font-mono);
-  font-size: 64px;
-  font-weight: 600;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-.count-label {
-  margin-top: var(--sp-2);
-  font-size: 12px;
-  color: var(--muted);
-}
-.pad {
+.stepper {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: var(--sp-3);
+  grid-template-columns: 56px 1fr 56px;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 var(--sp-3);
 }
-.plus {
+.step {
   height: 64px;
   border-radius: var(--r-md);
-  background: var(--accent);
-  color: var(--accent-ink);
-  font-family: var(--font-cond);
-  font-size: 26px;
-  font-weight: 700;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 28px;
+  font-weight: 600;
 }
-.plus:active {
-  transform: scale(0.98);
+.step:active {
+  background: var(--surface-2);
+}
+.reps {
+  height: 64px;
+  width: 100%;
+  text-align: center;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 34px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.reps:focus {
+  outline: none;
+  border-color: var(--ink);
 }
 .sets {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
 }
-.set-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding: var(--sp-2) 0;
-  font-size: 14px;
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 6px var(--sp-2) 6px var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: 999px;
 }
-.set-row + .set-row {
-  border-top: 1px solid var(--line);
+.chip .s {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
 }
-.set-row b {
+.chip .n {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
-.set-row.total {
-  font-weight: 600;
+.chip .rm {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+.total {
+  margin-top: var(--sp-3);
+  font-size: 13px;
+  color: var(--muted);
+}
+.total b {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  color: var(--ink);
 }
 .actions {
   display: flex;
