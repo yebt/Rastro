@@ -34,6 +34,12 @@ export {
   type RoutineExercise,
   routineTotalReps,
 } from "./domain/routine";
+export {
+  buildRun,
+  exercisesDone,
+  exerciseStepCount,
+  type RunStep,
+} from "./domain/routine-run";
 export { $routines, deleteRoutine, getRoutine, saveRoutine } from "./routines.store";
 export { cleanTrack } from "./domain/clean";
 export {

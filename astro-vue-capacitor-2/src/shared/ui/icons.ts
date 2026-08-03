@@ -14,7 +14,9 @@ import IconActivity from "~icons/lucide/activity";
 import IconBack from "~icons/lucide/chevron-left";
 import IconBell from "~icons/lucide/bell";
 import IconCalendar from "~icons/lucide/calendar-days";
+import IconCheck from "~icons/lucide/check";
 import IconChevron from "~icons/lucide/chevron-right";
+import IconEdit from "~icons/lucide/pencil";
 import IconList from "~icons/lucide/list";
 import IconDatabase from "~icons/lucide/database";
 import IconDownload from "~icons/lucide/download";
@@ -34,6 +36,7 @@ import IconPlus from "~icons/lucide/plus";
 import IconRabbit from "~icons/lucide/rabbit";
 import IconSettings from "~icons/lucide/settings";
 import IconShield from "~icons/lucide/shield-check";
+import IconSkip from "~icons/lucide/skip-forward";
 import IconSquare from "~icons/lucide/square";
 import IconTheme from "~icons/lucide/sun-moon";
 import IconTrash from "~icons/lucide/trash-2";
@@ -73,6 +76,9 @@ export const ICONS = {
   calendar: IconCalendar,
   list: IconList,
   dumbbell: IconDumbbell,
+  check: IconCheck,
+  skip: IconSkip,
+  edit: IconEdit,
 } satisfies Record<string, Component>;
 
 export type IconName = keyof typeof ICONS;

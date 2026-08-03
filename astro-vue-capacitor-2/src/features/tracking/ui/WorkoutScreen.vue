@@ -9,6 +9,7 @@ import ExerciseLive from "./ExerciseLive.vue";
 import MoveReview from "./MoveReview.vue";
 import ReadyMove from "./ReadyMove.vue";
 import RoutineBuilder from "./RoutineBuilder.vue";
+import RoutinePlayer from "./RoutinePlayer.vue";
 import StartMove from "./StartMove.vue";
 
 /**
@@ -23,6 +24,7 @@ const status = useStore(recorder.$status);
 const pending = ref<MoveType | null>(null);
 const exerciseId = ref<string | null>(null);
 const routineDraft = ref<Routine | null>(null);
+const runningRoutine = ref<Routine | null>(null);
 const editingCatalog = ref(false);
 
 function onSelect(type: MoveType): void {
@@ -34,8 +36,11 @@ function onExercise(id: string): void {
 function onNewRoutine(): void {
   routineDraft.value = newRoutine();
 }
-function onOpenRoutine(r: Routine): void {
+function onEditRoutine(r: Routine): void {
   routineDraft.value = r;
+}
+function onRunRoutine(r: Routine): void {
+  runningRoutine.value = r;
 }
 
 function onStart(): void {
@@ -54,6 +59,11 @@ function onCancel(): void {
     v-if="status === 'idle' && exerciseId"
     :exercise-id="exerciseId"
     @done="exerciseId = null"
+  />
+  <RoutinePlayer
+    v-else-if="status === 'idle' && runningRoutine"
+    :routine="runningRoutine"
+    @done="runningRoutine = null"
   />
   <RoutineBuilder
     v-else-if="status === 'idle' && routineDraft"
@@ -74,7 +84,8 @@ function onCancel(): void {
     v-else-if="status === 'idle'"
     @select="onSelect"
     @exercise="onExercise"
-    @open-routine="onOpenRoutine"
+    @run-routine="onRunRoutine"
+    @edit-routine="onEditRoutine"
     @new-routine="onNewRoutine"
     @edit-catalog="editingCatalog = true"
   />

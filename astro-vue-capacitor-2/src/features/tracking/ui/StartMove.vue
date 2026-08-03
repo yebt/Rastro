@@ -10,7 +10,8 @@ import { $exercises, $routines, type Routine } from "../../tracking";
 const emit = defineEmits<{
   select: [type: MoveType];
   exercise: [id: string];
-  openRoutine: [routine: Routine];
+  runRoutine: [routine: Routine];
+  editRoutine: [routine: Routine];
   newRoutine: [];
   editCatalog: [];
 }>();
@@ -64,19 +65,23 @@ const TYPES: { type: MoveType; label: string; hint: string }[] = [
 
     <Label>Rutinas</Label>
     <div class="routines">
-      <button
-        v-for="r in routines"
-        :key="r.id"
-        type="button"
-        class="routine"
-        @click="emit('openRoutine', r)"
-      >
-        <span class="r-text">
-          <b>{{ r.name }}</b>
-          <small>{{ r.exercises.length }} ejercicios · {{ r.rounds }} vueltas</small>
-        </span>
-        <AppIcon name="chevron" size="16px" class="r-chev" />
-      </button>
+      <div v-for="r in routines" :key="r.id" class="routine">
+        <button type="button" class="r-run" @click="emit('runRoutine', r)">
+          <span class="r-text">
+            <b>{{ r.name }}</b>
+            <small>{{ r.exercises.length }} ejercicios · {{ r.rounds }} vueltas</small>
+          </span>
+          <AppIcon name="play" size="16px" class="r-chev" />
+        </button>
+        <button
+          type="button"
+          class="r-edit"
+          aria-label="Editar rutina"
+          @click="emit('editRoutine', r)"
+        >
+          <AppIcon name="edit" size="16px" />
+        </button>
+      </div>
       <button type="button" class="routine new" @click="emit('newRoutine')">
         <AppIcon name="plus" size="18px" />
         <span>Nueva rutina</span>
@@ -180,17 +185,35 @@ const TYPES: { type: MoveType; label: string; hint: string }[] = [
 }
 .routine {
   display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-4);
+  align-items: stretch;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.r-run {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
   color: var(--ink);
   text-align: left;
 }
-.routine:active {
-  border-color: var(--ink);
+.r-run:active {
+  background: var(--surface-2);
+}
+.r-edit {
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: 0 var(--sp-4);
+  border-left: 1px solid var(--line);
+  color: var(--muted);
+}
+.r-edit:active {
+  background: var(--surface-2);
 }
 .r-text {
   flex: 1;
@@ -213,7 +236,11 @@ const TYPES: { type: MoveType; label: string; hint: string }[] = [
   color: var(--muted);
 }
 .routine.new {
+  display: flex;
+  align-items: center;
   justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
   color: var(--muted);
   font-weight: 600;
   border-style: dashed;
