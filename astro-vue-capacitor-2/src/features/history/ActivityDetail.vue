@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useStore } from "@nanostores/vue";
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { AppButton, AppSubScreen, Card, Label, SegmentedControl } from "../../shared/ui";
 import {
   type Activity,
@@ -23,7 +23,7 @@ import {
   totalReps,
   TRACK_FILTERS,
 } from "../tracking";
-import { shareRoute } from "../share/share-route";
+import { ShareScreen } from "../share";
 import RouteMap from "../tracking/ui/RouteMap.vue";
 import { deleteActivity } from "./history.store";
 
@@ -59,9 +59,7 @@ const elevation = computed(() =>
 
 const exReps = computed(() => (ex.value ? totalReps(ex.value.sets) : 0));
 
-function onShare(): void {
-  if (move.value) void shareRoute(move.value);
-}
+const showShare = ref(false);
 
 async function onDelete(): Promise<void> {
   await deleteActivity(props.activity.id);
@@ -70,7 +68,9 @@ async function onDelete(): Promise<void> {
 </script>
 
 <template>
-  <AppSubScreen :title="title" @back="emit('back')">
+  <ShareScreen v-if="showShare && move" :activity="move" @back="showShare = false" />
+
+  <AppSubScreen v-else :title="title" @back="emit('back')">
     <template v-if="move">
       <RouteMap :points="clean" />
 
@@ -102,7 +102,7 @@ async function onDelete(): Promise<void> {
         </dl>
       </Card>
 
-      <AppButton block variant="ghost" icon="export" @press="onShare">Compartir</AppButton>
+      <AppButton block variant="ghost" icon="export" @press="showShare = true">Compartir</AppButton>
     </template>
 
     <template v-else-if="ex">

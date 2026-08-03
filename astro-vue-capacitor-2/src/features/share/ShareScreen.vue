@@ -1,0 +1,245 @@
+<script setup lang="ts">
+import { computed, onMounted, ref, watch } from "vue";
+import { AppButton, AppSubScreen, Card, Label } from "../../shared/ui";
+import type { MoveActivity } from "../tracking";
+import { shareGallery, type SharedImage } from "./gallery-store";
+import { renderRouteCard } from "./route-card";
+import { shareImage } from "./share-route";
+import {
+  DEFAULT_THEME,
+  getPalette,
+  SHARE_LAYOUTS,
+  SHARE_PALETTES,
+  type ShareTheme,
+  themeKey,
+  themeLabel,
+} from "./themes";
+
+/**
+ * Compartir view: pick a theme (layout × palette), preview the card live,
+ * then share or save it. Saved cards persist to a gallery below.
+ */
+const props = defineProps<{ activity: MoveActivity }>();
+const emit = defineEmits<{ back: [] }>();
+
+const theme = ref<ShareTheme>({ ...DEFAULT_THEME });
+const preview = ref("");
+const gallery = ref<SharedImage[]>([]);
+const busy = ref(false);
+
+function renderPreview(): void {
+  preview.value = renderRouteCard(props.activity, theme.value);
+}
+
+async function loadGallery(): Promise<void> {
+  gallery.value = await shareGallery().list();
+}
+
+onMounted(async () => {
+  renderPreview();
+  await loadGallery();
+});
+watch(theme, renderPreview, { deep: true });
+
+function pickLayout(id: string): void {
+  theme.value = { ...theme.value, layoutId: id };
+}
+function pickPalette(id: string): void {
+  theme.value = { ...theme.value, paletteId: id };
+}
+
+/** Persist the current preview to the gallery and return its record. */
+async function persist(): Promise<void> {
+  await shareGallery().add({
+    activityId: props.activity.id,
+    themeKey: themeKey(theme.value),
+    dataUrl: preview.value,
+    createdAt: Date.now(),
+  });
+  await loadGallery();
+}
+
+async function onShare(): Promise<void> {
+  busy.value = true;
+  try {
+    await persist();
+    await shareImage(preview.value, `rastro-${props.activity.id}`);
+  } finally {
+    busy.value = false;
+  }
+}
+
+async function onSave(): Promise<void> {
+  busy.value = true;
+  try {
+    await persist();
+  } finally {
+    busy.value = false;
+  }
+}
+
+async function reshare(img: SharedImage): Promise<void> {
+  await shareImage(img.dataUrl, `rastro-${img.activityId}`);
+}
+async function removeImg(img: SharedImage): Promise<void> {
+  await shareGallery().remove(img.id);
+  await loadGallery();
+}
+
+const currentLabel = computed(() => themeLabel(theme.value));
+</script>
+
+<template>
+  <AppSubScreen title="Compartir" @back="emit('back')">
+    <div class="preview">
+      <img v-if="preview" :src="preview" alt="Vista previa de la tarjeta" />
+    </div>
+
+    <div class="picker">
+      <Label>Formato</Label>
+      <div class="chips">
+        <button
+          v-for="l in SHARE_LAYOUTS"
+          :key="l.id"
+          type="button"
+          class="chip"
+          :class="{ on: theme.layoutId === l.id }"
+          @click="pickLayout(l.id)"
+        >
+          {{ l.label }}
+        </button>
+      </div>
+    </div>
+
+    <div class="picker">
+      <Label>Color · {{ currentLabel }}</Label>
+      <div class="swatches">
+        <button
+          v-for="p in SHARE_PALETTES"
+          :key="p.id"
+          type="button"
+          class="swatch"
+          :class="{ on: theme.paletteId === p.id }"
+          :style="{ background: p.bg }"
+          :aria-label="p.label"
+          @click="pickPalette(p.id)"
+        >
+          <span class="line" :style="{ background: p.route }"></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <AppButton size="lg" block variant="ghost" :disabled="busy" @press="onSave">Guardar</AppButton>
+      <AppButton size="lg" block icon="export" :disabled="busy" @press="onShare">Compartir</AppButton>
+    </div>
+
+    <template v-if="gallery.length">
+      <Label>Compartidos</Label>
+      <div class="gallery">
+        <Card v-for="img in gallery" :key="img.id" class="g-item">
+          <button type="button" class="g-thumb" @click="reshare(img)">
+            <img :src="img.dataUrl" :alt="`Tarjeta ${img.themeKey}`" />
+          </button>
+          <button type="button" class="g-rm" aria-label="Borrar" @click="removeImg(img)">×</button>
+        </Card>
+      </div>
+    </template>
+  </AppSubScreen>
+</template>
+
+<style scoped>
+.preview {
+  display: flex;
+  justify-content: center;
+}
+.preview img {
+  max-width: 100%;
+  max-height: 46vh;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+}
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.chips {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+.chip {
+  flex: 1 1 0;
+  min-width: 72px;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+.chip.on {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: var(--surface-2);
+}
+.swatches {
+  display: flex;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+.swatch {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--r-md);
+  border: 2px solid var(--line);
+  display: grid;
+  place-items: center;
+}
+.swatch.on {
+  border-color: var(--accent);
+}
+.swatch .line {
+  width: 26px;
+  height: 5px;
+  border-radius: 999px;
+}
+.actions {
+  display: flex;
+  gap: var(--sp-3);
+}
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-3);
+}
+.g-item {
+  position: relative;
+  padding: var(--sp-2);
+}
+.g-thumb {
+  display: block;
+  width: 100%;
+}
+.g-thumb img {
+  width: 100%;
+  border-radius: var(--r-sm);
+  display: block;
+}
+.g-rm {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+}
+</style>
