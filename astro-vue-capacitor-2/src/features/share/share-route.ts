@@ -32,5 +32,5 @@ export async function shareImage(dataUrl: string, name: string): Promise<void> {
 
 /** Convenience: render a route with a theme and share it in one call. */
 export async function shareRoute(activity: MoveActivity, theme?: ShareTheme): Promise<void> {
-  await shareImage(renderRouteCard(activity, theme), `rastro-${activity.id}`);
+  await shareImage(await renderRouteCard(activity, theme), `rastro-${activity.id}`);
 }

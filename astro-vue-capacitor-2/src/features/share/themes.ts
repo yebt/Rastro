@@ -30,9 +30,57 @@ export interface ShareLayout {
   h: number;
 }
 
+/** Where a card's background comes from. Photo stays offline (local dataURL). */
+export type ShareBackground =
+  | { kind: "solid" }
+  | { kind: "gradient"; from: string; to: string; angle: number }
+  | {
+      kind: "photo";
+      /** A local data/blob URL — never a remote fetch, so offline holds. */
+      src: string;
+      /** "auto" derives ink/muted from the image luminance; "manual" keeps the palette. */
+      adjust: "auto" | "manual";
+    };
+
+/** Stackable canvas passes, drawn in array order. */
+export type ShareEffect =
+  | { kind: "scrim"; direction: "top" | "bottom" | "full"; color: string; from: number; to: number }
+  | { kind: "grain"; opacity: number }
+  | { kind: "routeGlow"; blur: number };
+
+/** Font treatment. Just the three faces the app self-hosts, recombined. */
+export interface ShareTypography {
+  id: string;
+  label: string;
+  /** Big number face. */
+  headline: string;
+  /** Title / activity type face. */
+  title: string;
+  /** Labels, date, coordinates, wordmark. */
+  meta: string;
+}
+
 export interface ShareTheme {
   layoutId: string;
   paletteId: string;
+  /** Defaults applied by the renderer keep v1 themes valid without these. */
+  typographyId?: string;
+  background?: ShareBackground;
+  effects?: ShareEffect[];
+}
+
+const COND = "'Barlow Condensed', sans-serif";
+const MONO = "'Roboto Mono', monospace";
+const SANS = "'Roboto', system-ui, sans-serif";
+
+export const SHARE_TYPOGRAPHIES: ShareTypography[] = [
+  { id: "mono", label: "Mono", headline: MONO, title: COND, meta: MONO },
+  { id: "grotesk", label: "Grotesk", headline: COND, title: SANS, meta: MONO },
+  { id: "tecnica", label: "Técnica", headline: MONO, title: MONO, meta: MONO },
+];
+
+export function getTypography(id: string | undefined): ShareTypography {
+  return SHARE_TYPOGRAPHIES.find((t) => t.id === id) ?? SHARE_TYPOGRAPHIES[0]!;
 }
 
 export const SHARE_PALETTES: SharePalette[] = [
@@ -93,6 +141,7 @@ export const SHARE_LAYOUTS: ShareLayout[] = [
   { id: "poster", label: "Póster", w: 1080, h: 1350 },
   { id: "minimal", label: "Minimal", w: 1080, h: 1080 },
   { id: "story", label: "Historia", w: 1080, h: 1920 },
+  { id: "overlay", label: "Overlay", w: 1080, h: 1350 },
 ];
 
 export const DEFAULT_THEME: ShareTheme = { layoutId: "clasico", paletteId: "noche" };

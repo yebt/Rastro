@@ -3,8 +3,10 @@ import {
   DEFAULT_THEME,
   getLayout,
   getPalette,
+  getTypography,
   SHARE_LAYOUTS,
   SHARE_PALETTES,
+  SHARE_TYPOGRAPHIES,
   themeKey,
   themeLabel,
 } from "./themes";
@@ -29,6 +31,16 @@ describe("share themes", () => {
     const t = { layoutId: "poster", paletteId: "oro" };
     expect(themeKey(t)).toBe("poster:oro");
     expect(themeLabel(t)).toBe("Póster · Oro");
+  });
+
+  it("resolves typography with a fallback to the default face", () => {
+    expect(getTypography("tecnica").id).toBe("tecnica");
+    expect(getTypography(undefined)).toBe(SHARE_TYPOGRAPHIES[0]);
+    expect(getTypography("nope")).toBe(SHARE_TYPOGRAPHIES[0]);
+  });
+
+  it("exposes the overlay layout for photo backgrounds", () => {
+    expect(SHARE_LAYOUTS.some((l) => l.id === "overlay")).toBe(true);
   });
 
   it("every palette defines all required colors", () => {

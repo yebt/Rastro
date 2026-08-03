@@ -7,28 +7,30 @@ import { renderRouteCard } from "./route-card";
 import { shareImage } from "./share-route";
 import {
   DEFAULT_THEME,
-  getPalette,
   SHARE_LAYOUTS,
   SHARE_PALETTES,
+  SHARE_TYPOGRAPHIES,
+  type ShareEffect,
   type ShareTheme,
   themeKey,
   themeLabel,
 } from "./themes";
 
 /**
- * Compartir view: pick a theme (layout × palette), preview the card live,
- * then share or save it. Saved cards persist to a gallery below.
+ * Compartir view: pick a theme (layout × palette × typography × background ×
+ * effects), preview the card live, then share or save it. Saved cards persist
+ * to a gallery below. A photo background stays offline (embedded data URL).
  */
 const props = defineProps<{ activity: MoveActivity }>();
 const emit = defineEmits<{ back: [] }>();
 
-const theme = ref<ShareTheme>({ ...DEFAULT_THEME });
+const theme = ref<ShareTheme>({ ...DEFAULT_THEME, effects: [] });
 const preview = ref("");
 const gallery = ref<SharedImage[]>([]);
 const busy = ref(false);
 
-function renderPreview(): void {
-  preview.value = renderRouteCard(props.activity, theme.value);
+async function renderPreview(): Promise<void> {
+  preview.value = await renderRouteCard(props.activity, theme.value);
 }
 
 async function loadGallery(): Promise<void> {
@@ -36,7 +38,7 @@ async function loadGallery(): Promise<void> {
 }
 
 onMounted(async () => {
-  renderPreview();
+  await renderPreview();
   await loadGallery();
 });
 watch(theme, renderPreview, { deep: true });
@@ -47,8 +49,56 @@ function pickLayout(id: string): void {
 function pickPalette(id: string): void {
   theme.value = { ...theme.value, paletteId: id };
 }
+function pickTypography(id: string): void {
+  theme.value = { ...theme.value, typographyId: id };
+}
 
-/** Persist the current preview to the gallery and return its record. */
+const hasPhoto = computed(() => theme.value.background?.kind === "photo");
+const photoAuto = computed(
+  () => theme.value.background?.kind === "photo" && theme.value.background.adjust === "auto",
+);
+
+function onPhoto(event: Event): void {
+  const file = (event.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    theme.value = {
+      ...theme.value,
+      background: { kind: "photo", src: String(reader.result), adjust: "auto" },
+    };
+  };
+  reader.readAsDataURL(file);
+}
+function clearPhoto(): void {
+  theme.value = { ...theme.value, background: { kind: "solid" } };
+}
+function toggleAdjust(): void {
+  const bg = theme.value.background;
+  if (bg?.kind !== "photo") return;
+  theme.value = {
+    ...theme.value,
+    background: { ...bg, adjust: bg.adjust === "auto" ? "manual" : "auto" },
+  };
+}
+
+const EFFECT_PRESETS: Record<string, ShareEffect> = {
+  grain: { kind: "grain", opacity: 0.06 },
+  glow: { kind: "routeGlow", blur: 26 },
+};
+function hasEffect(name: keyof typeof EFFECT_PRESETS): boolean {
+  const target = EFFECT_PRESETS[name]!;
+  return (theme.value.effects ?? []).some((e) => e.kind === target.kind);
+}
+function toggleEffect(name: keyof typeof EFFECT_PRESETS): void {
+  const target = EFFECT_PRESETS[name]!;
+  const list = theme.value.effects ?? [];
+  const next = list.some((e) => e.kind === target.kind)
+    ? list.filter((e) => e.kind !== target.kind)
+    : [...list, target];
+  theme.value = { ...theme.value, effects: next };
+}
+
 async function persist(): Promise<void> {
   await shareGallery().add({
     activityId: props.activity.id,
@@ -68,7 +118,6 @@ async function onShare(): Promise<void> {
     busy.value = false;
   }
 }
-
 async function onSave(): Promise<void> {
   busy.value = true;
   try {
@@ -77,7 +126,6 @@ async function onSave(): Promise<void> {
     busy.value = false;
   }
 }
-
 async function reshare(img: SharedImage): Promise<void> {
   await shareImage(img.dataUrl, `rastro-${img.activityId}`);
 }
@@ -129,6 +177,54 @@ const currentLabel = computed(() => themeLabel(theme.value));
       </div>
     </div>
 
+    <div class="picker">
+      <Label>Tipografía</Label>
+      <div class="chips">
+        <button
+          v-for="t in SHARE_TYPOGRAPHIES"
+          :key="t.id"
+          type="button"
+          class="chip"
+          :class="{ on: (theme.typographyId ?? 'mono') === t.id }"
+          @click="pickTypography(t.id)"
+        >
+          {{ t.label }}
+        </button>
+      </div>
+    </div>
+
+    <div class="picker">
+      <Label>Fondo</Label>
+      <div class="chips">
+        <label class="chip file" :class="{ on: hasPhoto }">
+          {{ hasPhoto ? "Cambiar foto" : "Foto…" }}
+          <input type="file" accept="image/*" @change="onPhoto" />
+        </label>
+        <button v-if="hasPhoto" type="button" class="chip" @click="clearPhoto">Quitar</button>
+        <button
+          v-if="hasPhoto"
+          type="button"
+          class="chip"
+          :class="{ on: photoAuto }"
+          @click="toggleAdjust"
+        >
+          {{ photoAuto ? "Auto color" : "Color manual" }}
+        </button>
+      </div>
+    </div>
+
+    <div class="picker">
+      <Label>Efectos</Label>
+      <div class="chips">
+        <button type="button" class="chip" :class="{ on: hasEffect('glow') }" @click="toggleEffect('glow')">
+          Glow
+        </button>
+        <button type="button" class="chip" :class="{ on: hasEffect('grain') }" @click="toggleEffect('grain')">
+          Grano
+        </button>
+      </div>
+    </div>
+
     <div class="actions">
       <AppButton size="lg" block variant="ghost" :disabled="busy" @press="onSave">Guardar</AppButton>
       <AppButton size="lg" block icon="export" :disabled="busy" @press="onShare">Compartir</AppButton>
@@ -170,8 +266,6 @@ const currentLabel = computed(() => themeLabel(theme.value));
   flex-wrap: wrap;
 }
 .chip {
-  flex: 1 1 0;
-  min-width: 72px;
   padding: var(--sp-2) var(--sp-3);
   border: 1px solid var(--line);
   border-radius: var(--r-pill);
@@ -183,6 +277,17 @@ const currentLabel = computed(() => themeLabel(theme.value));
   border-color: var(--ink);
   color: var(--ink);
   background: var(--surface-2);
+}
+.chip.file {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+.chip.file input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
 }
 .swatches {
   display: flex;
