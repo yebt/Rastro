@@ -1,82 +1,133 @@
-# TODO — Rastro
+# TODO — Rastro v2
 
 Roadmap de objetivos. Es el "qué queremos alcanzar", no el "cómo" definitivo.
 Se trabaja con **refactors incrementales sobre base estable**, de a poco, y la
 **UI/UX se acuerda en conjunto antes de construir** cada parte.
 
 Leyenda: `[ ]` pendiente · `[~]` en progreso · `[x]` hecho.
-Base estable actual: `7355e03` (share/maplibre themes).
+App activa: `astro-vue-capacitor-2/` (Astro + isla Vue + Capacitor, arquitectura
+hexagonal, diseño monocromo, offline-first / local-first / sin cuenta).
 
 ---
 
 ## 1. Navegación y estructura
 
-- [ ] Nueva distribución de tabs (reorganizar las 5 actuales `track/pull/hist/progress/data` en algo más claro). Propuesta a confirmar.
-- [ ] Home / dashboard con las stats base.
-- [~] Ajustes como vista propia → tab **Más** agregada (6ta, temporal) con config segmentada: Perfil · Vista y temas · Registro · Datos · Información. Falta jubilar las vistas viejas en supresión.
+- [x] Shell de navegación v2 con tabs (Home · Actividad · Info).
+- [x] Home / dashboard base.
+- [x] Ajustes / datos como vista propia (tab **Info**, antes "Perfil"): sin card
+      de nombre, arranca con totales de por vida + accesos a Calendario/Historial.
 
 ## 2. Calendario y racha
 
-- [ ] Vista de calendario para ver cuándo salí a caminar / trotar / correr / ejercicios.
-- [ ] Racha (streak) de días activos.
+- [x] Vista de calendario (caminar / trotar / correr / ejercicios).
+- [x] Racha (streak) de días activos (en los totales de Info).
 
-## 3. Ejercicios (antes "Dominadas")
+## 3. Ejercicios y rutinas
 
-- [ ] Generalizar dominadas → ejercicios: sumar burpees, abdominales, flexiones de pecho, y dejar la puerta abierta a más.
-- [ ] Rutinas configurables (futuro).
+- [x] Modelo generalizado de ejercicios (no solo dominadas).
+- [x] Conteo estilo v1: card de stats (total / hoy / mejor sesión / mejor serie)
+      + stepper.
+- [x] UX de series: el conteo **persiste** y se re-aplica sin re-tipear N; ± solo
+      cuando una serie difiere.
+- [x] Catálogo editable y persistido (seed: solo dominadas). Agregar / renombrar /
+      borrar, con **warning** si se borra un ejercicio usado en una rutina.
+- [x] Rutinas = circuitos ("vuelta = serie"): modelo + store + builder (Fase 1).
+- [ ] **Fase 2 — player guiado**: correr la rutina con cuentas de descanso entre
+      ejercicio y entre vuelta, pausar/reanudar, y **reiniciar con confirmación**.
+- [ ] **Fase 3 — guardar sesión de rutina** como actividad y mostrarla en
+      historial / calendario.
 
 ## 4. Métricas (repensar a fondo)
 
-- [ ] Analizar cómo se toman, qué se evalúa y cómo se muestran hoy.
-- [ ] Insights útiles para el corredor/caminante: dónde apreté (ej. km 18→19), dónde con zancada más larga rendí más, dónde bajé el ritmo, dónde empecé a caer.
-- [ ] Splits negativos/positivos, zonas de esfuerzo, eficiencia de zancada por tramo.
-- [ ] Depende de datos que hoy no se guardan (ver §6 altitud y §7 captura rica).
+- [x] Métricas base: distancia, tiempo, ritmo, velocidad, desnivel, pausas, pasos.
+- [ ] Insights útiles: dónde apreté (ej. km 18→19), dónde rendí más, dónde caí.
+- [ ] Splits negativos/positivos, zonas de esfuerzo, eficiencia por tramo.
+- [ ] Gráficas interactivas de ritmo/velocidad en el tiempo (como v1).
 
 ## 5. Share card del rastro
 
-- [ ] Mejorar cómo se arma la card.
-- [ ] Nuevas plantillas/temas: variar layout de la data, fuentes, colores, inclinación.
-- [ ] Guardar una configuración como favorito.
-- [ ] Adjuntar foto (tomada al finalizar) como fondo.
-- [ ] Colores desde imagen: paleta dominante + ajuste de secundarios por contraste.
-- [ ] Tema topográfico (topografía del terreno como fondo).
-- [ ] Marcador de meta en el punto de llegada.
+- [x] Vista de compartir (no share instantáneo) con **preview en vivo**.
+- [x] Temas = **layout × paleta** (4 layouts: Clásico/Póster/Minimal/Historia ·
+      5 paletas: Noche/Papel/Oro/Neón/Mono).
+- [x] **Galería** de compartidos, persistida (re-compartir / borrar).
+- [ ] **Más temas/plantillas**: más variantes de layout y disposición de la data.
+- [ ] **Tipografías** configurables por tema.
+- [ ] **Mapas** de fondo (tiles) como en v1 — rompe algo del offline puro, evaluar
+      lazy-load como v1 (CARTO/MapLibre).
+- [ ] **Foto de fondo** (tomada al finalizar) como fondo de la card.
+- [ ] **Colores desde imagen**: paleta dominante + ajuste por contraste.
+- [ ] **Tema topográfico** (topografía del terreno como fondo).
+- [ ] **Marcador de meta** más marcado en el punto de llegada.
+- [ ] Guardar una configuración de tema como **favorito**.
 
 ## 6. Altitud / elevación
 
-- [ ] Guardar la altitud del GPS (suavizada) por punto.
-- [ ] Usarla en métricas (desnivel acumulado) y, opcionalmente, en la card.
-- [ ] Conectar a terceros para elevación precisa (opt-in, rompe offline) — futuro.
+- [x] Guardar altitud del GPS por punto (captura sin pérdida).
+- [x] Desnivel acumulado en métricas.
+- [ ] Suavizado de altitud dedicado.
+- [ ] Elevación precisa vía terceros (opt-in, rompe offline) — futuro.
 
 ## 7. Datos y captura (fundación)
 
-- [ ] Captura sin pérdida: guardar altitud + tiempo + precisión por punto (hoy se descartan).
-- [ ] Esquema de datos versionado + capa de migración (para no romper datos viejos).
-- [ ] Tramos guardables y reutilizables: comparar el ritmo en el mismo tramo entre salidas.
+- [x] Captura sin pérdida (lat/lng/t/alt/acc por punto).
+- [x] Esquema versionado + capa de migración.
+- [x] Filtros de traza intercambiables (raw / drift / kalman / D+K) con selector
+      para A/B comparar cuál aproxima mejor.
+- [ ] Tramos guardables y reutilizables: comparar ritmo en el mismo tramo entre
+      salidas.
 - [ ] Fotos durante el recorrido (más que solo la ruta).
 
 ## 8. Captura / tracking (UX)
 
-- [ ] Repensar la pantalla de tracking: más inmersiva, mapa protagonista, pausar/reanudar/finalizar/foto.
-- [ ] Al finalizar la actividad → ir directo a la review.
+- [x] Pantalla de tracking inmersiva: mapa protagonista, stats en blur toggleable,
+      botones fijos abajo, nav oculto, botón de recentrar.
+- [x] Basemap Leaflet + CARTO dark bajo la ruta (con fixes de zoom/pinch/mundo).
+- [x] Esperar "Iniciar" antes de arrancar el contador.
+- [x] Confirmar antes de guardar recorridos < 10 s.
+- [x] Congelar stats en el instante de finalizar (sin perder tiempo/distancia).
+- [x] Al finalizar → ir directo a la review.
+- [x] Pausar/reanudar/finalizar (finalizar = back ×2).
 
-## 9. Onboarding e identidad
+## 9. Permisos, identidad y sistema
 
-- [x] Splash con logo (plugin + `splash.png` + ícono Android 12+). Verificar en dispositivo.
-- [x] Pedir permisos de entrada (SetupScreen, ya existía).
-- [x] Info base: nombre/apodo + altura + **peso como registro** (lista con fecha, para re-pesar y ver el cambio a futuro). En el setup y editable en Más › Perfil.
+- [x] Splash con logo.
+- [x] Pedir permisos de entrada + **encender ubicación** como v1
+      (request-location-accuracy) — verificado en dispositivo.
+- [x] Migración a background-geolocation (grabar con pantalla apagada).
+- [x] Podómetro por hardware (@capgo/capacitor-pedometer).
+- [x] Permisos de notificación.
+- [x] Sistema de versión en el APK atado al commit (versionName/versionCode).
+- [x] Info base: nombre/apodo + altura + peso como registro.
 
 ## 10. Diseño / UI
 
-- [ ] Definir la dirección visual en conjunto (el intento anterior no convenció — arrancar de referencias que sí gusten).
-- [ ] Accent color configurable con contraste garantizado en claro y oscuro.
-- [ ] Revisar/estado del dark mode.
+- [x] Contrato de diseño (DESIGN.md): monocromo, íconos de línea, sin emojis.
+- [x] Sistema de accent color con contraste garantizado (test).
+- [ ] Revisar estado del dark mode a fondo.
 
 ---
 
+## Mejorar HOME (pendiente puntual)
+
+- [ ] Stats + gráficas + favoritos / acciones rápidas (pedido explícito).
+
 ## Futuro / backlog
 
-- [ ] Notificación con estado del recorrido (en progreso / pausado) mientras se rastrea.
+- [ ] Notificación con estado del recorrido (en progreso / pausado) mientras rastrea.
 - [ ] Detección automática de tramos repetidos (vs. marcado manual).
 - [ ] Sync online opcional (Google), privado y opt-in.
 - [ ] Íconos PWA 192/512 maskable reales.
+
+---
+
+## Auditoría — cosas que se saltaron / quedaron a medias
+
+- **Rutinas Fase 2 y 3**: el builder existe, pero **no hay player** (correr la
+  rutina con descansos, pausa/reinicio) ni se guarda la sesión de rutina. Es lo
+  más grande pendiente del bloque ejercicios.
+- **Share**: quedaron fuera del primer corte los **mapas de fondo**, la **foto**,
+  las **tipografías** y varios **temas** (topográfico, colores desde imagen,
+  favorito, marcador de meta). Hecho: layout × paleta + galería.
+- **Home**: sigue base; falta gráficas + favoritos.
+- **Métricas**: falta todo el bloque de insights/splits y las gráficas
+  interactivas de v1.
