@@ -32,10 +32,10 @@ hexagonal, diseño monocromo, offline-first / local-first / sin cuenta).
 - [x] Catálogo editable y persistido (seed: solo dominadas). Agregar / renombrar /
       borrar, con **warning** si se borra un ejercicio usado en una rutina.
 - [x] Rutinas = circuitos ("vuelta = serie"): modelo + store + builder (Fase 1).
-- [ ] **Fase 2 — player guiado**: correr la rutina con cuentas de descanso entre
-      ejercicio y entre vuelta, pausar/reanudar, y **reiniciar con confirmación**.
-- [ ] **Fase 3 — guardar sesión de rutina** como actividad y mostrarla en
-      historial / calendario.
+- [x] **Fase 2 — player guiado**: correr la rutina con descansos cronometrados
+      (pausar/reanudar, +15s, saltar) y **reiniciar con confirmación**.
+- [x] **Fase 3 — guardar sesión de rutina** como actividad (RoutineActivity),
+      visible en historial/detalle/calendario y sumada a los reps de Info.
 
 ## 4. Métricas (repensar a fondo)
 
@@ -50,14 +50,19 @@ hexagonal, diseño monocromo, offline-first / local-first / sin cuenta).
 - [x] Temas = **layout × paleta** (4 layouts: Clásico/Póster/Minimal/Historia ·
       5 paletas: Noche/Papel/Oro/Neón/Mono).
 - [x] **Galería** de compartidos, persistida (re-compartir / borrar).
-- [ ] **Más temas/plantillas**: más variantes de layout y disposición de la data.
-- [ ] **Tipografías** configurables por tema.
-- [ ] **Mapas** de fondo (tiles) como en v1 — rompe algo del offline puro, evaluar
-      lazy-load como v1 (CARTO/MapLibre).
-- [ ] **Foto de fondo** (tomada al finalizar) como fondo de la card.
-- [ ] **Colores desde imagen**: paleta dominante + ajuste por contraste.
-- [ ] **Tema topográfico** (topografía del terreno como fondo).
-- [ ] **Marcador de meta** más marcado en el punto de llegada.
+- [x] **Foto de fondo** (adjuntar imagen local, offline) con **auto-ajuste de
+      color** (ink/muted por luminancia) o manual, + scrim automático.
+- [x] **Tipografías** configurables (mono / grotesk / técnica).
+- [x] **Efectos** apilables (scrim, grano, glow de ruta) + layout `overlay`.
+- [ ] **Colores desde imagen** completo: paleta dominante (median-cut) + acento
+      de ruta con contraste validado (hoy solo ink/muted por luminancia).
+- [ ] **Override manual de colores** editable (campos ink/muted/route/dots).
+- [ ] **Mapas** de fondo **inclinados** (pitch 3D) como en v1 — MapLibre + tiles
+      CARTO. Rompe offline puro → lazy-load + fallback `topo` local. Spec §6.
+      (Es el "mapas bonitos inclinados" que pidió el usuario; próximo paso.)
+- [ ] **Tema topográfico** (curvas de nivel line-art, 100% offline).
+- [ ] Más layouts abstraídos del spec: editorial, dataGrid, blueprint, techCard.
+- [ ] **Marcador de meta** (flag/pin/ring) más marcado en la llegada.
 - [ ] Guardar una configuración de tema como **favorito**.
 
 ## 6. Altitud / elevación
