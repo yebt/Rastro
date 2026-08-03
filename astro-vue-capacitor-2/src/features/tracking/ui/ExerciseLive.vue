@@ -24,7 +24,9 @@ const base = startExercise(props.exerciseId, Date.now());
 const label = exerciseLabel(props.exerciseId);
 
 const sets = ref<ExerciseSet[]>([]);
-const draft = ref(""); // reps for the set being entered
+// Standing reps for the NEXT set. It PERSISTS after adding, so you set the count
+// once and tap "Agregar serie" to re-apply it; nudge ± only when a set differs.
+const rep = ref(10);
 const elapsed = ref(0);
 const saved = ref<Activity[]>([]);
 
@@ -41,24 +43,19 @@ onUnmounted(() => {
   if (timer) clearInterval(timer);
 });
 
-const draftReps = computed(() => Math.max(0, Math.floor(Number(draft.value) || 0)));
-const total = computed(() => totalReps(sets.value) + draftReps.value);
+const total = computed(() => totalReps(sets.value));
 
 function nudge(by: number): void {
-  draft.value = String(Math.max(0, draftReps.value + by));
+  rep.value = Math.max(0, (Number(rep.value) || 0) + by);
 }
 function addSet(): void {
-  if (draftReps.value > 0) {
-    sets.value.push({ reps: draftReps.value });
-    draft.value = "";
-  }
+  if (rep.value > 0) sets.value.push({ reps: rep.value }); // keep rep for quick re-add
 }
 function removeSet(i: number): void {
   sets.value.splice(i, 1);
 }
 
 async function finish(): Promise<void> {
-  addSet(); // bank a pending draft so nothing is lost
   if (sets.value.length === 0) {
     emit("done"); // nothing logged
     return;
@@ -91,21 +88,22 @@ async function finish(): Promise<void> {
     </Card>
 
     <Card>
-      <Label>Repeticiones · serie {{ sets.length + 1 }}</Label>
+      <Label>Reps por serie · serie {{ sets.length + 1 }}</Label>
       <div class="stepper">
         <button type="button" class="step" aria-label="Restar" @click="nudge(-1)">−</button>
         <input
-          v-model="draft"
+          v-model.number="rep"
           class="reps"
           type="number"
           inputmode="numeric"
+          min="0"
           placeholder="0"
           @keyup.enter="addSet"
         />
         <button type="button" class="step" aria-label="Sumar" @click="nudge(1)">+</button>
       </div>
-      <AppButton block size="lg" icon="plus" :disabled="draftReps === 0" @press="addSet">
-        Agregar serie
+      <AppButton block size="lg" icon="plus" :disabled="!(rep > 0)" @press="addSet">
+        Agregar serie de {{ rep > 0 ? rep : "…" }}
       </AppButton>
     </Card>
 

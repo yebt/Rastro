@@ -13,13 +13,21 @@ export type {
 } from "./domain/activity";
 export { newId, startExercise, startMove } from "./domain/activity";
 export {
-  EXERCISES,
+  DEFAULT_EXERCISES,
   type ExerciseDef,
-  exerciseLabel,
   exerciseStats,
   type ExerciseStats,
+  slugifyExercise,
   totalReps,
 } from "./domain/exercises";
+export {
+  $exercises,
+  addExercise,
+  exerciseLabel,
+  removeExercise,
+  renameExercise,
+  routinesUsing,
+} from "./exercise-catalog.store";
 export {
   newRoutine,
   type Routine,

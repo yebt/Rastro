@@ -2,8 +2,7 @@
 import { useStore } from "@nanostores/vue";
 import { AppIcon, AppScreen, Label } from "../../../shared/ui";
 import type { MoveType } from "../domain/activity";
-import { EXERCISES } from "../domain/exercises";
-import { $routines, type Routine } from "../../tracking";
+import { $exercises, $routines, type Routine } from "../../tracking";
 
 /** Idle state of the Actividad tab — pick a movement type, an exercise, or a
  *  routine. GPS recording doesn't begin until the user confirms on the ready
@@ -13,9 +12,11 @@ const emit = defineEmits<{
   exercise: [id: string];
   openRoutine: [routine: Routine];
   newRoutine: [];
+  editCatalog: [];
 }>();
 
 const routines = useStore($routines);
+const exercises = useStore($exercises);
 
 const TYPES: { type: MoveType; label: string; hint: string }[] = [
   { type: "walk", label: "Caminar", hint: "Paso tranquilo" },
@@ -44,10 +45,13 @@ const TYPES: { type: MoveType; label: string; hint: string }[] = [
       </button>
     </div>
 
-    <Label>Ejercicios</Label>
+    <div class="section-h">
+      <Label>Ejercicios</Label>
+      <button type="button" class="edit" @click="emit('editCatalog')">Editar</button>
+    </div>
     <div class="exercises">
       <button
-        v-for="e in EXERCISES"
+        v-for="e in exercises"
         :key="e.id"
         type="button"
         class="ex"
@@ -130,6 +134,16 @@ const TYPES: { type: MoveType; label: string; hint: string }[] = [
 }
 .choice-ic {
   flex: none;
+  color: var(--accent);
+}
+.section-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.edit {
+  font-size: 13px;
+  font-weight: 600;
   color: var(--accent);
 }
 .exercises {

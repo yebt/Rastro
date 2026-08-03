@@ -1,14 +1,17 @@
 <script setup lang="ts">
+import { useStore } from "@nanostores/vue";
 import { computed, ref } from "vue";
 import { AppButton, AppIcon, AppSubScreen, Card, Field, Label } from "../../../shared/ui";
 import {
+  $exercises,
   deleteRoutine,
-  EXERCISES,
   exerciseLabel,
   getRoutine,
   type Routine,
   saveRoutine,
 } from "../../tracking";
+
+const catalog = useStore($exercises);
 
 /** Create or edit a routine (a circuit: reps per exercise, rounds, rests). */
 const props = defineProps<{ routine: Routine }>();
@@ -105,7 +108,7 @@ function remove(): void {
     </Card>
 
     <div class="add">
-      <button v-for="e in EXERCISES" :key="e.id" type="button" class="chip" @click="addExercise(e.id)">
+      <button v-for="e in catalog" :key="e.id" type="button" class="chip" @click="addExercise(e.id)">
         <AppIcon name="plus" size="14px" /> {{ e.label }}
       </button>
     </div>

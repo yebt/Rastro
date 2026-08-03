@@ -4,6 +4,7 @@ import { ref } from "vue";
 import { recorder } from "../../recording";
 import { newRoutine, type Routine } from "../../tracking";
 import type { MoveType } from "../domain/activity";
+import CatalogEditor from "./CatalogEditor.vue";
 import ExerciseLive from "./ExerciseLive.vue";
 import MoveReview from "./MoveReview.vue";
 import ReadyMove from "./ReadyMove.vue";
@@ -22,6 +23,7 @@ const status = useStore(recorder.$status);
 const pending = ref<MoveType | null>(null);
 const exerciseId = ref<string | null>(null);
 const routineDraft = ref<Routine | null>(null);
+const editingCatalog = ref(false);
 
 function onSelect(type: MoveType): void {
   pending.value = type;
@@ -58,6 +60,10 @@ function onCancel(): void {
     :routine="routineDraft"
     @done="routineDraft = null"
   />
+  <CatalogEditor
+    v-else-if="status === 'idle' && editingCatalog"
+    @back="editingCatalog = false"
+  />
   <ReadyMove
     v-else-if="status === 'idle' && pending"
     :type="pending"
@@ -70,6 +76,7 @@ function onCancel(): void {
     @exercise="onExercise"
     @open-routine="onOpenRoutine"
     @new-routine="onNewRoutine"
+    @edit-catalog="editingCatalog = true"
   />
   <MoveReview v-else-if="status === 'finished'" />
   <!-- recording / paused: the global LiveMove overlay (in AppRoot) covers the screen -->

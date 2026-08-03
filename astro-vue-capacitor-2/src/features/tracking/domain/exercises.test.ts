@@ -1,6 +1,19 @@
 import { describe, expect, it } from "vitest";
 import type { ExerciseActivity } from "./activity";
-import { exerciseStats } from "./exercises";
+import { exerciseStats, slugifyExercise } from "./exercises";
+
+describe("slugifyExercise", () => {
+  it("lowercases, strips accents and joins words with hyphens", () => {
+    expect(slugifyExercise("Flexiones de pecho")).toBe("flexiones-de-pecho");
+    expect(slugifyExercise("Dominadas")).toBe("dominadas");
+    expect(slugifyExercise("  Sentadillas búlgaras  ")).toBe("sentadillas-bulgaras");
+  });
+
+  it("returns an empty string when there is nothing slug-worthy", () => {
+    expect(slugifyExercise("   ")).toBe("");
+    expect(slugifyExercise("!!!")).toBe("");
+  });
+});
 
 const NOW = new Date(2026, 7, 1, 12, 0, 0).getTime();
 const DAY = 86_400_000;

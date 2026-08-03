@@ -1,6 +1,7 @@
 /**
- * The exercise catalog. Exercise ids are open strings in the model (new ones are
- * data, not code), but the app ships a known set with Spanish labels.
+ * The exercise catalog model. Exercise ids are open strings (new ones are data,
+ * not code), so the catalog is user-editable and persisted — see the
+ * exercise-catalog store. The app seeds a single exercise; the user grows it.
  */
 
 import type { Activity } from "./activity";
@@ -10,15 +11,23 @@ export interface ExerciseDef {
   label: string;
 }
 
-export const EXERCISES: ExerciseDef[] = [
-  { id: "dominadas", label: "Dominadas" },
-  { id: "flexiones", label: "Flexiones" },
-  { id: "abdominales", label: "Abdominales" },
-  { id: "burpees", label: "Burpees" },
-];
+/** Seed catalog on first run: just dominadas. The user adds the rest. */
+export const DEFAULT_EXERCISES: ExerciseDef[] = [{ id: "dominadas", label: "Dominadas" }];
 
-export function exerciseLabel(id: string): string {
-  return EXERCISES.find((e) => e.id === id)?.label ?? id;
+/** Derive a stable id from a label ("Flexiones de pecho" → "flexiones-de-pecho"). */
+export function slugifyExercise(label: string): string {
+  return label
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/** Resolve a label from a catalog, falling back to the id (unknown/old data). */
+export function exerciseLabelIn(catalog: ExerciseDef[], id: string): string {
+  return catalog.find((e) => e.id === id)?.label ?? id;
 }
 
 /** Total reps across an exercise activity's sets. */
