@@ -10,6 +10,7 @@ import {
   formatActivityDate,
   formatDuration,
   MOVE_LABEL,
+  routineEntriesReps,
   totalReps,
 } from "../tracking";
 
@@ -18,11 +19,12 @@ defineEmits<{ open: [] }>();
 
 const date = computed(() => formatActivityDate(props.activity.startedAt));
 
-const title = computed(() =>
-  props.activity.kind === "move"
-    ? MOVE_LABEL[props.activity.type]
-    : exerciseLabel(props.activity.exercise),
-);
+const title = computed(() => {
+  const a = props.activity;
+  if (a.kind === "move") return MOVE_LABEL[a.type];
+  if (a.kind === "routine") return a.name || "Rutina";
+  return exerciseLabel(a.exercise);
+});
 
 const primary = computed(() => {
   const a = props.activity;
@@ -30,12 +32,14 @@ const primary = computed(() => {
     const d = distanceParts(distanceMeters(cleanTrack(a.points)));
     return `${d.value} ${d.unit}`;
   }
+  if (a.kind === "routine") return `${routineEntriesReps(a.entries)} reps`;
   return `${totalReps(a.sets)} reps`;
 });
 
 const secondary = computed(() => {
   const a = props.activity;
   if (a.kind === "move") return formatDuration(a.movingMs ?? 0);
+  if (a.kind === "routine") return `${a.rounds} ${a.rounds === 1 ? "vuelta" : "vueltas"}`;
   return `${a.sets.length} ${a.sets.length === 1 ? "serie" : "series"}`;
 });
 </script>

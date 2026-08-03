@@ -14,7 +14,7 @@
 import { CURRENT_SCHEMA_VERSION } from "./schema";
 import type { TrackPoint } from "./track-point";
 
-export type ActivityKind = "move" | "exercise";
+export type ActivityKind = "move" | "exercise" | "routine";
 
 /** Movement modes, mapped to the Spanish UI: caminar / trotar / correr. */
 export type MoveType = "walk" | "jog" | "run";
@@ -51,7 +51,23 @@ export interface ExerciseActivity extends BaseActivity {
   sets: ExerciseSet[];
 }
 
-export type Activity = MoveActivity | ExerciseActivity;
+/** One completed exercise within a routine run (one entry per exercise per round). */
+export interface RoutineEntry {
+  exerciseId: string;
+  reps: number;
+}
+
+/** A completed guided run of a routine template (see routine-run.ts). */
+export interface RoutineActivity extends BaseActivity {
+  kind: "routine";
+  /** The template this run came from (may no longer exist). */
+  routineId: string;
+  name: string;
+  rounds: number;
+  entries: RoutineEntry[];
+}
+
+export type Activity = MoveActivity | ExerciseActivity | RoutineActivity;
 
 /** Cryptographically-random id; available in browsers, Capacitor and Node. */
 export function newId(): string {

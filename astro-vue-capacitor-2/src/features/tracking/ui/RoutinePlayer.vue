@@ -2,10 +2,13 @@
 import { computed, onUnmounted, ref, watch } from "vue";
 import { AppButton, AppIcon, AppSubScreen, Card } from "../../../shared/ui";
 import {
+  activityRepository,
   buildRun,
+  entriesFrom,
   exercisesDone,
   exerciseLabel,
   exerciseStepCount,
+  routineActivity,
   type Routine,
   type RunStep,
 } from "../../tracking";
@@ -24,6 +27,8 @@ const steps = ref<RunStep[]>(buildRun(props.routine));
 const index = ref(0);
 const remaining = ref(0); // seconds left on the current rest
 const paused = ref(false);
+const startedAt = Date.now();
+const saving = ref(false);
 
 const totalExercises = exerciseStepCount(steps.value);
 const current = computed<RunStep | null>(() => steps.value[index.value] ?? null);
@@ -82,6 +87,21 @@ function restart(): void {
   index.value = 0;
 }
 
+/** Persist the completed run as an activity, then close. */
+async function saveAndFinish(): Promise<void> {
+  saving.value = true;
+  try {
+    const entries = entriesFrom(steps.value);
+    if (entries.length > 0) {
+      const activity = routineActivity(props.routine, entries, startedAt, Date.now());
+      await activityRepository().save(activity);
+    }
+    emit("done");
+  } finally {
+    saving.value = false;
+  }
+}
+
 const restLabel = computed(() =>
   current.value?.kind === "rest" && current.value.scope === "round"
     ? "Descanso entre vueltas"
@@ -105,8 +125,8 @@ const restLabel = computed(() =>
         <small>{{ routine.rounds }} vueltas · {{ totalExercises }} ejercicios</small>
       </Card>
       <div class="actions">
-        <AppButton size="lg" block variant="ghost" @press="restart">Repetir</AppButton>
-        <AppButton size="lg" block @press="emit('done')">Terminar</AppButton>
+        <AppButton size="lg" block variant="ghost" :disabled="saving" @press="restart">Repetir</AppButton>
+        <AppButton size="lg" block :disabled="saving" @press="saveAndFinish">Guardar</AppButton>
       </div>
     </template>
 

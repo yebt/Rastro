@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { Routine } from "./routine";
-import { buildRun, exercisesDone, exerciseStepCount } from "./routine-run";
+import {
+  buildRun,
+  entriesFrom,
+  exercisesDone,
+  exerciseStepCount,
+  routineActivity,
+  routineEntriesReps,
+} from "./routine-run";
 
 function routine(over: Partial<Routine>): Routine {
   return {
@@ -66,5 +73,34 @@ describe("buildRun", () => {
     expect(exercisesDone(steps, 1)).toBe(1); // after first exercise
     expect(exercisesDone(steps, 3)).toBe(2); // after 2nd exercise (index 2) + its rest
     expect(exercisesDone(steps, steps.length)).toBe(4);
+  });
+});
+
+describe("routine session persistence", () => {
+  it("derives entries from completed exercise steps (one per round)", () => {
+    const entries = entriesFrom(buildRun(routine({})));
+    expect(entries).toEqual([
+      { exerciseId: "dominadas", reps: 10 },
+      { exerciseId: "flexiones", reps: 15 },
+      { exerciseId: "dominadas", reps: 10 },
+      { exerciseId: "flexiones", reps: 15 },
+    ]);
+    expect(routineEntriesReps(entries)).toBe(50);
+  });
+
+  it("builds a routine activity linked to its template", () => {
+    const r = routine({});
+    const entries = entriesFrom(buildRun(r));
+    const a = routineActivity(r, entries, 1000, 2000);
+    expect(a).toMatchObject({
+      kind: "routine",
+      routineId: "r1",
+      name: "Test",
+      rounds: 2,
+      startedAt: 1000,
+      endedAt: 2000,
+    });
+    expect(a.id).toBeTruthy();
+    expect(routineEntriesReps(a.entries)).toBe(50);
   });
 });

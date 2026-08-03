@@ -8,7 +8,9 @@
  * Pure data: the UI drives the clock, this only says what comes next.
  */
 
+import { newId, type RoutineActivity, type RoutineEntry } from "./activity";
 import type { Routine } from "./routine";
+import { CURRENT_SCHEMA_VERSION } from "./schema";
 
 export type RunStep =
   | {
@@ -88,4 +90,36 @@ export function exercisesDone(steps: RunStep[], index: number): number {
     if (steps[i]!.kind === "exercise") n++;
   }
   return n;
+}
+
+/** The completed exercise steps as routine entries (target reps, in order). */
+export function entriesFrom(steps: RunStep[]): RoutineEntry[] {
+  return steps.flatMap((s) =>
+    s.kind === "exercise" ? [{ exerciseId: s.exerciseId, reps: s.reps }] : [],
+  );
+}
+
+/** Total reps across a routine session's entries. */
+export function routineEntriesReps(entries: RoutineEntry[]): number {
+  return entries.reduce((sum, e) => sum + e.reps, 0);
+}
+
+/** Build the persisted activity for a completed routine run. */
+export function routineActivity(
+  routine: Routine,
+  entries: RoutineEntry[],
+  startedAt: number,
+  endedAt: number,
+): RoutineActivity {
+  return {
+    id: newId(),
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    kind: "routine",
+    startedAt,
+    endedAt,
+    routineId: routine.id,
+    name: routine.name,
+    rounds: routine.rounds,
+    entries,
+  };
 }

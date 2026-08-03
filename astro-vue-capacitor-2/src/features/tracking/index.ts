@@ -10,6 +10,8 @@ export type {
   ExerciseSet,
   MoveActivity,
   MoveType,
+  RoutineActivity,
+  RoutineEntry,
 } from "./domain/activity";
 export { newId, startExercise, startMove } from "./domain/activity";
 export {
@@ -36,8 +38,11 @@ export {
 } from "./domain/routine";
 export {
   buildRun,
+  entriesFrom,
   exercisesDone,
   exerciseStepCount,
+  routineActivity,
+  routineEntriesReps,
   type RunStep,
 } from "./domain/routine-run";
 export { $routines, deleteRoutine, getRoutine, saveRoutine } from "./routines.store";

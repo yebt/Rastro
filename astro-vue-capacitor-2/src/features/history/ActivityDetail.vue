@@ -32,12 +32,28 @@ const emit = defineEmits<{ back: [] }>();
 
 const move = computed(() => (props.activity.kind === "move" ? props.activity : null));
 const ex = computed(() => (props.activity.kind === "exercise" ? props.activity : null));
+const rt = computed(() => (props.activity.kind === "routine" ? props.activity : null));
 
-const title = computed(() =>
-  props.activity.kind === "move"
-    ? MOVE_LABEL[props.activity.type]
-    : exerciseLabel(props.activity.exercise),
-);
+const title = computed(() => {
+  const a = props.activity;
+  if (a.kind === "move") return MOVE_LABEL[a.type];
+  if (a.kind === "routine") return a.name || "Rutina";
+  return exerciseLabel(a.exercise);
+});
+
+// Routine: reps totalled per exercise, in first-seen order.
+const rtBreakdown = computed(() => {
+  const a = rt.value;
+  if (!a) return [] as { exerciseId: string; reps: number }[];
+  const order: string[] = [];
+  const byId = new Map<string, number>();
+  for (const e of a.entries) {
+    if (!byId.has(e.exerciseId)) order.push(e.exerciseId);
+    byId.set(e.exerciseId, (byId.get(e.exerciseId) ?? 0) + e.reps);
+  }
+  return order.map((id) => ({ exerciseId: id, reps: byId.get(id) ?? 0 }));
+});
+const rtTotal = computed(() => rtBreakdown.value.reduce((s, e) => s + e.reps, 0));
 
 // Movement stats (empty/zero for exercises).
 const trackFilter = useStore($trackFilter);
@@ -103,6 +119,25 @@ async function onDelete(): Promise<void> {
       </Card>
 
       <AppButton block variant="ghost" icon="export" @press="showShare = true">Compartir</AppButton>
+    </template>
+
+    <template v-else-if="rt">
+      <Card>
+        <div class="headline">
+          <span class="hl-dist">{{ rtTotal }} <small>reps</small></span>
+          <span class="hl-date">{{ formatActivityDate(rt.startedAt) }}</span>
+        </div>
+      </Card>
+
+      <Card>
+        <dl class="stats">
+          <div class="row"><dt>Vueltas</dt><dd>{{ rt.rounds }}</dd></div>
+          <div v-for="e in rtBreakdown" :key="e.exerciseId" class="row">
+            <dt>{{ exerciseLabel(e.exerciseId) }}</dt>
+            <dd>{{ e.reps }}</dd>
+          </div>
+        </dl>
+      </Card>
     </template>
 
     <template v-else-if="ex">

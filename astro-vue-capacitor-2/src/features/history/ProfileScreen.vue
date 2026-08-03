@@ -9,6 +9,7 @@ import {
   distanceParts,
   formatDuration,
   type MoveActivity,
+  routineEntriesReps,
   totalReps,
 } from "../tracking";
 import CalendarScreen from "./CalendarScreen.vue";
@@ -32,7 +33,11 @@ const time = computed(() =>
 );
 const streak = computed(() => currentStreak(activities.value, Date.now()));
 const reps = computed(() =>
-  activities.value.reduce((sum, a: Activity) => sum + (a.kind === "exercise" ? totalReps(a.sets) : 0), 0),
+  activities.value.reduce((sum, a: Activity) => {
+    if (a.kind === "exercise") return sum + totalReps(a.sets);
+    if (a.kind === "routine") return sum + routineEntriesReps(a.entries);
+    return sum;
+  }, 0),
 );
 </script>
 
