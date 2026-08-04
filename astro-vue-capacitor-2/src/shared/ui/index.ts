@@ -14,4 +14,5 @@ export { default as Logo } from "./Logo.vue";
 export { default as Row } from "./Row.vue";
 export { default as RowGroup } from "./RowGroup.vue";
 export { default as SegmentedControl } from "./SegmentedControl.vue";
+export { default as Spinner } from "./Spinner.vue";
 export type { IconName } from "./icons";

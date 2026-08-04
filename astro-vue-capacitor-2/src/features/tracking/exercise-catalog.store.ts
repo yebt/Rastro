@@ -38,6 +38,11 @@ function set(list: ExerciseDef[]): void {
   persist(list);
 }
 
+/** Replace the whole catalog (used by backup import). */
+export function setExercises(list: ExerciseDef[]): void {
+  set(list);
+}
+
 /** Reactive label lookup, falling back to the id for unknown/old ids. */
 export function exerciseLabel(id: string): string {
   return $exercises.get().find((e) => e.id === id)?.label ?? id;

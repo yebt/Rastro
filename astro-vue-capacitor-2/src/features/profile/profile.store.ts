@@ -95,6 +95,13 @@ export function addWeight(kg: number, t: number): void {
   write(WEIGHTS_KEY, JSON.stringify(next));
 }
 
+/** Replace the whole weight log (used by backup import). Kept sorted oldest-first. */
+export function setWeights(list: WeightEntry[]): void {
+  const next = [...list].toSorted((a, b) => a.t - b.t);
+  $weights.set(next);
+  write(WEIGHTS_KEY, JSON.stringify(next));
+}
+
 /** Correct a logged measurement, matched by its timestamp. No-op if kg invalid. */
 export function updateWeight(t: number, kg: number): void {
   if (!Number.isFinite(kg) || kg <= 0) return;

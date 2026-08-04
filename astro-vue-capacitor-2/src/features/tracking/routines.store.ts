@@ -36,6 +36,12 @@ export function saveRoutine(routine: Routine): void {
   persist(next);
 }
 
+/** Replace the whole routine list (used by backup import). */
+export function setRoutines(list: Routine[]): void {
+  $routines.set(list);
+  persist(list);
+}
+
 export function deleteRoutine(id: string): void {
   const next = $routines.get().filter((r) => r.id !== id);
   $routines.set(next);

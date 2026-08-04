@@ -29,6 +29,7 @@ export {
   removeExercise,
   renameExercise,
   routinesUsing,
+  setExercises,
 } from "./exercise-catalog.store";
 export {
   newRoutine,
@@ -45,7 +46,7 @@ export {
   routineEntriesReps,
   type RunStep,
 } from "./domain/routine-run";
-export { $routines, deleteRoutine, getRoutine, saveRoutine } from "./routines.store";
+export { $routines, deleteRoutine, getRoutine, saveRoutine, setRoutines } from "./routines.store";
 export { cleanTrack } from "./domain/clean";
 export {
   applyFilter,
