@@ -30,6 +30,8 @@ export interface ShareLayout {
   h: number;
 }
 
+export type MapStyleId = "dark" | "light" | "voyager";
+
 /** Where a card's background comes from. Photo stays offline (local dataURL). */
 export type ShareBackground =
   | { kind: "solid" }
@@ -40,7 +42,29 @@ export type ShareBackground =
       src: string;
       /** "auto" derives ink/muted from the image luminance; "manual" keeps the palette. */
       adjust: "auto" | "manual";
+    }
+  | {
+      /** Real streets under the route via CARTO tiles + MapLibre. Needs network
+       *  (breaks pure offline); the route line still renders without tiles. */
+      kind: "map";
+      style: MapStyleId;
+      /** 0 = top-down, up to ~60 for the inclined 3D look. */
+      pitch: number;
+      bearing: number;
     };
+
+export interface MapStyleDef {
+  id: MapStyleId;
+  label: string;
+  /** Light basemap → dark text; dark basemap → light text. */
+  dark: boolean;
+}
+
+export const MAP_STYLES: MapStyleDef[] = [
+  { id: "voyager", label: "Mapa", dark: false },
+  { id: "dark", label: "Mapa noche", dark: true },
+  { id: "light", label: "Mapa claro", dark: false },
+];
 
 /** Stackable canvas passes, drawn in array order. */
 export type ShareEffect =

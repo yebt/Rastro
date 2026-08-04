@@ -107,6 +107,10 @@ export default defineConfig({
   ],
 
   vite: {
+    // MapLibre (share map cards) is a ~800 kB chunk, but it's dynamically
+    // imported only when a map background is chosen, so it never touches the
+    // base bundle. Raise the warning limit rather than chase a false positive.
+    build: { chunkSizeWarningLimit: 1000 },
     // Bake the git build id in at compile time so the About screen can show
     // exactly which commit an APK was cut from. Replaced literally by Vite.
     define: {

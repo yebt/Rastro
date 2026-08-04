@@ -18,6 +18,7 @@ import {
   MOVE_LABEL,
   type TrackPoint,
 } from "../tracking";
+import { renderMapBackground } from "./map-card";
 import {
   DEFAULT_THEME,
   getLayout,
@@ -44,6 +45,8 @@ interface Style {
   meta: string;
   glow: number; // routeGlow blur, 0 = none
   textShadow: { blur: number; color: string } | null;
+  /** When the background already contains the route (map mode), skip drawing it. */
+  skipRoute: boolean;
 }
 
 interface CardStats {
@@ -244,7 +247,7 @@ function drawRoute(
   st: Style,
   lineWidth: number,
 ): void {
-  if (points.length < 2) return;
+  if (st.skipRoute || points.length < 2) return;
 
   let minLat = Infinity;
   let maxLat = -Infinity;
@@ -503,6 +506,12 @@ function wordmarkCentered(ctx: CanvasRenderingContext2D, cx: number, y: number, 
 
 // ---- Composition --------------------------------------------------------------
 
+interface Painted {
+  pal: SharePalette;
+  /** Map mode bakes the route into the snapshot, so the flat route is skipped. */
+  skipRoute: boolean;
+}
+
 async function paintBackground(
   ctx: CanvasRenderingContext2D,
   W: number,
@@ -510,7 +519,8 @@ async function paintBackground(
   bg: ShareBackground,
   pal: SharePalette,
   blurRadius: number,
-): Promise<SharePalette> {
+  points: TrackPoint[],
+): Promise<Painted> {
   if (bg.kind === "gradient") {
     const rad = (bg.angle * Math.PI) / 180;
     const grad = ctx.createLinearGradient(0, 0, Math.cos(rad) * W, Math.sin(rad) * H);
@@ -518,26 +528,52 @@ async function paintBackground(
     grad.addColorStop(1, bg.to);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
-    return pal;
+    return { pal, skipRoute: false };
   }
   if (bg.kind === "photo") {
     try {
       const img = await loadImage(bg.src);
       if (blurRadius > 0) ctx.filter = `blur(${blurRadius}px)`;
-      // Overscan so the blur doesn't reveal transparent edges.
       const over = blurRadius * 2;
       drawCover(ctx, img, W + over * 2, H + over * 2);
       ctx.filter = "none";
-      return bg.adjust === "auto" ? adjustForPhoto(pal, samplePhoto(img)) : pal;
+      return { pal: bg.adjust === "auto" ? adjustForPhoto(pal, samplePhoto(img)) : pal, skipRoute: false };
     } catch {
       ctx.fillStyle = pal.bg;
       ctx.fillRect(0, 0, W, H);
-      return pal;
+      return { pal, skipRoute: false };
     }
+  }
+  if (bg.kind === "map") {
+    const dark = bg.style === "dark";
+    const bgColor = bg.style === "dark" ? "#0a0c0d" : bg.style === "light" ? "#e7e8e4" : "#e9e6df";
+    const src = await renderMapBackground(points, W, H, {
+      style: bg.style,
+      pitch: bg.pitch,
+      bearing: bg.bearing,
+      routeColor: pal.route,
+      startColor: pal.startDot,
+      endColor: pal.endDot,
+      bgColor,
+    });
+    if (src) {
+      try {
+        const img = await loadImage(src);
+        drawCover(ctx, img, W, H);
+        const ink = dark ? "#f6f6f4" : "#14181a";
+        const muted = dark ? "#cbd0cb" : "#454b47";
+        return { pal: { ...pal, ink, muted }, skipRoute: true };
+      } catch {
+        /* fall through to solid */
+      }
+    }
+    ctx.fillStyle = pal.bg;
+    ctx.fillRect(0, 0, W, H);
+    return { pal, skipRoute: false };
   }
   ctx.fillStyle = pal.bg;
   ctx.fillRect(0, 0, W, H);
-  return pal;
+  return { pal, skipRoute: false };
 }
 
 function applyExposure(ctx: CanvasRenderingContext2D, W: number, H: number, amount: number): void {
@@ -607,10 +643,13 @@ export async function renderRouteCard(
   canvas.height = H;
   const ctx = canvas.getContext("2d")!;
 
-  // 1. Background (blur is a photo-time filter; may adjust the palette).
+  const clean = cleanTrack(activity.points);
+
+  // 1. Background (blur is a photo-time filter; map bakes in the route).
   const blurFx = effects.find((e) => e.kind === "blur");
   const blurRadius = blurFx?.kind === "blur" ? blurFx.radius : 0;
-  const pal = await paintBackground(ctx, W, H, background, pal0, blurRadius);
+  const painted = await paintBackground(ctx, W, H, background, pal0, blurRadius, clean);
+  const pal = painted.pal;
 
   // 2. Background passes, in array order (route-level & text-level handled later).
   for (const e of effects) {
@@ -631,6 +670,7 @@ export async function renderRouteCard(
     meta: typo.meta,
     glow: glow?.kind === "routeGlow" ? glow.blur : 0,
     textShadow: shadow?.kind === "textShadow" ? { blur: shadow.blur, color: shadow.color } : null,
+    skipRoute: painted.skipRoute,
   };
 
   // 3. Text shadow is a global canvas state; drawRoute scopes its own shadow so
@@ -640,7 +680,6 @@ export async function renderRouteCard(
     ctx.shadowBlur = st.textShadow.blur;
   }
 
-  const clean = cleanTrack(activity.points);
   const s = statsOf(activity, clean);
   switch (layout.id) {
     case "poster":

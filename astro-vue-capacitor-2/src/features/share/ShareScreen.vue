@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
-import { AppButton, AppSubScreen, Card, Label } from "../../shared/ui";
+import { AppButton, AppSubScreen, Card, Label, Spinner } from "../../shared/ui";
 import type { MoveActivity } from "../tracking";
 import { shareGallery, type SharedImage } from "./gallery-store";
 import { renderRouteCard } from "./route-card";
 import { shareImage } from "./share-route";
 import {
   DEFAULT_THEME,
+  MAP_STYLES,
+  type MapStyleId,
   SHARE_GRADIENTS,
   SHARE_LAYOUTS,
   SHARE_PALETTES,
@@ -31,8 +33,17 @@ const preview = ref("");
 const gallery = ref<SharedImage[]>([]);
 const busy = ref(false);
 
+const previewing = ref(false);
+let renderToken = 0;
 async function renderPreview(): Promise<void> {
-  preview.value = await renderRouteCard(props.activity, theme.value);
+  const token = ++renderToken;
+  previewing.value = true;
+  try {
+    const url = await renderRouteCard(props.activity, theme.value);
+    if (token === renderToken) preview.value = url; // discard stale renders
+  } finally {
+    if (token === renderToken) previewing.value = false;
+  }
 }
 
 async function loadGallery(): Promise<void> {
@@ -82,6 +93,26 @@ function pickGradient(g: ShareGradient): void {
   };
 }
 const bgKind = computed(() => theme.value.background?.kind ?? "solid");
+
+const isMap = computed(() => theme.value.background?.kind === "map");
+function currentMapStyle(): MapStyleId | null {
+  const bg = theme.value.background;
+  return bg?.kind === "map" ? bg.style : null;
+}
+const tilted = computed(() => {
+  const bg = theme.value.background;
+  return bg?.kind === "map" && bg.pitch > 0;
+});
+function pickMap(style: MapStyleId): void {
+  const bg = theme.value.background;
+  const pitch = bg?.kind === "map" ? bg.pitch : 0;
+  theme.value = { ...theme.value, background: { kind: "map", style, pitch, bearing: 0 } };
+}
+function toggleTilt(): void {
+  const bg = theme.value.background;
+  if (bg?.kind !== "map") return;
+  theme.value = { ...theme.value, background: { ...bg, pitch: bg.pitch > 0 ? 0 : 50 } };
+}
 function toggleAdjust(): void {
   const bg = theme.value.background;
   if (bg?.kind !== "photo") return;
@@ -158,6 +189,7 @@ const currentLabel = computed(() => themeLabel(theme.value));
   <AppSubScreen title="Compartir" @back="emit('back')">
     <div class="preview">
       <img v-if="preview" :src="preview" alt="Vista previa de la tarjeta" />
+      <div v-if="previewing" class="prev-busy"><Spinner size="26px" /></div>
     </div>
 
     <div class="picker">
@@ -241,6 +273,22 @@ const currentLabel = computed(() => themeLabel(theme.value));
           @click="pickGradient(g)"
         ></button>
       </div>
+      <div class="chips">
+        <button
+          v-for="m in MAP_STYLES"
+          :key="m.id"
+          type="button"
+          class="chip"
+          :class="{ on: currentMapStyle() === m.id }"
+          @click="pickMap(m.id)"
+        >
+          {{ m.label }}
+        </button>
+        <button v-if="isMap" type="button" class="chip" :class="{ on: tilted }" @click="toggleTilt">
+          Inclinar
+        </button>
+      </div>
+      <p v-if="isMap" class="hint">El mapa usa datos en línea; sin red se dibuja solo la ruta.</p>
     </div>
 
     <div class="picker">
@@ -280,6 +328,7 @@ const currentLabel = computed(() => themeLabel(theme.value));
 
 <style scoped>
 .preview {
+  position: relative;
   display: flex;
   justify-content: center;
 }
@@ -288,6 +337,19 @@ const currentLabel = computed(() => themeLabel(theme.value));
   max-height: 46vh;
   border-radius: var(--r-lg);
   border: 1px solid var(--line);
+}
+.prev-busy {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  border-radius: var(--r-lg);
+}
+.hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
 }
 .picker {
   display: flex;
