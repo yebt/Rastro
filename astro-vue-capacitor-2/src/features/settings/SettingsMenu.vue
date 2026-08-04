@@ -9,6 +9,10 @@ const emit = defineEmits<{ open: [page: SettingsPage] }>();
 
 const displayName = useStore($name);
 const initial = computed(() => displayName.value.trim().charAt(0).toUpperCase() || "·");
+
+// The identity card above already opens "profile", so drop that row to avoid
+// two entries into the same page.
+const categories = computed(() => SETTINGS_CATEGORIES.filter((c) => c.id !== "profile"));
 </script>
 
 <template>
@@ -27,7 +31,7 @@ const initial = computed(() => displayName.value.trim().charAt(0).toUpperCase() 
 
     <RowGroup>
       <Row
-        v-for="cat in SETTINGS_CATEGORIES"
+        v-for="cat in categories"
         :key="cat.id"
         :icon="cat.icon"
         :label="cat.label"
