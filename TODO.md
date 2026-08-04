@@ -117,9 +117,16 @@ hexagonal, diseño monocromo, offline-first / local-first / sin cuenta).
 
 ---
 
-## Mejorar HOME (pendiente puntual)
+## HOME
 
-- [ ] Stats + gráficas + favoritos / acciones rápidas (pedido explícito).
+- [x] Dashboard gráfico/deportivo: racha, gráfica de barras semanal, y favoritos
+      de arranque rápido (Correr/Trotar/Caminar → Ready). Sin lista de historial.
+
+## Registro / captura extra
+
+- [x] **Cuenta atrás** configurable (3/5/10 s) antes de que arranque el conteo.
+- [x] **Cache de tiles** (service worker, solo CARTO) para que los mapas carguen
+      rápido en vistas repetidas y offline.
 
 ## Futuro / backlog
 
