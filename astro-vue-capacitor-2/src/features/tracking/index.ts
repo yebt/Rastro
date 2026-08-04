@@ -47,6 +47,12 @@ export {
   type RunStep,
 } from "./domain/routine-run";
 export { $routines, deleteRoutine, getRoutine, saveRoutine, setRoutines } from "./routines.store";
+export {
+  movementSeries,
+  type SeriesPoint,
+  type Split,
+  splits,
+} from "./domain/analytics";
 export { cleanTrack } from "./domain/clean";
 export {
   applyFilter,

@@ -17,14 +17,18 @@ import {
   formatSpeed,
   hasElevation,
   MOVE_LABEL,
+  movementSeries,
   pausedMs,
   setTrackFilter,
+  splits,
   $trackFilter,
   totalReps,
   TRACK_FILTERS,
 } from "../tracking";
 import { ShareScreen } from "../share";
 import RouteMap from "../tracking/ui/RouteMap.vue";
+import SplitBars from "../tracking/ui/SplitBars.vue";
+import TrendChart from "../tracking/ui/TrendChart.vue";
 import { deleteActivity } from "./history.store";
 
 const props = defineProps<{ activity: Activity }>();
@@ -75,6 +79,11 @@ const elevation = computed(() =>
 
 const exReps = computed(() => (ex.value ? totalReps(ex.value.sets) : 0));
 
+// Route analytics (move only): per-km splits + speed (km/h) over time.
+const splitData = computed(() => splits(clean.value));
+const speedKmh = computed(() => movementSeries(clean.value, 60).map((p) => p.mps * 3.6));
+const hasCharts = computed(() => clean.value.length >= 4);
+
 const showShare = ref(false);
 
 async function onDelete(): Promise<void> {
@@ -116,6 +125,16 @@ async function onDelete(): Promise<void> {
           <div class="row"><dt>Pasos</dt><dd>{{ move.steps ?? "—" }}</dd></div>
           <div class="row"><dt>Puntos GPS</dt><dd>{{ points.length }}</dd></div>
         </dl>
+      </Card>
+
+      <Card v-if="hasCharts && splitData.length">
+        <Label>Ritmo por km</Label>
+        <SplitBars :splits="splitData" />
+      </Card>
+
+      <Card v-if="hasCharts">
+        <Label>Velocidad en el tiempo</Label>
+        <TrendChart :values="speedKmh" :format="(v) => `${v.toFixed(1)} km/h`" />
       </Card>
 
       <AppButton block variant="ghost" icon="export" @press="showShare = true">Compartir</AppButton>
