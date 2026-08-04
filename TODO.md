@@ -76,6 +76,9 @@ hexagonal, diseño monocromo, offline-first / local-first / sin cuenta).
 
 - [x] Captura sin pérdida (lat/lng/t/alt/acc por punto).
 - [x] Esquema versionado + capa de migración.
+- [x] **Backup en carpetas**: export/import/compartir un JSON (actividades +
+      rutinas + catálogo + perfil) a `Documents/Rastro`, con confirmación y
+      spinner. Import combinar (dedup) o reemplazar.
 - [x] Filtros de traza intercambiables (raw / drift / kalman / D+K) con selector
       para A/B comparar cuál aproxima mejor.
 - [ ] Tramos guardables y reutilizables: comparar ritmo en el mismo tramo entre
