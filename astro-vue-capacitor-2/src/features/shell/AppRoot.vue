@@ -3,6 +3,7 @@ import { useStore } from "@nanostores/vue";
 import { computed, onBeforeUnmount, onMounted } from "vue";
 import { requestPendingPermissions } from "../permissions/permissions";
 import { recorder } from "../recording";
+import { applyAccent } from "../settings/accent.store";
 import { applyTheme } from "../settings/settings.store";
 import SettingsRoot from "../settings/SettingsRoot.vue";
 import { $setupDone } from "../setup/setup.store";
@@ -33,6 +34,7 @@ let disposeBack: (() => void) | null = null;
 
 onMounted(() => {
   applyTheme();
+  applyAccent();
   disposeBack = registerBackButton();
   // First run asks inside the setup; once it's done the setup never shows again,
   // so ask here on entry for anything still undecided (v1 behaviour).
