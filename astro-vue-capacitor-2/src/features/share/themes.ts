@@ -46,7 +46,35 @@ export type ShareBackground =
 export type ShareEffect =
   | { kind: "scrim"; direction: "top" | "bottom" | "full"; color: string; from: number; to: number }
   | { kind: "grain"; opacity: number }
-  | { kind: "routeGlow"; blur: number };
+  | { kind: "routeGlow"; blur: number }
+  /** Gaussian blur applied to the background image (photo). */
+  | { kind: "blur"; radius: number }
+  /** Exposure: amount < 0 darkens, > 0 brightens (0..1). */
+  | { kind: "exposure"; amount: number }
+  /** Darkened edges. strength 0..1. */
+  | { kind: "vignette"; strength: number }
+  /** Map the photo's luminance onto a two-color ramp. */
+  | { kind: "duotone"; shadow: string; highlight: string }
+  /** Halftone dot pattern over the background (the v1 "dots" look). */
+  | { kind: "halftone"; color: string; alpha: number; gap: number; radius: number }
+  /** Shadow behind all text, for legibility over busy photos. */
+  | { kind: "textShadow"; blur: number; color: string };
+
+export interface ShareGradient {
+  id: string;
+  label: string;
+  from: string;
+  to: string;
+  angle: number;
+}
+
+/** Preset gradients offered in the UI (the v1 violeta/atardecer looks, offline). */
+export const SHARE_GRADIENTS: ShareGradient[] = [
+  { id: "violeta", label: "Violeta", from: "#3a1c8c", to: "#7b3ff2", angle: 120 },
+  { id: "atardecer", label: "Atardecer", from: "#241021", to: "#ff5a1f", angle: 120 },
+  { id: "oceano", label: "Océano", from: "#04263b", to: "#0e7a45", angle: 120 },
+  { id: "carbon", label: "Carbón", from: "#0a0c0d", to: "#2a3236", angle: 120 },
+];
 
 /** Font treatment. Just the three faces the app self-hosts, recombined. */
 export interface ShareTypography {
@@ -142,6 +170,8 @@ export const SHARE_LAYOUTS: ShareLayout[] = [
   { id: "minimal", label: "Minimal", w: 1080, h: 1080 },
   { id: "story", label: "Historia", w: 1080, h: 1920 },
   { id: "overlay", label: "Overlay", w: 1080, h: 1350 },
+  { id: "editorial", label: "Editorial", w: 1080, h: 1350 },
+  { id: "dataGrid", label: "Datos", w: 1080, h: 1350 },
 ];
 
 export const DEFAULT_THEME: ShareTheme = { layoutId: "clasico", paletteId: "noche" };

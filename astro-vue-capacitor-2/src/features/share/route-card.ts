@@ -43,6 +43,7 @@ interface Style {
   title: string;
   meta: string;
   glow: number; // routeGlow blur, 0 = none
+  textShadow: { blur: number; color: string } | null;
 }
 
 interface CardStats {
@@ -92,31 +93,110 @@ function drawCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, W: numb
   ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
 }
 
-/** Mean relative luminance (0..1) of an image, sampled at 16×16. */
-function avgLuminance(img: HTMLImageElement): number {
-  const c = document.createElement("canvas");
-  c.width = 16;
-  c.height = 16;
-  const x = c.getContext("2d");
-  if (!x) return 0.5;
-  x.drawImage(img, 0, 0, 16, 16);
-  const d = x.getImageData(0, 0, 16, 16).data;
-  let sum = 0;
-  for (let i = 0; i < d.length; i += 4) {
-    sum += (0.2126 * d[i]! + 0.7152 * d[i + 1]! + 0.0722 * d[i + 2]!) / 255;
-  }
-  return sum / (d.length / 4);
+type RGB = [number, number, number];
+
+function relLum([r, g, b]: RGB): number {
+  const f = (v: number): number => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
 }
 
-/** Derive legible ink/muted for a photo of the given mean luminance. */
-function adjustForPhoto(pal: SharePalette, lum: number): SharePalette {
-  const dark = lum < 0.5;
+/** WCAG contrast ratio (1..21) between two colors. */
+function contrast(a: RGB, b: RGB): number {
+  const la = relLum(a);
+  const lb = relLum(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+
+function toHex([r, g, b]: RGB): string {
+  return `#${[r, g, b].map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`;
+}
+
+function saturation([r, g, b]: RGB): number {
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  return max === 0 ? 0 : (max - min) / max;
+}
+
+/** Sample an image to a small pixel array plus its mean luminance (0..1). */
+function samplePhoto(img: HTMLImageElement, n = 24): { pixels: RGB[]; lum: number } {
+  const c = document.createElement("canvas");
+  c.width = n;
+  c.height = n;
+  const x = c.getContext("2d");
+  if (!x) return { pixels: [], lum: 0.5 };
+  x.drawImage(img, 0, 0, n, n);
+  const d = x.getImageData(0, 0, n, n).data;
+  const pixels: RGB[] = [];
+  let sum = 0;
+  for (let i = 0; i < d.length; i += 4) {
+    const px: RGB = [d[i]!, d[i + 1]!, d[i + 2]!];
+    pixels.push(px);
+    sum += (0.2126 * px[0] + 0.7152 * px[1] + 0.0722 * px[2]) / 255;
+  }
+  return { pixels, lum: sum / (pixels.length || 1) };
+}
+
+/** Dominant colors via coarse RGB bucketing (a light median-cut stand-in). */
+function dominantColors(pixels: RGB[]): { color: RGB; weight: number }[] {
+  const buckets = new Map<number, { sum: RGB; n: number }>();
+  for (const [r, g, b] of pixels) {
+    const key = ((r >> 5) << 6) | ((g >> 5) << 3) | (b >> 5); // 8×8×8 cube
+    const e = buckets.get(key) ?? { sum: [0, 0, 0] as RGB, n: 0 };
+    e.sum[0] += r;
+    e.sum[1] += g;
+    e.sum[2] += b;
+    e.n += 1;
+    buckets.set(key, e);
+  }
+  return [...buckets.values()]
+    .map((e) => ({ color: [e.sum[0] / e.n, e.sum[1] / e.n, e.sum[2] / e.n] as RGB, weight: e.n }))
+    .sort((a, b) => b.weight - a.weight);
+}
+
+/**
+ * Derive legible text + a contrast-safe route accent from a photo. Text is
+ * light/dark by mean luminance; the accent is the most saturated dominant color
+ * that clears a contrast threshold against the image, falling back to the
+ * palette accent, then to a neon orange, then to plain ink.
+ */
+function adjustForPhoto(pal: SharePalette, sample: { pixels: RGB[]; lum: number }): SharePalette {
+  const dark = sample.lum < 0.5;
+  const ink: RGB = dark ? [246, 246, 244] : [20, 24, 26];
+  const bgAvg: RGB = [
+    sample.lum * 255 * 0.9 + 12,
+    sample.lum * 255 * 0.9 + 12,
+    sample.lum * 255 * 0.9 + 12,
+  ];
+
+  const doms = dominantColors(sample.pixels);
+  const candidates: RGB[] = [
+    ...doms
+      .filter((d) => saturation(d.color) > 0.35)
+      .sort((a, b) => saturation(b.color) - saturation(a.color))
+      .map((d) => d.color),
+    hexToRgb(pal.route),
+    [255, 90, 31],
+  ];
+  const accent = candidates.find((c) => contrast(c, bgAvg) >= 2.2) ?? ink;
+
   return {
     ...pal,
-    ink: dark ? "#f6f6f4" : "#14181a",
+    ink: toHex(ink),
     muted: dark ? "#cbd0cb" : "#454b47",
-    // route stays the palette accent (bright); a scrim guarantees contrast.
+    route: toHex(accent),
+    startDot: toHex(accent),
+    endDot: toHex(ink),
   };
+}
+
+function hexToRgb(hex: string): RGB {
+  const h = hex.replace("#", "");
+  const full = h.length === 3 ? h.replace(/(.)/g, "$1$1") : h;
+  const n = parseInt(full, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
 // ---- Effects ------------------------------------------------------------------
@@ -191,11 +271,11 @@ function drawRoute(
   const px = (i: number): number => offX + (xs[i]! - minX) * scale;
   const py = (i: number): number => offY + (maxLat - points[i]!.lat) * scale;
 
+  // Route + markers drawn under their own shadow scope (glow, or none) so a
+  // global text shadow never bleeds onto the line or dots.
   ctx.save();
-  if (st.glow > 0) {
-    ctx.shadowBlur = st.glow;
-    ctx.shadowColor = st.pal.route;
-  }
+  ctx.shadowBlur = st.glow;
+  ctx.shadowColor = st.glow > 0 ? st.pal.route : "transparent";
   ctx.strokeStyle = st.pal.route;
   ctx.lineWidth = lineWidth;
   ctx.lineJoin = "round";
@@ -203,7 +283,6 @@ function drawRoute(
   ctx.beginPath();
   points.forEach((_, i) => (i === 0 ? ctx.moveTo(px(i), py(i)) : ctx.lineTo(px(i), py(i))));
   ctx.stroke();
-  ctx.restore();
 
   const dot = (i: number, fill: string): void => {
     ctx.beginPath();
@@ -216,6 +295,7 @@ function drawRoute(
   };
   dot(0, st.pal.startDot);
   dot(points.length - 1, st.pal.endDot);
+  ctx.restore();
 }
 
 // ---- Layouts ------------------------------------------------------------------
@@ -352,6 +432,60 @@ function drawOverlay(ctx: CanvasRenderingContext2D, W: number, H: number, pts: T
   ctx.textAlign = "left";
 }
 
+/** Editorial: big split title + DMS-ish coords, route as art, minimal stat line. */
+function drawEditorial(ctx: CanvasRenderingContext2D, W: number, H: number, pts: TrackPoint[], s: CardStats, st: Style, first: TrackPoint | undefined): void {
+  ctx.textAlign = "left";
+  ctx.fillStyle = st.pal.ink;
+  ctx.font = `700 92px ${st.title}`;
+  ctx.fillText(s.type, 70, 160);
+  ctx.fillStyle = st.pal.muted;
+  ctx.font = `400 30px ${st.meta}`;
+  ctx.fillText(formatCoords(first), 74, 212);
+  drawRoute(ctx, pts, { x: 60, y: 250, w: W - 120, h: H - 560 }, st, 8);
+  ctx.fillStyle = st.pal.ink;
+  ctx.font = `600 44px ${st.headline}`;
+  ctx.fillText(`${s.distValue} ${s.distUnit}`, 70, H - 130);
+  ctx.fillStyle = st.pal.muted;
+  ctx.font = `400 30px ${st.meta}`;
+  ctx.fillText(`${s.duration}  ·  ${s.pace}/km  ·  ${s.date}`, 70, H - 88);
+  wordmark(ctx, W - 70, H - 88, st);
+}
+
+/** DataGrid: title/date top, route silhouette, a DISTANCIA·TIEMPO·RITMO row (v1 map-card feel). */
+function drawDataGrid(ctx: CanvasRenderingContext2D, W: number, H: number, pts: TrackPoint[], s: CardStats, st: Style): void {
+  ctx.textAlign = "left";
+  ctx.fillStyle = st.pal.route;
+  ctx.font = `600 40px ${st.title}`;
+  ctx.fillText(s.type, 70, 120);
+  ctx.fillStyle = st.pal.muted;
+  ctx.font = `400 28px ${st.meta}`;
+  ctx.fillText(s.date, 72, 162);
+  drawRoute(ctx, pts, { x: 120, y: 210, w: W - 240, h: 620 }, st, 8);
+  const cols: [string, string, string][] = [
+    ["DISTANCIA", s.distValue, s.distUnit],
+    ["TIEMPO", s.duration, ""],
+    ["RITMO", s.pace, "/km"],
+  ];
+  const y = H - 170;
+  const colW = (W - 140) / 3;
+  cols.forEach((c, i) => {
+    const x = 70 + i * colW;
+    ctx.fillStyle = st.pal.muted;
+    ctx.font = `600 24px ${st.meta}`;
+    ctx.fillText(c[0], x, y);
+    ctx.fillStyle = st.pal.ink;
+    ctx.font = `600 62px ${st.headline}`;
+    ctx.fillText(c[1], x, y + 70);
+    if (c[2]) {
+      const w = ctx.measureText(c[1]).width;
+      ctx.fillStyle = st.pal.muted;
+      ctx.font = `600 26px ${st.headline}`;
+      ctx.fillText(c[2], x + w + 10, y + 70);
+    }
+  });
+  wordmark(ctx, W - 70, H - 50, st);
+}
+
 function wordmark(ctx: CanvasRenderingContext2D, x: number, y: number, st: Style): void {
   ctx.fillStyle = st.pal.muted;
   ctx.font = `600 30px ${st.title}`;
@@ -375,6 +509,7 @@ async function paintBackground(
   H: number,
   bg: ShareBackground,
   pal: SharePalette,
+  blurRadius: number,
 ): Promise<SharePalette> {
   if (bg.kind === "gradient") {
     const rad = (bg.angle * Math.PI) / 180;
@@ -388,10 +523,13 @@ async function paintBackground(
   if (bg.kind === "photo") {
     try {
       const img = await loadImage(bg.src);
-      drawCover(ctx, img, W, H);
-      return bg.adjust === "auto" ? adjustForPhoto(pal, avgLuminance(img)) : pal;
+      if (blurRadius > 0) ctx.filter = `blur(${blurRadius}px)`;
+      // Overscan so the blur doesn't reveal transparent edges.
+      const over = blurRadius * 2;
+      drawCover(ctx, img, W + over * 2, H + over * 2);
+      ctx.filter = "none";
+      return bg.adjust === "auto" ? adjustForPhoto(pal, samplePhoto(img)) : pal;
     } catch {
-      // Fall back to a solid fill if the image can't be decoded.
       ctx.fillStyle = pal.bg;
       ctx.fillRect(0, 0, W, H);
       return pal;
@@ -400,6 +538,48 @@ async function paintBackground(
   ctx.fillStyle = pal.bg;
   ctx.fillRect(0, 0, W, H);
   return pal;
+}
+
+function applyExposure(ctx: CanvasRenderingContext2D, W: number, H: number, amount: number): void {
+  ctx.save();
+  ctx.fillStyle = amount < 0 ? rgba("#000000", -amount) : rgba("#ffffff", amount);
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+}
+
+function applyVignette(ctx: CanvasRenderingContext2D, W: number, H: number, strength: number): void {
+  const grad = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.max(W, H) * 0.72);
+  grad.addColorStop(0, "rgba(0,0,0,0)");
+  grad.addColorStop(1, rgba("#000000", strength));
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+}
+
+function applyDuotone(ctx: CanvasRenderingContext2D, W: number, H: number, shadow: string, highlight: string): void {
+  const s = hexToRgb(shadow);
+  const h = hexToRgb(highlight);
+  const img = ctx.getImageData(0, 0, W, H);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const t = (0.2126 * d[i]! + 0.7152 * d[i + 1]! + 0.0722 * d[i + 2]!) / 255;
+    d[i] = s[0] + (h[0] - s[0]) * t;
+    d[i + 1] = s[1] + (h[1] - s[1]) * t;
+    d[i + 2] = s[2] + (h[2] - s[2]) * t;
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+function applyHalftone(ctx: CanvasRenderingContext2D, W: number, H: number, e: Extract<ShareEffect, { kind: "halftone" }>): void {
+  ctx.save();
+  ctx.fillStyle = rgba(e.color, e.alpha);
+  for (let y = e.gap / 2; y < H; y += e.gap) {
+    for (let x = e.gap / 2; x < W; x += e.gap) {
+      ctx.beginPath();
+      ctx.arc(x, y, e.radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
 }
 
 /** Ensure a photo card always has some scrim for legibility. */
@@ -427,25 +607,39 @@ export async function renderRouteCard(
   canvas.height = H;
   const ctx = canvas.getContext("2d")!;
 
-  // 1. Background (may adjust the palette for photos).
-  const pal = await paintBackground(ctx, W, H, background, pal0);
+  // 1. Background (blur is a photo-time filter; may adjust the palette).
+  const blurFx = effects.find((e) => e.kind === "blur");
+  const blurRadius = blurFx?.kind === "blur" ? blurFx.radius : 0;
+  const pal = await paintBackground(ctx, W, H, background, pal0, blurRadius);
 
-  // 2. Background effects (scrim, grain) before the route.
+  // 2. Background passes, in array order (route-level & text-level handled later).
   for (const e of effects) {
-    if (e.kind === "scrim") applyScrim(ctx, W, H, e);
+    if (e.kind === "duotone") applyDuotone(ctx, W, H, e.shadow, e.highlight);
+    else if (e.kind === "exposure") applyExposure(ctx, W, H, e.amount);
+    else if (e.kind === "halftone") applyHalftone(ctx, W, H, e);
+    else if (e.kind === "scrim") applyScrim(ctx, W, H, e);
     else if (e.kind === "grain") applyGrain(ctx, W, H, e.opacity);
+    else if (e.kind === "vignette") applyVignette(ctx, W, H, e.strength);
   }
 
   const glow = effects.find((e) => e.kind === "routeGlow");
+  const shadow = effects.find((e) => e.kind === "textShadow");
   const st: Style = {
     pal,
     headline: typo.headline,
     title: typo.title,
     meta: typo.meta,
     glow: glow?.kind === "routeGlow" ? glow.blur : 0,
+    textShadow: shadow?.kind === "textShadow" ? { blur: shadow.blur, color: shadow.color } : null,
   };
 
-  // 3. Route + text per layout.
+  // 3. Text shadow is a global canvas state; drawRoute scopes its own shadow so
+  //    the line/dots stay crisp.
+  if (st.textShadow) {
+    ctx.shadowColor = st.textShadow.color;
+    ctx.shadowBlur = st.textShadow.blur;
+  }
+
   const clean = cleanTrack(activity.points);
   const s = statsOf(activity, clean);
   switch (layout.id) {
@@ -460,6 +654,12 @@ export async function renderRouteCard(
       break;
     case "overlay":
       drawOverlay(ctx, W, H, clean, s, st);
+      break;
+    case "editorial":
+      drawEditorial(ctx, W, H, clean, s, st, clean[0]);
+      break;
+    case "dataGrid":
+      drawDataGrid(ctx, W, H, clean, s, st);
       break;
     default:
       drawClasico(ctx, W, H, clean, s, st);

@@ -7,10 +7,12 @@ import { renderRouteCard } from "./route-card";
 import { shareImage } from "./share-route";
 import {
   DEFAULT_THEME,
+  SHARE_GRADIENTS,
   SHARE_LAYOUTS,
   SHARE_PALETTES,
   SHARE_TYPOGRAPHIES,
   type ShareEffect,
+  type ShareGradient,
   type ShareTheme,
   themeKey,
   themeLabel,
@@ -73,6 +75,13 @@ function onPhoto(event: Event): void {
 function clearPhoto(): void {
   theme.value = { ...theme.value, background: { kind: "solid" } };
 }
+function pickGradient(g: ShareGradient): void {
+  theme.value = {
+    ...theme.value,
+    background: { kind: "gradient", from: g.from, to: g.to, angle: g.angle },
+  };
+}
+const bgKind = computed(() => theme.value.background?.kind ?? "solid");
 function toggleAdjust(): void {
   const bg = theme.value.background;
   if (bg?.kind !== "photo") return;
@@ -82,16 +91,24 @@ function toggleAdjust(): void {
   };
 }
 
-const EFFECT_PRESETS: Record<string, ShareEffect> = {
-  grain: { kind: "grain", opacity: 0.06 },
-  glow: { kind: "routeGlow", blur: 26 },
+const EFFECT_PRESETS: Record<string, { label: string; effect: ShareEffect }> = {
+  glow: { label: "Glow", effect: { kind: "routeGlow", blur: 26 } },
+  grain: { label: "Grano", effect: { kind: "grain", opacity: 0.06 } },
+  blur: { label: "Desenfoque", effect: { kind: "blur", radius: 16 } },
+  oscurecer: { label: "Oscurecer", effect: { kind: "exposure", amount: -0.32 } },
+  vineta: { label: "Viñeta", effect: { kind: "vignette", strength: 0.55 } },
+  duotono: { label: "Duotono", effect: { kind: "duotone", shadow: "#0a0c1f", highlight: "#7b3ff2" } },
+  puntos: { label: "Puntos", effect: { kind: "halftone", color: "#ffffff", alpha: 0.1, gap: 26, radius: 3 } },
+  sombra: { label: "Sombra", effect: { kind: "textShadow", blur: 14, color: "#000000" } },
 };
-function hasEffect(name: keyof typeof EFFECT_PRESETS): boolean {
-  const target = EFFECT_PRESETS[name]!;
+type EffectName = keyof typeof EFFECT_PRESETS;
+const EFFECT_NAMES = Object.keys(EFFECT_PRESETS) as EffectName[];
+function hasEffect(name: EffectName): boolean {
+  const target = EFFECT_PRESETS[name].effect;
   return (theme.value.effects ?? []).some((e) => e.kind === target.kind);
 }
-function toggleEffect(name: keyof typeof EFFECT_PRESETS): void {
-  const target = EFFECT_PRESETS[name]!;
+function toggleEffect(name: EffectName): void {
+  const target = EFFECT_PRESETS[name].effect;
   const list = theme.value.effects ?? [];
   const next = list.some((e) => e.kind === target.kind)
     ? list.filter((e) => e.kind !== target.kind)
@@ -196,11 +213,13 @@ const currentLabel = computed(() => themeLabel(theme.value));
     <div class="picker">
       <Label>Fondo</Label>
       <div class="chips">
+        <button type="button" class="chip" :class="{ on: bgKind === 'solid' }" @click="clearPhoto">
+          Sólido
+        </button>
         <label class="chip file" :class="{ on: hasPhoto }">
           {{ hasPhoto ? "Cambiar foto" : "Foto…" }}
           <input type="file" accept="image/*" @change="onPhoto" />
         </label>
-        <button v-if="hasPhoto" type="button" class="chip" @click="clearPhoto">Quitar</button>
         <button
           v-if="hasPhoto"
           type="button"
@@ -211,16 +230,31 @@ const currentLabel = computed(() => themeLabel(theme.value));
           {{ photoAuto ? "Auto color" : "Color manual" }}
         </button>
       </div>
+      <div class="swatches">
+        <button
+          v-for="g in SHARE_GRADIENTS"
+          :key="g.id"
+          type="button"
+          class="swatch grad"
+          :style="{ background: `linear-gradient(135deg, ${g.from}, ${g.to})` }"
+          :aria-label="g.label"
+          @click="pickGradient(g)"
+        ></button>
+      </div>
     </div>
 
     <div class="picker">
       <Label>Efectos</Label>
       <div class="chips">
-        <button type="button" class="chip" :class="{ on: hasEffect('glow') }" @click="toggleEffect('glow')">
-          Glow
-        </button>
-        <button type="button" class="chip" :class="{ on: hasEffect('grain') }" @click="toggleEffect('grain')">
-          Grano
+        <button
+          v-for="name in EFFECT_NAMES"
+          :key="name"
+          type="button"
+          class="chip"
+          :class="{ on: hasEffect(name) }"
+          @click="toggleEffect(name)"
+        >
+          {{ EFFECT_PRESETS[name].label }}
         </button>
       </div>
     </div>

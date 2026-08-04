@@ -13,6 +13,8 @@ export {
   getTypography,
   type ShareBackground,
   type ShareEffect,
+  type ShareGradient,
+  SHARE_GRADIENTS,
   type SharePalette,
   type ShareLayout,
   SHARE_LAYOUTS,
