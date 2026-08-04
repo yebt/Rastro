@@ -58,10 +58,10 @@ hexagonal, diseño monocromo, offline-first / local-first / sin cuenta).
 - [ ] **Colores desde imagen** completo: paleta dominante (median-cut) + acento
       de ruta con contraste validado (hoy solo ink/muted por luminancia).
 - [ ] **Override manual de colores** editable (campos ink/muted/route/dots).
-- [ ] **Mapas** de fondo **inclinados** (pitch 3D) como en v1 — MapLibre + tiles
-      CARTO. Rompe offline puro → lazy-load + fallback `topo` local. Spec §6.
-      (Es el "mapas bonitos inclinados" que pidió el usuario; próximo paso.)
-- [ ] **Tema topográfico** (curvas de nivel line-art, 100% offline).
+- [x] **Mapas** de fondo **inclinados** (pitch 3D) como en v1 — MapLibre + tiles
+      CARTO (Mapa / noche / claro + Inclinar), lazy-load, ruta horneada en el
+      snapshot, degrada offline (dibuja solo la ruta). Spec §6.
+- [ ] **Tema topográfico** (curvas de nivel line-art, 100% offline) — fallback.
 - [ ] Más layouts abstraídos del spec: editorial, dataGrid, blueprint, techCard.
 - [ ] **Marcador de meta** (flag/pin/ring) más marcado en la llegada.
 - [ ] Guardar una configuración de tema como **favorito**.
