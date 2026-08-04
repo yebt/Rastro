@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useStore } from "@nanostores/vue";
-import { ref, watch } from "vue";
+import { onUnmounted, ref, watch } from "vue";
 import { recorder } from "../../recording";
-import { $startIntent, clearStartIntent, newRoutine, type Routine } from "../../tracking";
+import { $countdown, $startIntent, clearStartIntent, newRoutine, type Routine } from "../../tracking";
 import type { MoveType } from "../domain/activity";
 import CatalogEditor from "./CatalogEditor.vue";
 import ExerciseLive from "./ExerciseLive.vue";
@@ -56,10 +56,43 @@ function onRunRoutine(r: Routine): void {
   runningRoutine.value = r;
 }
 
+// Optional pre-start countdown (Registro › Cuenta atrás).
+const countdownLeft = ref(0);
+let cdTimer: ReturnType<typeof setInterval> | null = null;
+let cdType: MoveType | null = null;
+
+function stopCountdown(): void {
+  if (cdTimer) {
+    clearInterval(cdTimer);
+    cdTimer = null;
+  }
+  countdownLeft.value = 0;
+}
+function cancelCountdown(): void {
+  stopCountdown();
+  cdType = null;
+}
+onUnmounted(stopCountdown);
+
 function onStart(): void {
   if (pending.value === null) return;
-  void recorder.start(pending.value);
+  const type = pending.value;
   pending.value = null;
+  const secs = $countdown.get();
+  if (secs <= 0) {
+    void recorder.start(type);
+    return;
+  }
+  cdType = type;
+  countdownLeft.value = secs;
+  cdTimer = setInterval(() => {
+    countdownLeft.value -= 1;
+    if (countdownLeft.value <= 0) {
+      stopCountdown();
+      if (cdType) void recorder.start(cdType);
+      cdType = null;
+    }
+  }, 1000);
 }
 
 function onCancel(): void {
@@ -105,4 +138,34 @@ function onCancel(): void {
   <MoveReview v-else-if="status === 'finished'" />
   <!-- recording / paused: the global LiveMove overlay (in AppRoot) covers the screen -->
 
+  <div v-if="countdownLeft > 0" class="countdown" @click="cancelCountdown">
+    <b>{{ countdownLeft }}</b>
+    <span>tocá para cancelar</span>
+  </div>
 </template>
+
+<style scoped>
+.countdown {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  background: var(--bg);
+}
+.countdown b {
+  font-family: var(--font-mono);
+  font-size: 160px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.countdown span {
+  font-size: 14px;
+  color: var(--muted);
+}
+</style>
