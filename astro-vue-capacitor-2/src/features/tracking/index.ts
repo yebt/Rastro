@@ -86,3 +86,4 @@ export {
   formatSpeed,
 } from "./ui/format";
 export { MOVE_LABEL } from "./ui/labels";
+export { $startIntent, clearStartIntent, setStartIntent } from "./start-intent.store";

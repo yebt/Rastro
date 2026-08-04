@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { MoveActivity, TrackPoint } from "../tracking";
-import { currentStreak, weekSummary } from "./summary";
+import { currentStreak, dailyTotals, weekSummary } from "./summary";
 
 const DAY = 86_400_000;
 // Noon, mid-June — away from any DST transition, so day math is stable.
@@ -34,6 +34,16 @@ describe("home summary", () => {
     expect(s.count).toBe(2);
     expect(s.movingMs).toBe(900_000);
     expect(s.distanceM).toBeGreaterThan(100); // one leg ~111m
+  });
+
+  it("dailyTotals buckets the last N days oldest-first", () => {
+    const acts = [move(NOW, 600_000), move(NOW - 2 * DAY, 300_000), move(NOW - 2 * DAY + 1000, 60_000)];
+    const days = dailyTotals(acts, NOW, 7);
+    expect(days).toHaveLength(7);
+    expect(days[6]!.count).toBe(1); // today (last bucket)
+    expect(days[6]!.movingMs).toBe(600_000);
+    expect(days[4]!.count).toBe(2); // two activities two days ago
+    expect(days[0]!.count).toBe(0); // 6 days ago, empty
   });
 
   it("streak counts consecutive active days ending today", () => {

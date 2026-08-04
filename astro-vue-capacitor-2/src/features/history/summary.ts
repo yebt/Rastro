@@ -25,6 +25,40 @@ export interface WeekSummary {
   movingMs: number;
 }
 
+export interface DayTotal {
+  /** Local start-of-day, epoch ms. */
+  t: number;
+  distanceM: number;
+  movingMs: number;
+  count: number;
+}
+
+/**
+ * Totals per day for the last `days` days, oldest first (left-to-right chart
+ * order). Distance/time come from movement; count includes every activity kind.
+ */
+export function dailyTotals(activities: Activity[], now: number, days = 7): DayTotal[] {
+  const today = startOfDay(now);
+  const out: DayTotal[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const dayStart = today - i * DAY_MS;
+    const dayEnd = dayStart + DAY_MS;
+    let distanceM = 0;
+    let movingMs = 0;
+    let count = 0;
+    for (const a of activities) {
+      if (a.startedAt < dayStart || a.startedAt >= dayEnd) continue;
+      count++;
+      if (isMove(a)) {
+        distanceM += distanceMeters(cleanTrack(a.points));
+        movingMs += a.movingMs ?? 0;
+      }
+    }
+    out.push({ t: dayStart, distanceM, movingMs, count });
+  }
+  return out;
+}
+
 /** Totals over movement activities started within the last 7 days. */
 export function weekSummary(activities: Activity[], now: number): WeekSummary {
   const cutoff = now - 7 * DAY_MS;

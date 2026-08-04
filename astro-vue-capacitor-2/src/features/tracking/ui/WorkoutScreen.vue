@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useStore } from "@nanostores/vue";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { recorder } from "../../recording";
-import { newRoutine, type Routine } from "../../tracking";
+import { $startIntent, clearStartIntent, newRoutine, type Routine } from "../../tracking";
 import type { MoveType } from "../domain/activity";
 import CatalogEditor from "./CatalogEditor.vue";
 import ExerciseLive from "./ExerciseLive.vue";
@@ -30,6 +30,19 @@ const editingCatalog = ref(false);
 function onSelect(type: MoveType): void {
   pending.value = type;
 }
+
+// Home's quick-start hands us a type; land on the Ready screen for it.
+const startIntent = useStore($startIntent);
+watch(
+  startIntent,
+  (type) => {
+    if (type && status.value === "idle") {
+      pending.value = type;
+      clearStartIntent();
+    }
+  },
+  { immediate: true },
+);
 function onExercise(id: string): void {
   exerciseId.value = id;
 }
