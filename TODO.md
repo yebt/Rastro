@@ -40,9 +40,10 @@ hexagonal, diseño monocromo, offline-first / local-first / sin cuenta).
 ## 4. Métricas (repensar a fondo)
 
 - [x] Métricas base: distancia, tiempo, ritmo, velocidad, desnivel, pausas, pasos.
+- [x] **Splits por km** (barras, más rápido resaltado) + **velocidad en el tiempo**
+      (gráfica de línea SVG) en el detalle. Dominio puro `analytics.ts`.
 - [ ] Insights útiles: dónde apreté (ej. km 18→19), dónde rendí más, dónde caí.
-- [ ] Splits negativos/positivos, zonas de esfuerzo, eficiencia por tramo.
-- [ ] Gráficas interactivas de ritmo/velocidad en el tiempo (como v1).
+- [ ] Zonas de esfuerzo, eficiencia de zancada por tramo.
 
 ## 5. Share card del rastro
 
@@ -110,7 +111,8 @@ hexagonal, diseño monocromo, offline-first / local-first / sin cuenta).
 ## 10. Diseño / UI
 
 - [x] Contrato de diseño (DESIGN.md): monocromo, íconos de línea, sin emojis.
-- [x] Sistema de accent color con contraste garantizado (test).
+- [x] Sistema de accent color **configurable** (6 paletas) con contraste
+      garantizado en claro/oscuro (test). Selector en Apariencia.
 - [ ] Revisar estado del dark mode a fondo.
 
 ---
