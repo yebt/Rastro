@@ -35,6 +35,10 @@ let disposeBack: (() => void) | null = null;
 onMounted(() => {
   applyTheme();
   applyAccent();
+  // Cache map tiles (CARTO) so maps load fast on repeat views and offline.
+  if ("serviceWorker" in navigator) {
+    void navigator.serviceWorker.register("/sw.js").catch(() => {});
+  }
   disposeBack = registerBackButton();
   // First run asks inside the setup; once it's done the setup never shows again,
   // so ask here on entry for anything still undecided (v1 behaviour).
