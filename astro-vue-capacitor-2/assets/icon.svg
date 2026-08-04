@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Rastro launcher icon: the trail mark (start point + goal) on brand dark. -->
+  <rect width="1024" height="1024" fill="#0a0c0d"/>
+  <g transform="scale(32)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 23c4-2 3-7 7-8s6-3 9-6" stroke="#4ce08c" stroke-width="2.4"/>
+    <circle cx="8" cy="23" r="2.7" fill="#eef1ee" stroke="none"/>
+    <circle cx="24" cy="9" r="2.7" fill="#4ce08c" stroke="none"/>
+  </g>
+</svg>

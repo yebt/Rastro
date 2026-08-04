@@ -50,6 +50,7 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
     "@capacitor/android": "^8.4.2",
+    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.4.2",
     "@iconify-json/lucide": "^1.2.119",
     "@types/leaflet": "^1.9.21",

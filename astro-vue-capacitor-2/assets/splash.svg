@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2732" height="2732" viewBox="0 0 2732 2732">
+  <!-- Rastro splash: trail mark centered on brand dark with generous margin. -->
+  <rect width="2732" height="2732" fill="#0a0c0d"/>
+  <g transform="translate(1366 1366) scale(28) translate(-16 -16)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 23c4-2 3-7 7-8s6-3 9-6" stroke="#4ce08c" stroke-width="2.2"/>
+    <circle cx="8" cy="23" r="2.7" fill="#eef1ee" stroke="none"/>
+    <circle cx="24" cy="9" r="2.7" fill="#4ce08c" stroke="none"/>
+  </g>
+</svg>
