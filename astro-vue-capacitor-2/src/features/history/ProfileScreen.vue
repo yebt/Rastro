@@ -15,11 +15,12 @@ import {
 import { useBackHandler } from "../shell/useBackHandler";
 import CalendarScreen from "./CalendarScreen.vue";
 import HistoryScreen from "./HistoryScreen.vue";
+import ProgressScreen from "./ProgressScreen.vue";
 import { $activities } from "./history.store";
 import { currentStreak } from "./summary";
 
-/** Info tab — lifetime data plus ways into the calendar and full history. */
-type View = "menu" | "calendar" | "history";
+/** Info tab — lifetime data plus ways into progress, calendar and full history. */
+type View = "menu" | "progress" | "calendar" | "history";
 const view = ref<View>("menu");
 
 // Back from a sub-view returns to the menu (not straight Home).
@@ -51,7 +52,8 @@ const reps = computed(() =>
 </script>
 
 <template>
-  <CalendarScreen v-if="view === 'calendar'" @back="view = 'menu'" />
+  <ProgressScreen v-if="view === 'progress'" @back="view = 'menu'" />
+  <CalendarScreen v-else-if="view === 'calendar'" @back="view = 'menu'" />
   <HistoryScreen v-else-if="view === 'history'" @back="view = 'menu'" />
 
   <AppScreen v-else title="Info">
@@ -69,6 +71,7 @@ const reps = computed(() =>
     </Card>
 
     <RowGroup>
+      <Row icon="workout" label="Progreso" value="Tendencias por tipo" @press="view = 'progress'" />
       <Row icon="calendar" label="Calendario" value="Días activos" @press="view = 'calendar'" />
       <Row icon="list" label="Historial" value="Todas tus actividades" @press="view = 'history'" />
     </RowGroup>
