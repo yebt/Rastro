@@ -10,6 +10,7 @@ import {
   distanceMeters,
   distanceParts,
   elevationGainM,
+  elevationLossM,
   exerciseLabel,
   formatActivityDate,
   formatDuration,
@@ -84,6 +85,23 @@ const splitData = computed(() => splits(clean.value));
 const speedKmh = computed(() => movementSeries(clean.value, 60).map((p) => p.mps * 3.6));
 const hasCharts = computed(() => clean.value.length >= 4);
 
+// Richer derived metrics.
+const bestKm = computed(() => {
+  const paces = splitData.value.map((s) => s.paceSecPerKm).filter((p): p is number => p != null);
+  return paces.length ? formatPace(Math.min(...paces)) : null;
+});
+const cadence = computed(() => {
+  const m = move.value;
+  return m?.steps && m.movingMs ? Math.round(m.steps / (m.movingMs / 60_000)) : null;
+});
+const stride = computed(() => {
+  const m = move.value;
+  return m?.steps ? distanceMeters(clean.value) / m.steps : null; // metres per step
+});
+const elevLoss = computed(() =>
+  hasElevation(points.value) ? `−${Math.round(elevationLossM(points.value))} m` : "—",
+);
+
 const showShare = ref(false);
 
 async function onDelete(): Promise<void> {
@@ -120,9 +138,13 @@ async function onDelete(): Promise<void> {
           <div class="row"><dt>Tiempo</dt><dd>{{ duration }}</dd></div>
           <div class="row"><dt>En pausa</dt><dd>{{ paused }} · {{ move.pauses ?? 0 }}×</dd></div>
           <div class="row"><dt>Ritmo medio</dt><dd>{{ pace }} /km</dd></div>
+          <div v-if="bestKm" class="row"><dt>Mejor km</dt><dd>{{ bestKm }} /km</dd></div>
           <div class="row"><dt>Velocidad media</dt><dd>{{ speed }} km/h</dd></div>
           <div class="row"><dt>Desnivel +</dt><dd>{{ elevation }}</dd></div>
+          <div class="row"><dt>Desnivel −</dt><dd>{{ elevLoss }}</dd></div>
           <div class="row"><dt>Pasos</dt><dd>{{ move.steps ?? "—" }}</dd></div>
+          <div v-if="cadence" class="row"><dt>Cadencia media</dt><dd>{{ cadence }} p/min</dd></div>
+          <div v-if="stride" class="row"><dt>Zancada media</dt><dd>{{ stride.toFixed(2) }} m</dd></div>
           <div class="row"><dt>Puntos GPS</dt><dd>{{ points.length }}</dd></div>
         </dl>
       </Card>
