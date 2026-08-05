@@ -6,7 +6,6 @@ import { $countdown, $startIntent, clearStartIntent, newRoutine, type Routine } 
 import type { MoveType } from "../domain/activity";
 import CatalogEditor from "./CatalogEditor.vue";
 import ExerciseLive from "./ExerciseLive.vue";
-import MoveReview from "./MoveReview.vue";
 import ReadyMove from "./ReadyMove.vue";
 import RoutineBuilder from "./RoutineBuilder.vue";
 import RoutinePlayer from "./RoutinePlayer.vue";
@@ -135,8 +134,8 @@ function onCancel(): void {
     @new-routine="onNewRoutine"
     @edit-catalog="editingCatalog = true"
   />
-  <MoveReview v-else-if="status === 'finished'" />
-  <!-- recording / paused: the global LiveMove overlay (in AppRoot) covers the screen -->
+  <!-- recording / paused: the global LiveMove overlay (in AppRoot) covers the screen.
+       finished: AppRoot opens the saved activity's detail and resets to idle. -->
 
   <div v-if="countdownLeft > 0" class="countdown" @click="cancelCountdown">
     <b>{{ countdownLeft }}</b>

@@ -101,8 +101,9 @@ const emit = defineEmits<{ press: [] }>();
   border-color: var(--line);
 }
 .v-danger {
-  background: transparent;
-  color: var(--danger);
-  border-color: color-mix(in srgb, var(--danger) 35%, transparent);
+  background: var(--danger);
+  color: #fff;
+  font-weight: 700;
+  border-color: transparent;
 }
 </style>

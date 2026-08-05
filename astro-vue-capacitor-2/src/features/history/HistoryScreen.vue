@@ -1,31 +1,26 @@
 <script setup lang="ts">
 import { useStore } from "@nanostores/vue";
-import { computed, onMounted, ref } from "vue";
+import { onMounted } from "vue";
 import { AppSubScreen, Card } from "../../shared/ui";
-import ActivityDetail from "./ActivityDetail.vue";
 import ActivityRow from "./ActivityRow.vue";
+import { openActivity } from "./detail.store";
 import { $activities, loadActivities } from "./history.store";
 
-/** Full activity history, newest first. */
+/** Full activity history, newest first. Detail opens in the global overlay. */
 defineEmits<{ back: [] }>();
 
 const activities = useStore($activities);
-const selectedId = ref<string | null>(null);
 
 onMounted(() => {
   void loadActivities();
 });
-
-const selected = computed(() => activities.value.find((a) => a.id === selectedId.value) ?? null);
 </script>
 
 <template>
-  <ActivityDetail v-if="selected" :activity="selected" @back="selectedId = null" />
-
-  <AppSubScreen v-else title="Historial" @back="$emit('back')">
+  <AppSubScreen title="Historial" @back="$emit('back')">
     <Card>
       <div v-if="activities.length" class="list">
-        <ActivityRow v-for="a in activities" :key="a.id" :activity="a" @open="selectedId = a.id" />
+        <ActivityRow v-for="a in activities" :key="a.id" :activity="a" @open="openActivity(a.id)" />
       </div>
       <p v-else class="empty">Todavía no registraste ninguna actividad.</p>
     </Card>

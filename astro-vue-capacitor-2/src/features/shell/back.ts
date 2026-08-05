@@ -11,6 +11,7 @@ import { Capacitor } from "@capacitor/core";
 import { handleRecordingBack } from "../recording";
 import { closeSettingsPage, $settingsPage } from "../settings/settings.nav";
 import { $setupDone, prevStep } from "../setup/setup.store";
+import { popBack } from "./backstack";
 import { $activeTab, setTab } from "./nav.store";
 
 export function handleBack(): void {
@@ -26,7 +27,9 @@ export function handleBack(): void {
     closeSettingsPage();
     return;
   }
-  // 3) Not on Home: go Home first.
+  // 3) An in-tab overlay is open (activity detail, a sub-view): pop it.
+  if (popBack()) return;
+  // 4) Not on Home: go Home first.
   if ($activeTab.get() !== "home") {
     setTab("home");
     return;

@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { useStore } from "@nanostores/vue";
-import { computed, onBeforeUnmount, onMounted } from "vue";
+import { computed, onBeforeUnmount, onMounted, watch } from "vue";
 import { requestPendingPermissions } from "../permissions/permissions";
 import { recorder } from "../recording";
+import ActivityDetailHost from "../history/ActivityDetailHost.vue";
+import { openActivity } from "../history/detail.store";
 import { applyAccent } from "../settings/accent.store";
 import { applyTheme } from "../settings/settings.store";
 import SettingsRoot from "../settings/SettingsRoot.vue";
@@ -45,6 +47,16 @@ onMounted(() => {
   if (setupDone.value) void requestPendingPermissions();
 });
 
+// On finish, jump straight to the saved activity's detail and reset the
+// recorder — no blocking summary screen, so a new activity can start right away.
+watch(recStatus, (s) => {
+  if (s === "finished") {
+    const id = recorder.$activity.get()?.id ?? null; // capture before discard clears it
+    void recorder.discard();
+    if (id) openActivity(id); // the host reloads the store if the record isn't in it yet
+  }
+});
+
 onBeforeUnmount(() => {
   disposeBack?.();
 });
@@ -63,6 +75,7 @@ onBeforeUnmount(() => {
       </main>
       <BottomNav />
     </div>
+    <ActivityDetailHost />
     <LiveMove v-if="recording" />
   </template>
 </template>

@@ -95,7 +95,7 @@ watch(finishRequested, (requested) => {
 
 <template>
   <div class="live">
-    <RouteMap ref="routeMap" :points="clean" fill class="map-bg" />
+    <RouteMap ref="routeMap" :points="clean" fill class="map-bg" @tap="showStats = !showStats" />
 
     <div class="overlay">
       <header class="top">

@@ -2,9 +2,9 @@
 import { useStore } from "@nanostores/vue";
 import { computed, onMounted, ref } from "vue";
 import { AppIcon, AppSubScreen, Card } from "../../shared/ui";
-import ActivityDetail from "./ActivityDetail.vue";
 import ActivityRow from "./ActivityRow.vue";
 import { buildMonth } from "./calendar";
+import { openActivity } from "./detail.store";
 import { $activities, loadActivities } from "./history.store";
 
 /** Month calendar of active days; tap a day for its activities. */
@@ -16,7 +16,6 @@ const now = new Date();
 const viewYear = ref(now.getFullYear());
 const viewMonth = ref(now.getMonth());
 const selectedDay = ref<number | null>(null);
-const selectedId = ref<string | null>(null);
 
 onMounted(() => {
   void loadActivities();
@@ -48,8 +47,6 @@ const dayActivities = computed(() => {
   });
 });
 
-const selected = computed(() => activities.value.find((a) => a.id === selectedId.value) ?? null);
-
 function step(delta: number): void {
   selectedDay.value = null;
   const d = new Date(viewYear.value, viewMonth.value + delta, 1);
@@ -59,9 +56,7 @@ function step(delta: number): void {
 </script>
 
 <template>
-  <ActivityDetail v-if="selected" :activity="selected" @back="selectedId = null" />
-
-  <AppSubScreen v-else title="Calendario" @back="$emit('back')">
+  <AppSubScreen title="Calendario" @back="$emit('back')">
     <Card>
       <header class="cal-head">
         <button type="button" class="nav" aria-label="Mes anterior" @click="step(-1)">
@@ -106,7 +101,7 @@ function step(delta: number): void {
           v-for="a in dayActivities"
           :key="a.id"
           :activity="a"
-          @open="selectedId = a.id"
+          @open="openActivity(a.id)"
         />
       </div>
       <p v-else class="empty-day">Sin actividades ese día.</p>

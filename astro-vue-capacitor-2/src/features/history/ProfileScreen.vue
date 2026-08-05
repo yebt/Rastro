@@ -12,6 +12,7 @@ import {
   routineEntriesReps,
   totalReps,
 } from "../tracking";
+import { useBackHandler } from "../shell/useBackHandler";
 import CalendarScreen from "./CalendarScreen.vue";
 import HistoryScreen from "./HistoryScreen.vue";
 import { $activities } from "./history.store";
@@ -20,6 +21,14 @@ import { currentStreak } from "./summary";
 /** Info tab — lifetime data plus ways into the calendar and full history. */
 type View = "menu" | "calendar" | "history";
 const view = ref<View>("menu");
+
+// Back from a sub-view returns to the menu (not straight Home).
+useBackHandler(
+  computed(() => view.value !== "menu"),
+  () => {
+    view.value = "menu";
+  },
+);
 
 const activities = useStore($activities);
 

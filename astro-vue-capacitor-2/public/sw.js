@@ -28,7 +28,9 @@ async function cacheFirst(request) {
   const hit = await cache.match(request);
   if (hit) return hit;
   const res = await fetch(request);
-  if (res.ok) {
+  // Tiles are loaded no-cors (opaque, status 0) by Leaflet/MapLibre — cache
+  // those too, or the cache never populates and maps stay slow.
+  if (res && (res.ok || res.type === "opaque")) {
     cache.put(request, res.clone());
     void trim(cache);
   }

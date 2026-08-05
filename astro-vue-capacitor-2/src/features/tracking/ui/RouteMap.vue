@@ -10,6 +10,7 @@ import type { TrackPoint } from "../domain/track-point";
  * default marker images — vector circle markers avoid the bundler asset problem.
  */
 const props = defineProps<{ points: TrackPoint[]; fill?: boolean }>();
+const emit = defineEmits<{ tap: [] }>();
 
 const TILES = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
 
@@ -86,6 +87,9 @@ onMounted(() => {
     fadeAnimation: false,
   }).setView([0, 0], 2);
   L.tileLayer(TILES, { subdomains: "abcd", maxZoom: 20, detectRetina: true }).addTo(map);
+
+  // A tap on the map (not a drag/pinch) is a toggle signal for the caller.
+  map.on("click", () => emit("tap"));
 
   map.on("zoomstart", () => {
     zooming = true;
