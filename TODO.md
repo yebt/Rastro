@@ -42,8 +42,12 @@ hexagonal, diseño monocromo, offline-first / local-first / sin cuenta).
 - [x] Métricas base: distancia, tiempo, ritmo, velocidad, desnivel, pausas, pasos.
 - [x] **Splits por km** (barras, más rápido resaltado) + **velocidad en el tiempo**
       (gráfica de línea SVG) en el detalle. Dominio puro `analytics.ts`.
-- [ ] Insights útiles: dónde apreté (ej. km 18→19), dónde rendí más, dónde caí.
-- [ ] Zonas de esfuerzo, eficiencia de zancada por tramo.
+- [x] Métricas extra en el detalle: mejor km, cadencia media, zancada media, desnivel −.
+- [x] **Progreso** (Info): tendencias de distancia y velocidad por tipo entre
+      salidas + récords (salidas, km más largo, mejor ritmo). `progress.ts`.
+- [ ] Zancada/cadencia **en el tiempo** (requiere capturar pasos por punto GPS
+      durante la grabación — cambio en el modelo de datos).
+- [ ] Zonas de esfuerzo, dónde apreté / dónde caí por tramo.
 
 ## 5. Share card del rastro
 
