@@ -22,10 +22,16 @@ export function haversineMeters(a: TrackPoint, b: TrackPoint): number {
   return 2 * EARTH_RADIUS_M * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
-/** Total path length over every consecutive pair of points, in metres. */
-export function distanceMeters(points: TrackPoint[]): number {
+/**
+ * Total path length over consecutive points, in metres. Pairs separated by more
+ * than `maxGapMs` (a pause — the watch stops, leaving one big gap) are skipped,
+ * so distance never includes the straight bridge across a pause. Points logged
+ * with a single timestamp (dt = 0, e.g. tests) are unaffected.
+ */
+export function distanceMeters(points: TrackPoint[], maxGapMs = 10_000): number {
   let total = 0;
   for (let i = 1; i < points.length; i++) {
+    if (points[i]!.t - points[i - 1]!.t > maxGapMs) continue;
     total += haversineMeters(points[i - 1]!, points[i]!);
   }
   return total;
