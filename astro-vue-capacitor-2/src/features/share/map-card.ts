@@ -1,35 +1,83 @@
 /**
- * Render a CARTO street map with the route baked in, as a PNG data URL, to use
- * as a share-card background. MapLibre is dynamically imported so it never
- * inflates the base bundle — the map mode is opt-in. Tiles are remote (this is
- * the one share mode that needs network); when offline the route line still
- * renders over the basemap's flat background color, so it degrades gracefully.
+ * Render a CARTO street map with the route drawn on top, as a PNG data URL, to
+ * use as a share-card background.
+ *
+ * A STATIC TILE MOSAIC, not a live GL map: we pick a zoom that frames the route,
+ * fetch the handful of covering tiles (cache-first via the tile service worker),
+ * composite them, then draw the route in the SAME Web-Mercator projection so it
+ * lines up with the streets at any route length. No WebGL, no idle waiting — so
+ * it's fast and reliable, and the route is always visible.
  */
 
 import type { TrackPoint } from "../tracking";
 import type { MapStyleId } from "./themes";
 
-const TILES: Record<MapStyleId, string> = {
-  dark: "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-  light: "https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-  voyager: "https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+const TILE_PATH: Record<MapStyleId, string> = {
+  dark: "dark_all",
+  light: "light_all",
+  voyager: "rastertiles/voyager",
 };
+const SUBDOMAINS = ["a", "b", "c", "d"];
+const TILE = 256;
 
 export interface MapRenderOptions {
   style: MapStyleId;
-  pitch: number;
-  bearing: number;
+  /** Zoom offset from the auto-fit level. */
+  zoom: number;
+  /** Framing pan in card pixels. */
+  offsetX: number;
+  offsetY: number;
   routeColor: string;
   startColor: string;
   endColor: string;
   bgColor: string;
 }
 
-const delay = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+/** Web-Mercator world pixel for a lng/lat at zoom z. */
+function project(lng: number, lat: number, z: number): { x: number; y: number } {
+  const n = TILE * 2 ** z;
+  const x = ((lng + 180) / 360) * n;
+  const s = Math.sin((lat * Math.PI) / 180);
+  const y = (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * n;
+  return { x, y };
+}
+
+function tileUrl(style: MapStyleId, z: number, x: number, y: number): string {
+  const sd = SUBDOMAINS[(x + y) % SUBDOMAINS.length];
+  return `https://${sd}.basemaps.cartocdn.com/${TILE_PATH[style]}/${z}/${x}/${y}.png`;
+}
+
+function loadTile(url: string): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous"; // keep the canvas untainted for toDataURL()
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null); // a missing tile just leaves the bg color
+    img.src = url;
+  });
+}
+
+/** Largest zoom at which the route's bbox fits within (W-pad)×(H-pad). */
+function fitZoom(
+  minLng: number,
+  minLat: number,
+  maxLng: number,
+  maxLat: number,
+  W: number,
+  H: number,
+  pad: number,
+): number {
+  for (let z = 18; z >= 1; z--) {
+    const a = project(minLng, maxLat, z);
+    const b = project(maxLng, minLat, z);
+    if (Math.abs(b.x - a.x) <= W - pad && Math.abs(b.y - a.y) <= H - pad) return z;
+  }
+  return 1;
+}
 
 /**
- * Returns a PNG data URL of the map+route sized WxH, or null if it can't render
- * (no WebGL / hard failure) so the caller can fall back to a solid background.
+ * Returns a PNG data URL (WxH) of the map + route, or null on hard failure
+ * (e.g. tiles blocked) so the caller can fall back to a solid background.
  */
 export async function renderMapBackground(
   points: TrackPoint[],
@@ -39,99 +87,93 @@ export async function renderMapBackground(
 ): Promise<string | null> {
   if (points.length < 2 || typeof document === "undefined") return null;
 
-  let map: import("maplibre-gl").Map | null = null;
-  let container: HTMLDivElement | null = null;
   try {
-    const ml = await import("maplibre-gl");
-
-    container = document.createElement("div");
-    container.style.cssText = `position:fixed;left:-99999px;top:0;width:${W / 2}px;height:${H / 2}px;`;
-    document.body.appendChild(container);
-
-    const coords = points.map((p) => [p.lng, p.lat] as [number, number]);
     let minLng = Infinity;
     let minLat = Infinity;
     let maxLng = -Infinity;
     let maxLat = -Infinity;
-    for (const [lng, lat] of coords) {
-      if (lng < minLng) minLng = lng;
-      if (lng > maxLng) maxLng = lng;
-      if (lat < minLat) minLat = lat;
-      if (lat > maxLat) maxLat = lat;
+    for (const p of points) {
+      if (p.lng < minLng) minLng = p.lng;
+      if (p.lng > maxLng) maxLng = p.lng;
+      if (p.lat < minLat) minLat = p.lat;
+      if (p.lat > maxLat) maxLat = p.lat;
     }
 
-    map = new ml.Map({
-      container,
-      pixelRatio: 2,
-      interactive: false,
-      attributionControl: false,
-      // required for toDataURL() — moved under canvasContextAttributes in v5+
-      canvasContextAttributes: { preserveDrawingBuffer: true },
-      style: {
-        version: 8,
-        sources: {
-          carto: {
-            type: "raster",
-            tiles: [TILES[opts.style]],
-            tileSize: 256,
-            attribution: "© OpenStreetMap · CARTO",
-          },
-        },
-        layers: [
-          { id: "bg", type: "background", paint: { "background-color": opts.bgColor } },
-          { id: "carto", type: "raster", source: "carto" },
-        ],
-      },
-    });
+    const z = Math.max(1, Math.min(18, fitZoom(minLng, minLat, maxLng, maxLat, W, H, 120) + opts.zoom));
 
-    const m = map;
-    await new Promise<void>((res) => m.on("load", () => res()));
+    // Framing: center on the route bbox, plus the user's pan.
+    const c = project((minLng + maxLng) / 2, (minLat + maxLat) / 2, z);
+    const originX = c.x - W / 2 - opts.offsetX;
+    const originY = c.y - H / 2 - opts.offsetY;
 
-    m.addSource("route", {
-      type: "geojson",
-      data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords } },
-    });
-    m.addLayer({
-      id: "route-line",
-      type: "line",
-      source: "route",
-      layout: { "line-join": "round", "line-cap": "round" },
-      paint: { "line-color": opts.routeColor, "line-width": 6 },
-    });
-    m.addSource("ends", {
-      type: "geojson",
-      data: {
-        type: "FeatureCollection",
-        features: [
-          { type: "Feature", properties: { role: "start" }, geometry: { type: "Point", coordinates: coords[0]! } },
-          { type: "Feature", properties: { role: "end" }, geometry: { type: "Point", coordinates: coords[coords.length - 1]! } },
-        ],
-      },
-    });
-    m.addLayer({
-      id: "ends-dots",
-      type: "circle",
-      source: "ends",
-      paint: {
-        "circle-radius": 7,
-        "circle-color": ["match", ["get", "role"], "start", opts.startColor, opts.endColor],
-        "circle-stroke-width": 3,
-        "circle-stroke-color": opts.routeColor,
-      },
-    });
+    const canvas = document.createElement("canvas");
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.fillStyle = opts.bgColor;
+    ctx.fillRect(0, 0, W, H);
 
-    m.setPitch(opts.pitch);
-    m.setBearing(opts.bearing);
-    m.fitBounds([[minLng, minLat], [maxLng, maxLat]], { padding: 90, duration: 0 });
+    // Tiles covering the viewport.
+    const world = TILE * 2 ** z;
+    const maxTile = 2 ** z;
+    const txMin = Math.floor(originX / TILE);
+    const txMax = Math.floor((originX + W) / TILE);
+    const tyMin = Math.max(0, Math.floor(originY / TILE));
+    const tyMax = Math.min(maxTile - 1, Math.floor((originY + H) / TILE));
 
-    // Wait for tiles to settle, but never hang offline.
-    await Promise.race([new Promise<void>((res) => m.once("idle", () => res())), delay(9000)]);
+    const jobs: Promise<void>[] = [];
+    for (let tx = txMin; tx <= txMax; tx++) {
+      const wx = ((tx % maxTile) + maxTile) % maxTile; // wrap longitude
+      for (let ty = tyMin; ty <= tyMax; ty++) {
+        const dx = tx * TILE - originX;
+        const dy = ty * TILE - originY;
+        jobs.push(
+          loadTile(tileUrl(opts.style, z, wx, ty)).then((img) => {
+            if (img) ctx.drawImage(img, dx, dy, TILE, TILE);
+          }),
+        );
+      }
+    }
+    await Promise.all(jobs);
 
-    return m.getCanvas().toDataURL("image/png");
+    // Route, projected the same way so it aligns with the streets.
+    const px = (p: TrackPoint): [number, number] => {
+      const w = project(p.lng, p.lat, z);
+      // choose the longitude copy nearest the origin (dateline safety)
+      let x = w.x - originX;
+      if (x < -world / 2) x += world;
+      if (x > world / 2) x -= world;
+      return [x, w.y - originY];
+    };
+
+    ctx.strokeStyle = opts.routeColor;
+    ctx.lineWidth = 7;
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    points.forEach((p, i) => {
+      const [x, y] = px(p);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    const dot = (p: TrackPoint, fill: string): void => {
+      const [x, y] = px(p);
+      ctx.beginPath();
+      ctx.arc(x, y, 11, 0, Math.PI * 2);
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = opts.routeColor;
+      ctx.stroke();
+    };
+    dot(points[0]!, opts.startColor);
+    dot(points[points.length - 1]!, opts.endColor);
+
+    return canvas.toDataURL("image/png");
   } catch {
     return null;
-  } finally {
-    map?.remove();
-    container?.remove();
   }
 }

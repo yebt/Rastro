@@ -44,13 +44,15 @@ export type ShareBackground =
       adjust: "auto" | "manual";
     }
   | {
-      /** Real streets under the route via CARTO tiles + MapLibre. Needs network
-       *  (breaks pure offline); the route line still renders without tiles. */
+      /** Real streets under the route via CARTO tiles (static mosaic). Needs
+       *  network for tiles; the route always draws on top. */
       kind: "map";
       style: MapStyleId;
-      /** 0 = top-down, up to ~60 for the inclined 3D look. */
-      pitch: number;
-      bearing: number;
+      /** Zoom offset from the auto-fit level (− out, + in). */
+      zoom: number;
+      /** Pan the framing, in card pixels. */
+      offsetX: number;
+      offsetY: number;
     };
 
 export interface MapStyleDef {

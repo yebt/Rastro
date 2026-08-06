@@ -29,3 +29,4 @@ export {
   themeLabel,
 } from "./themes";
 export { default as ShareScreen } from "./ShareScreen.vue";
+export { default as GalleryScreen } from "./GalleryScreen.vue";

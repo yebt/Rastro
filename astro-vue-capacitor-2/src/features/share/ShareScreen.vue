@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
-import { AppButton, AppSubScreen, Card, Label, Spinner } from "../../shared/ui";
+import { AppButton, AppSubScreen, Label, Spinner } from "../../shared/ui";
 import type { MoveActivity } from "../tracking";
-import { shareGallery, type SharedImage } from "./gallery-store";
+import { shareGallery } from "./gallery-store";
 import { renderRouteCard } from "./route-card";
 import { shareImage } from "./share-route";
 import {
@@ -30,7 +30,6 @@ const emit = defineEmits<{ back: [] }>();
 
 const theme = ref<ShareTheme>({ ...DEFAULT_THEME, effects: [] });
 const preview = ref("");
-const gallery = ref<SharedImage[]>([]);
 const busy = ref(false);
 
 const previewing = ref(false);
@@ -46,14 +45,7 @@ async function renderPreview(): Promise<void> {
   }
 }
 
-async function loadGallery(): Promise<void> {
-  gallery.value = await shareGallery().list();
-}
-
-onMounted(async () => {
-  await renderPreview();
-  await loadGallery();
-});
+onMounted(renderPreview);
 watch(theme, renderPreview, { deep: true });
 
 function pickLayout(id: string): void {
@@ -99,19 +91,29 @@ function currentMapStyle(): MapStyleId | null {
   const bg = theme.value.background;
   return bg?.kind === "map" ? bg.style : null;
 }
-const tilted = computed(() => {
-  const bg = theme.value.background;
-  return bg?.kind === "map" && bg.pitch > 0;
-});
 function pickMap(style: MapStyleId): void {
   const bg = theme.value.background;
-  const pitch = bg?.kind === "map" ? bg.pitch : 0;
-  theme.value = { ...theme.value, background: { kind: "map", style, pitch, bearing: 0 } };
+  const keep = bg?.kind === "map" ? bg : { zoom: 0, offsetX: 0, offsetY: 0 };
+  theme.value = { ...theme.value, background: { kind: "map", style, zoom: keep.zoom, offsetX: keep.offsetX, offsetY: keep.offsetY } };
 }
-function toggleTilt(): void {
+const PAN = 140;
+function nudgeMap(dz: number, dx: number, dy: number): void {
   const bg = theme.value.background;
   if (bg?.kind !== "map") return;
-  theme.value = { ...theme.value, background: { ...bg, pitch: bg.pitch > 0 ? 0 : 50 } };
+  theme.value = {
+    ...theme.value,
+    background: {
+      ...bg,
+      zoom: Math.max(-3, Math.min(4, bg.zoom + dz)),
+      offsetX: bg.offsetX + dx,
+      offsetY: bg.offsetY + dy,
+    },
+  };
+}
+function recenterMap(): void {
+  const bg = theme.value.background;
+  if (bg?.kind !== "map") return;
+  theme.value = { ...theme.value, background: { ...bg, zoom: 0, offsetX: 0, offsetY: 0 } };
 }
 function toggleAdjust(): void {
   const bg = theme.value.background;
@@ -154,7 +156,6 @@ async function persist(): Promise<void> {
     dataUrl: preview.value,
     createdAt: Date.now(),
   });
-  await loadGallery();
 }
 
 async function onShare(): Promise<void> {
@@ -174,14 +175,6 @@ async function onSave(): Promise<void> {
     busy.value = false;
   }
 }
-async function reshare(img: SharedImage): Promise<void> {
-  await shareImage(img.dataUrl, `rastro-${img.activityId}`);
-}
-async function removeImg(img: SharedImage): Promise<void> {
-  await shareGallery().remove(img.id);
-  await loadGallery();
-}
-
 const currentLabel = computed(() => themeLabel(theme.value));
 </script>
 
@@ -284,11 +277,19 @@ const currentLabel = computed(() => themeLabel(theme.value));
         >
           {{ m.label }}
         </button>
-        <button v-if="isMap" type="button" class="chip" :class="{ on: tilted }" @click="toggleTilt">
-          Inclinar
-        </button>
       </div>
-      <p v-if="isMap" class="hint">El mapa usa datos en línea; sin red se dibuja solo la ruta.</p>
+      <div v-if="isMap" class="mapctl">
+        <button type="button" class="mc" aria-label="Alejar" @click="nudgeMap(-1, 0, 0)">−</button>
+        <button type="button" class="mc" aria-label="Acercar" @click="nudgeMap(1, 0, 0)">+</button>
+        <span class="mc-sep"></span>
+        <button type="button" class="mc" aria-label="Mover izquierda" @click="nudgeMap(0, PAN, 0)">←</button>
+        <button type="button" class="mc" aria-label="Mover arriba" @click="nudgeMap(0, 0, PAN)">↑</button>
+        <button type="button" class="mc" aria-label="Mover abajo" @click="nudgeMap(0, 0, -PAN)">↓</button>
+        <button type="button" class="mc" aria-label="Mover derecha" @click="nudgeMap(0, -PAN, 0)">→</button>
+        <span class="mc-sep"></span>
+        <button type="button" class="mc" aria-label="Centrar" @click="recenterMap">⌖</button>
+      </div>
+      <p v-if="isMap" class="hint">Usa datos en línea; sin red se dibuja solo la ruta.</p>
     </div>
 
     <div class="picker">
@@ -311,18 +312,7 @@ const currentLabel = computed(() => themeLabel(theme.value));
       <AppButton size="lg" block variant="ghost" :disabled="busy" @press="onSave">Guardar</AppButton>
       <AppButton size="lg" block icon="export" :disabled="busy" @press="onShare">Compartir</AppButton>
     </div>
-
-    <template v-if="gallery.length">
-      <Label>Compartidos</Label>
-      <div class="gallery">
-        <Card v-for="img in gallery" :key="img.id" class="g-item">
-          <button type="button" class="g-thumb" @click="reshare(img)">
-            <img :src="img.dataUrl" :alt="`Tarjeta ${img.themeKey}`" />
-          </button>
-          <button type="button" class="g-rm" aria-label="Borrar" @click="removeImg(img)">×</button>
-        </Card>
-      </div>
-    </template>
+    <p class="saved-note">Lo que guardes o compartas queda en <b>Info › Compartidos</b>.</p>
   </AppSubScreen>
 </template>
 
@@ -410,37 +400,36 @@ const currentLabel = computed(() => themeLabel(theme.value));
   display: flex;
   gap: var(--sp-3);
 }
-.gallery {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--sp-3);
-}
-.g-item {
-  position: relative;
-  padding: var(--sp-2);
-}
-.g-thumb {
-  display: block;
-  width: 100%;
-}
-.g-thumb img {
-  width: 100%;
-  border-radius: var(--r-sm);
-  display: block;
-}
-.g-rm {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 26px;
-  height: 26px;
-  border-radius: 999px;
-  background: var(--bg);
-  border: 1px solid var(--line);
+.saved-note {
+  margin: 0;
+  font-size: 12px;
   color: var(--muted);
+  text-align: center;
+}
+.mapctl {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+.mc {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
   font-size: 18px;
-  line-height: 1;
+  font-weight: 600;
   display: grid;
   place-items: center;
+}
+.mc:active {
+  background: var(--surface-2);
+}
+.mc-sep {
+  width: 1px;
+  height: 24px;
+  background: var(--line);
 }
 </style>

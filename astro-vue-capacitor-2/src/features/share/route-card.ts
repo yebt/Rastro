@@ -549,8 +549,9 @@ async function paintBackground(
     const bgColor = bg.style === "dark" ? "#0a0c0d" : bg.style === "light" ? "#e7e8e4" : "#e9e6df";
     const src = await renderMapBackground(points, W, H, {
       style: bg.style,
-      pitch: bg.pitch,
-      bearing: bg.bearing,
+      zoom: bg.zoom,
+      offsetX: bg.offsetX,
+      offsetY: bg.offsetY,
       routeColor: pal.route,
       startColor: pal.startDot,
       endColor: pal.endDot,
