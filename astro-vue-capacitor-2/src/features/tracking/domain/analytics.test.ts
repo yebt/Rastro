@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { movementSeries, splits } from "./analytics";
+import {
+  elevationStats,
+  halfSplit,
+  movementSeries,
+  speedExtremes,
+  splits,
+  splitStats,
+} from "./analytics";
 import type { TrackPoint } from "./track-point";
 
 /** A point moving east from (0,0); ~111.32 km per degree of longitude at eq. */
@@ -57,5 +64,36 @@ describe("movementSeries", () => {
 
   it("is empty for degenerate input", () => {
     expect(movementSeries([pt(0, 0)])).toEqual([]);
+  });
+});
+
+describe("aggregate analytics", () => {
+  const pts: TrackPoint[] = [];
+  for (let s = 0; s <= 1800; s += 5) pts.push(pt(s, (s / 600) * KM_DEG)); // ~3 km steady
+
+  it("splitStats gives best/worst/avg/spread", () => {
+    const st = splitStats(splits(pts));
+    expect(st.best).not.toBeNull();
+    expect(st.worst).toBeGreaterThanOrEqual(st.best!);
+    expect(st.spread).toBeGreaterThanOrEqual(0);
+  });
+
+  it("speedExtremes reports max and min moving speed", () => {
+    const ex = speedExtremes(movementSeries(pts, 20));
+    expect(ex.maxMps).toBeGreaterThan(1.4);
+    expect(ex.minMovingMps).not.toBeNull();
+  });
+
+  it("halfSplit flags even pacing for a steady run", () => {
+    const h = halfSplit(pts);
+    expect(h.firstPace).not.toBeNull();
+    expect(h.secondPace).not.toBeNull();
+    expect(h.kind).toBe("even");
+  });
+
+  it("elevationStats is null-safe without altitude", () => {
+    const e = elevationStats(pts);
+    expect(e.maxAlt).toBeNull();
+    expect(e.gainM).toBe(0);
   });
 });

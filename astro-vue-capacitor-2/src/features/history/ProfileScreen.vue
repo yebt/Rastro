@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useStore } from "@nanostores/vue";
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import { AppScreen, Card, Label, Row, RowGroup } from "../../shared/ui";
 import {
   type Activity,
@@ -18,18 +18,17 @@ import CalendarScreen from "./CalendarScreen.vue";
 import HistoryScreen from "./HistoryScreen.vue";
 import ProgressScreen from "./ProgressScreen.vue";
 import { $activities } from "./history.store";
+import { $infoView, setInfoView } from "./info-view.store";
 import { currentStreak } from "./summary";
 
-/** Info tab — lifetime data plus progress, calendar, history and shared cards. */
-type View = "menu" | "progress" | "calendar" | "history" | "shared";
-const view = ref<View>("menu");
+/** Info tab — lifetime data plus progress, calendar, history and shared cards.
+ *  The sub-view is a store so Home can jump straight to History. */
+const view = useStore($infoView);
 
 // Back from a sub-view returns to the menu (not straight Home).
 useBackHandler(
   computed(() => view.value !== "menu"),
-  () => {
-    view.value = "menu";
-  },
+  () => setInfoView("menu"),
 );
 
 const activities = useStore($activities);
@@ -53,10 +52,10 @@ const reps = computed(() =>
 </script>
 
 <template>
-  <ProgressScreen v-if="view === 'progress'" @back="view = 'menu'" />
-  <CalendarScreen v-else-if="view === 'calendar'" @back="view = 'menu'" />
-  <HistoryScreen v-else-if="view === 'history'" @back="view = 'menu'" />
-  <GalleryScreen v-else-if="view === 'shared'" @back="view = 'menu'" />
+  <ProgressScreen v-if="view === 'progress'" @back="setInfoView('menu')" />
+  <CalendarScreen v-else-if="view === 'calendar'" @back="setInfoView('menu')" />
+  <HistoryScreen v-else-if="view === 'history'" @back="setInfoView('menu')" />
+  <GalleryScreen v-else-if="view === 'shared'" @back="setInfoView('menu')" />
 
   <AppScreen v-else title="Info">
     <Card>
@@ -73,10 +72,10 @@ const reps = computed(() =>
     </Card>
 
     <RowGroup>
-      <Row icon="workout" label="Progreso" value="Tendencias por tipo" @press="view = 'progress'" />
-      <Row icon="calendar" label="Calendario" value="Días activos" @press="view = 'calendar'" />
-      <Row icon="list" label="Historial" value="Todas tus actividades" @press="view = 'history'" />
-      <Row icon="palette" label="Compartidos" value="Tarjetas guardadas" @press="view = 'shared'" />
+      <Row icon="workout" label="Progreso" value="Tendencias por tipo" @press="setInfoView('progress')" />
+      <Row icon="calendar" label="Calendario" value="Días activos" @press="setInfoView('calendar')" />
+      <Row icon="list" label="Historial" value="Todas tus actividades" @press="setInfoView('history')" />
+      <Row icon="palette" label="Compartidos" value="Tarjetas guardadas" @press="setInfoView('shared')" />
     </RowGroup>
   </AppScreen>
 </template>
@@ -94,12 +93,19 @@ const reps = computed(() =>
   align-items: center;
   gap: 2px;
   text-align: center;
+  min-width: 0; /* let wide values (e.g. long times) shrink, not break the grid */
 }
 .stat b {
+  max-width: 100%;
   font-family: var(--font-mono);
-  font-size: 24px;
+  /* Scale down for wide values like "12:34:56" so the cell never overflows. */
+  font-size: clamp(15px, 5.2vw, 24px);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .stat small {
   font-size: 11px;

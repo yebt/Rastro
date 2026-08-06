@@ -48,10 +48,18 @@ export {
 } from "./domain/routine-run";
 export { $routines, deleteRoutine, getRoutine, saveRoutine, setRoutines } from "./routines.store";
 export {
+  type ElevationStats,
+  elevationStats,
+  type HalfSplit,
+  halfSplit,
   movementSeries,
   type SeriesPoint,
+  type SpeedExtremes,
+  speedExtremes,
   type Split,
+  type SplitStats,
   splits,
+  splitStats,
 } from "./domain/analytics";
 export { cleanTrack } from "./domain/clean";
 export { routeSegments } from "./domain/segments";

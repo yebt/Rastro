@@ -5,6 +5,7 @@ import { AppIcon, AppScreen, Card, Label } from "../../shared/ui";
 import { $activities, loadActivities } from "../history/history.store";
 import { currentStreak, dailyTotals, weekSummary } from "../history/summary";
 import { distanceParts, formatDuration, type MoveType, setStartIntent } from "../tracking";
+import { setInfoView } from "../history/info-view.store";
 import { setTab } from "../shell/nav.store";
 
 /**
@@ -48,17 +49,21 @@ function quickStart(type: MoveType): void {
   setStartIntent(type);
   setTab("workout");
 }
+function goHistory(): void {
+  setInfoView("history");
+  setTab("profile");
+}
 </script>
 
 <template>
   <AppScreen title="Inicio">
-    <!-- Streak hero -->
-    <Card class="hero">
+    <!-- Streak hero → history -->
+    <Card class="hero" role="button" tabindex="0" @click="goHistory">
       <div class="streak-n">
         <b>{{ streak }}</b>
         <span>{{ streak === 1 ? "día activo" : "días activos" }}</span>
       </div>
-      <AppIcon name="run" size="30px" class="hero-ic" />
+      <AppIcon name="chevron" size="22px" class="hero-ic" />
     </Card>
 
     <!-- Week graph -->
@@ -105,6 +110,10 @@ function quickStart(type: MoveType): void {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  cursor: pointer;
+}
+.hero:active {
+  border-color: var(--ink);
 }
 .streak-n {
   display: flex;

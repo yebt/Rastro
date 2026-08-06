@@ -4,7 +4,12 @@
  * like every other metric. `now`-free and deterministic, so it's unit-testable.
  */
 
-import { haversineMeters } from "./metrics";
+import {
+  avgPaceSecPerKm,
+  elevationGainM,
+  elevationLossM,
+  haversineMeters,
+} from "./metrics";
 import type { TrackPoint } from "./track-point";
 
 export interface Split {
@@ -118,4 +123,82 @@ export function movementSeries(points: TrackPoint[], buckets = 60, maxGapMs = 10
       paceSecPerKm: mps > 0 ? 1000 / mps : null,
     };
   });
+}
+
+// ---- Aggregate analytics (for the Stats panel) --------------------------------
+
+export interface SplitStats {
+  /** Fastest / slowest / average split pace, s/km, and their spread. */
+  best: number | null;
+  worst: number | null;
+  avg: number | null;
+  spread: number | null;
+}
+
+export function splitStats(list: Split[]): SplitStats {
+  const p = list.map((s) => s.paceSecPerKm).filter((x): x is number => x != null);
+  if (!p.length) return { best: null, worst: null, avg: null, spread: null };
+  const best = Math.min(...p);
+  const worst = Math.max(...p);
+  const avg = p.reduce((a, b) => a + b, 0) / p.length;
+  return { best, worst, avg, spread: worst - best };
+}
+
+export interface SpeedExtremes {
+  maxMps: number;
+  minMovingMps: number | null;
+}
+
+export function speedExtremes(series: SeriesPoint[]): SpeedExtremes {
+  const moving = series.filter((s) => s.mps > 0).map((s) => s.mps);
+  return {
+    maxMps: moving.length ? Math.max(...moving) : 0,
+    minMovingMps: moving.length ? Math.min(...moving) : null,
+  };
+}
+
+export interface HalfSplit {
+  firstPace: number | null;
+  secondPace: number | null;
+  /** negative = sped up (2nd half faster), positive = slowed down, even = same. */
+  kind: "negative" | "positive" | "even";
+}
+
+/** First-half vs second-half pace, split by distance — the classic pacing read. */
+export function halfSplit(points: TrackPoint[]): HalfSplit {
+  if (points.length < 3) return { firstPace: null, secondPace: null, kind: "even" };
+  let total = 0;
+  const cum = [0];
+  for (let i = 1; i < points.length; i++) {
+    total += haversineMeters(points[i - 1]!, points[i]!);
+    cum.push(total);
+  }
+  const half = total / 2;
+  let mid = 1;
+  while (mid < cum.length - 1 && cum[mid]! < half) mid++;
+  const first = avgPaceSecPerKm(points.slice(0, mid + 1));
+  const second = avgPaceSecPerKm(points.slice(mid));
+  let kind: HalfSplit["kind"] = "even";
+  if (first != null && second != null) {
+    if (second < first * 0.98) kind = "negative";
+    else if (second > first * 1.02) kind = "positive";
+  }
+  return { firstPace: first, secondPace: second, kind };
+}
+
+export interface ElevationStats {
+  gainM: number;
+  lossM: number;
+  maxAlt: number | null;
+  minAlt: number | null;
+}
+
+export function elevationStats(points: TrackPoint[]): ElevationStats {
+  const alts = points.map((p) => p.alt).filter((a): a is number => a != null);
+  return {
+    gainM: elevationGainM(points),
+    lossM: elevationLossM(points),
+    maxAlt: alts.length ? Math.max(...alts) : null,
+    minAlt: alts.length ? Math.min(...alts) : null,
+  };
 }
