@@ -15,6 +15,7 @@ export {
   type ShareEffect,
   type ShareGradient,
   SHARE_GRADIENTS,
+  type MapCamera,
   type MapStyleDef,
   type MapStyleId,
   MAP_STYLES,

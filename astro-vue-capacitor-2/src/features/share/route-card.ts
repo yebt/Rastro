@@ -18,7 +18,6 @@ import {
   MOVE_LABEL,
   type TrackPoint,
 } from "../tracking";
-import { renderMapBackground } from "./map-card";
 import {
   DEFAULT_THEME,
   getLayout,
@@ -525,7 +524,6 @@ async function paintBackground(
   bg: ShareBackground,
   pal: SharePalette,
   blurRadius: number,
-  points: TrackPoint[],
 ): Promise<Painted> {
   if (bg.kind === "gradient") {
     const rad = (bg.angle * Math.PI) / 180;
@@ -551,32 +549,20 @@ async function paintBackground(
     }
   }
   if (bg.kind === "map") {
-    const dark = bg.style === "dark";
-    const bgColor = bg.style === "dark" ? "#0a0c0d" : bg.style === "light" ? "#e7e8e4" : "#e9e6df";
-    const src = await renderMapBackground(points, W, H, {
-      style: bg.style,
-      zoom: bg.zoom,
-      offsetX: bg.offsetX,
-      offsetY: bg.offsetY,
-      routeColor: pal.route,
-      startColor: pal.startDot,
-      endColor: pal.endDot,
-      bgColor,
-    });
-    if (src) {
-      try {
-        const img = await loadImage(src);
-        drawCover(ctx, img, W, H);
-        const ink = dark ? "#f6f6f4" : "#14181a";
-        const muted = dark ? "#cbd0cb" : "#454b47";
-        return { pal: { ...pal, ink, muted }, skipRoute: true };
-      } catch {
-        /* fall through to solid */
-      }
+    // The snapshot (route already baked in) was captured in the interactive
+    // editor; just draw it and skip the flat route.
+    try {
+      const img = await loadImage(bg.src);
+      drawCover(ctx, img, W, H);
+      const dark = bg.style === "dark";
+      const ink = dark ? "#f6f6f4" : "#14181a";
+      const muted = dark ? "#cbd0cb" : "#454b47";
+      return { pal: { ...pal, ink, muted }, skipRoute: true };
+    } catch {
+      ctx.fillStyle = pal.bg;
+      ctx.fillRect(0, 0, W, H);
+      return { pal, skipRoute: false };
     }
-    ctx.fillStyle = pal.bg;
-    ctx.fillRect(0, 0, W, H);
-    return { pal, skipRoute: false };
   }
   ctx.fillStyle = pal.bg;
   ctx.fillRect(0, 0, W, H);
@@ -655,7 +641,7 @@ export async function renderRouteCard(
   // 1. Background (blur is a photo-time filter; map bakes in the route).
   const blurFx = effects.find((e) => e.kind === "blur");
   const blurRadius = blurFx?.kind === "blur" ? blurFx.radius : 0;
-  const painted = await paintBackground(ctx, W, H, background, pal0, blurRadius, clean);
+  const painted = await paintBackground(ctx, W, H, background, pal0, blurRadius);
   const pal = painted.pal;
 
   // 2. Background passes, in array order (route-level & text-level handled later).

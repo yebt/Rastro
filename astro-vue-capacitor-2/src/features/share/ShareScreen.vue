@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
-import { AppButton, AppSubScreen, Label, Spinner } from "../../shared/ui";
-import type { MoveActivity } from "../tracking";
+import { AppButton, AppIcon, Label, Spinner } from "../../shared/ui";
+import { cleanTrack, type MoveActivity } from "../tracking";
 import { shareGallery } from "./gallery-store";
+import MapEditor from "./MapEditor.vue";
 import { renderRouteCard } from "./route-card";
 import { shareImage } from "./share-route";
 import {
   DEFAULT_THEME,
+  getLayout,
+  getPalette,
+  type MapCamera,
   MAP_STYLES,
   type MapStyleId,
   SHARE_GRADIENTS,
@@ -21,9 +25,9 @@ import {
 } from "./themes";
 
 /**
- * Compartir view: pick a theme (layout × palette × typography × background ×
- * effects), preview the card live, then share or save it. Saved cards persist
- * to a gallery below. A photo background stays offline (embedded data URL).
+ * Compartir editor: a fixed live preview and pinned actions, with the theme
+ * controls grouped into tabs whose panel is the only thing that scrolls. A map
+ * background is framed in a full interactive editor (MapEditor).
  */
 const props = defineProps<{ activity: MoveActivity }>();
 const emit = defineEmits<{ back: [] }>();
@@ -31,23 +35,34 @@ const emit = defineEmits<{ back: [] }>();
 const theme = ref<ShareTheme>({ ...DEFAULT_THEME, effects: [] });
 const preview = ref("");
 const busy = ref(false);
-
 const previewing = ref(false);
 let renderToken = 0;
+
 async function renderPreview(): Promise<void> {
   const token = ++renderToken;
   previewing.value = true;
   try {
     const url = await renderRouteCard(props.activity, theme.value);
-    if (token === renderToken) preview.value = url; // discard stale renders
+    if (token === renderToken) preview.value = url;
   } finally {
     if (token === renderToken) previewing.value = false;
   }
 }
-
 onMounted(renderPreview);
 watch(theme, renderPreview, { deep: true });
 
+// ---- Tabs ----
+type Tab = "formato" | "color" | "texto" | "fondo" | "efectos";
+const tab = ref<Tab>("formato");
+const TABS: { id: Tab; label: string }[] = [
+  { id: "formato", label: "Formato" },
+  { id: "color", label: "Color" },
+  { id: "texto", label: "Texto" },
+  { id: "fondo", label: "Fondo" },
+  { id: "efectos", label: "Efectos" },
+];
+
+// ---- Basic pickers ----
 function pickLayout(id: string): void {
   theme.value = { ...theme.value, layoutId: id };
 }
@@ -57,12 +72,14 @@ function pickPalette(id: string): void {
 function pickTypography(id: string): void {
   theme.value = { ...theme.value, typographyId: id };
 }
+const currentLabel = computed(() => themeLabel(theme.value));
 
+// ---- Background ----
+const bgKind = computed(() => theme.value.background?.kind ?? "solid");
 const hasPhoto = computed(() => theme.value.background?.kind === "photo");
 const photoAuto = computed(
   () => theme.value.background?.kind === "photo" && theme.value.background.adjust === "auto",
 );
-
 function onPhoto(event: Event): void {
   const file = (event.target as HTMLInputElement).files?.[0];
   if (!file) return;
@@ -75,55 +92,46 @@ function onPhoto(event: Event): void {
   };
   reader.readAsDataURL(file);
 }
-function clearPhoto(): void {
+function setSolid(): void {
   theme.value = { ...theme.value, background: { kind: "solid" } };
 }
-function pickGradient(g: ShareGradient): void {
-  theme.value = {
-    ...theme.value,
-    background: { kind: "gradient", from: g.from, to: g.to, angle: g.angle },
-  };
+function toggleAdjust(): void {
+  const bg = theme.value.background;
+  if (bg?.kind !== "photo") return;
+  theme.value = { ...theme.value, background: { ...bg, adjust: bg.adjust === "auto" ? "manual" : "auto" } };
 }
-const bgKind = computed(() => theme.value.background?.kind ?? "solid");
+function pickGradient(g: ShareGradient): void {
+  theme.value = { ...theme.value, background: { kind: "gradient", from: g.from, to: g.to, angle: g.angle } };
+}
 
+// ---- Map editor ----
+const editingMap = ref(false);
+const editingStyle = ref<MapStyleId>("voyager");
 const isMap = computed(() => theme.value.background?.kind === "map");
 function currentMapStyle(): MapStyleId | null {
   const bg = theme.value.background;
   return bg?.kind === "map" ? bg.style : null;
 }
-function pickMap(style: MapStyleId): void {
-  const bg = theme.value.background;
-  const keep = bg?.kind === "map" ? bg : { zoom: 0, offsetX: 0, offsetY: 0 };
-  theme.value = { ...theme.value, background: { kind: "map", style, zoom: keep.zoom, offsetX: keep.offsetX, offsetY: keep.offsetY } };
+const editorCamera = computed(() =>
+  theme.value.background?.kind === "map" ? theme.value.background.camera : null,
+);
+const layout = computed(() => getLayout(theme.value.layoutId));
+const palette = computed(() => getPalette(theme.value.paletteId));
+const editorPoints = computed(() => cleanTrack(props.activity.points));
+
+function openMapEditor(style: MapStyleId): void {
+  editingStyle.value = style;
+  editingMap.value = true;
 }
-const PAN = 140;
-function nudgeMap(dz: number, dx: number, dy: number): void {
-  const bg = theme.value.background;
-  if (bg?.kind !== "map") return;
+function onMapDone(payload: { src: string; camera: MapCamera }): void {
   theme.value = {
     ...theme.value,
-    background: {
-      ...bg,
-      zoom: Math.max(-3, Math.min(4, bg.zoom + dz)),
-      offsetX: bg.offsetX + dx,
-      offsetY: bg.offsetY + dy,
-    },
+    background: { kind: "map", style: editingStyle.value, src: payload.src, camera: payload.camera },
   };
-}
-function recenterMap(): void {
-  const bg = theme.value.background;
-  if (bg?.kind !== "map") return;
-  theme.value = { ...theme.value, background: { ...bg, zoom: 0, offsetX: 0, offsetY: 0 } };
-}
-function toggleAdjust(): void {
-  const bg = theme.value.background;
-  if (bg?.kind !== "photo") return;
-  theme.value = {
-    ...theme.value,
-    background: { ...bg, adjust: bg.adjust === "auto" ? "manual" : "auto" },
-  };
+  editingMap.value = false;
 }
 
+// ---- Effects ----
 const EFFECT_PRESETS: Record<string, { label: string; effect: ShareEffect }> = {
   glow: { label: "Glow", effect: { kind: "routeGlow", blur: 26 } },
   grain: { label: "Grano", effect: { kind: "grain", opacity: 0.06 } },
@@ -149,6 +157,7 @@ function toggleEffect(name: EffectName): void {
   theme.value = { ...theme.value, effects: next };
 }
 
+// ---- Save / share ----
 async function persist(): Promise<void> {
   await shareGallery().add({
     activityId: props.activity.id,
@@ -157,7 +166,6 @@ async function persist(): Promise<void> {
     createdAt: Date.now(),
   });
 }
-
 async function onShare(): Promise<void> {
   busy.value = true;
   try {
@@ -175,19 +183,38 @@ async function onSave(): Promise<void> {
     busy.value = false;
   }
 }
-const currentLabel = computed(() => themeLabel(theme.value));
 </script>
 
 <template>
-  <AppSubScreen title="Compartir" @back="emit('back')">
+  <section class="share">
+    <header class="head">
+      <button type="button" class="back" aria-label="Volver" @click="emit('back')">
+        <AppIcon name="back" size="22px" />
+      </button>
+      <h1 class="title">Compartir</h1>
+    </header>
+
     <div class="preview">
       <img v-if="preview" :src="preview" alt="Vista previa de la tarjeta" />
       <div v-if="previewing" class="prev-busy"><Spinner size="26px" /></div>
     </div>
 
-    <div class="picker">
-      <Label>Formato</Label>
-      <div class="chips">
+    <nav class="tabs">
+      <button
+        v-for="t in TABS"
+        :key="t.id"
+        type="button"
+        class="tab"
+        :class="{ on: tab === t.id }"
+        @click="tab = t.id"
+      >
+        {{ t.label }}
+      </button>
+    </nav>
+
+    <div class="panel">
+      <!-- Formato -->
+      <div v-if="tab === 'formato'" class="chips">
         <button
           v-for="l in SHARE_LAYOUTS"
           :key="l.id"
@@ -199,102 +226,93 @@ const currentLabel = computed(() => themeLabel(theme.value));
           {{ l.label }}
         </button>
       </div>
-    </div>
 
-    <div class="picker">
-      <Label>Color · {{ currentLabel }}</Label>
-      <div class="swatches">
-        <button
-          v-for="p in SHARE_PALETTES"
-          :key="p.id"
-          type="button"
-          class="swatch"
-          :class="{ on: theme.paletteId === p.id }"
-          :style="{ background: p.bg }"
-          :aria-label="p.label"
-          @click="pickPalette(p.id)"
-        >
-          <span class="line" :style="{ background: p.route }"></span>
-        </button>
+      <!-- Color -->
+      <div v-else-if="tab === 'color'" class="group">
+        <Label>{{ currentLabel }}</Label>
+        <div class="swatches">
+          <button
+            v-for="p in SHARE_PALETTES"
+            :key="p.id"
+            type="button"
+            class="swatch"
+            :class="{ on: theme.paletteId === p.id }"
+            :style="{ background: p.bg }"
+            :aria-label="p.label"
+            @click="pickPalette(p.id)"
+          >
+            <span class="line" :style="{ background: p.route }"></span>
+          </button>
+        </div>
       </div>
-    </div>
 
-    <div class="picker">
-      <Label>Tipografía</Label>
-      <div class="chips">
+      <!-- Texto -->
+      <div v-else-if="tab === 'texto'" class="chips">
         <button
-          v-for="t in SHARE_TYPOGRAPHIES"
-          :key="t.id"
+          v-for="ty in SHARE_TYPOGRAPHIES"
+          :key="ty.id"
           type="button"
           class="chip"
-          :class="{ on: (theme.typographyId ?? 'mono') === t.id }"
-          @click="pickTypography(t.id)"
+          :class="{ on: (theme.typographyId ?? 'mono') === ty.id }"
+          @click="pickTypography(ty.id)"
         >
-          {{ t.label }}
+          {{ ty.label }}
         </button>
       </div>
-    </div>
 
-    <div class="picker">
-      <Label>Fondo</Label>
-      <div class="chips">
-        <button type="button" class="chip" :class="{ on: bgKind === 'solid' }" @click="clearPhoto">
-          Sólido
-        </button>
-        <label class="chip file" :class="{ on: hasPhoto }">
-          {{ hasPhoto ? "Cambiar foto" : "Foto…" }}
-          <input type="file" accept="image/*" @change="onPhoto" />
-        </label>
-        <button
-          v-if="hasPhoto"
-          type="button"
-          class="chip"
-          :class="{ on: photoAuto }"
-          @click="toggleAdjust"
-        >
-          {{ photoAuto ? "Auto color" : "Color manual" }}
-        </button>
-      </div>
-      <div class="swatches">
-        <button
-          v-for="g in SHARE_GRADIENTS"
-          :key="g.id"
-          type="button"
-          class="swatch grad"
-          :style="{ background: `linear-gradient(135deg, ${g.from}, ${g.to})` }"
-          :aria-label="g.label"
-          @click="pickGradient(g)"
-        ></button>
-      </div>
-      <div class="chips">
-        <button
-          v-for="m in MAP_STYLES"
-          :key="m.id"
-          type="button"
-          class="chip"
-          :class="{ on: currentMapStyle() === m.id }"
-          @click="pickMap(m.id)"
-        >
-          {{ m.label }}
-        </button>
-      </div>
-      <div v-if="isMap" class="mapctl">
-        <button type="button" class="mc" aria-label="Alejar" @click="nudgeMap(-1, 0, 0)">−</button>
-        <button type="button" class="mc" aria-label="Acercar" @click="nudgeMap(1, 0, 0)">+</button>
-        <span class="mc-sep"></span>
-        <button type="button" class="mc" aria-label="Mover izquierda" @click="nudgeMap(0, PAN, 0)">←</button>
-        <button type="button" class="mc" aria-label="Mover arriba" @click="nudgeMap(0, 0, PAN)">↑</button>
-        <button type="button" class="mc" aria-label="Mover abajo" @click="nudgeMap(0, 0, -PAN)">↓</button>
-        <button type="button" class="mc" aria-label="Mover derecha" @click="nudgeMap(0, -PAN, 0)">→</button>
-        <span class="mc-sep"></span>
-        <button type="button" class="mc" aria-label="Centrar" @click="recenterMap">⌖</button>
-      </div>
-      <p v-if="isMap" class="hint">Usa datos en línea; sin red se dibuja solo la ruta.</p>
-    </div>
+      <!-- Fondo -->
+      <div v-else-if="tab === 'fondo'" class="group">
+        <div class="chips">
+          <button type="button" class="chip" :class="{ on: bgKind === 'solid' }" @click="setSolid">Sólido</button>
+          <label class="chip file" :class="{ on: hasPhoto }">
+            {{ hasPhoto ? "Cambiar foto" : "Foto…" }}
+            <input type="file" accept="image/*" @change="onPhoto" />
+          </label>
+          <button
+            v-if="hasPhoto"
+            type="button"
+            class="chip"
+            :class="{ on: photoAuto }"
+            @click="toggleAdjust"
+          >
+            {{ photoAuto ? "Auto color" : "Color manual" }}
+          </button>
+        </div>
 
-    <div class="picker">
-      <Label>Efectos</Label>
-      <div class="chips">
+        <Label>Gradiente</Label>
+        <div class="swatches">
+          <button
+            v-for="g in SHARE_GRADIENTS"
+            :key="g.id"
+            type="button"
+            class="swatch grad"
+            :style="{ background: `linear-gradient(135deg, ${g.from}, ${g.to})` }"
+            :aria-label="g.label"
+            @click="pickGradient(g)"
+          ></button>
+        </div>
+
+        <Label>Mapa</Label>
+        <div class="chips">
+          <button
+            v-for="m in MAP_STYLES"
+            :key="m.id"
+            type="button"
+            class="chip"
+            :class="{ on: currentMapStyle() === m.id }"
+            @click="openMapEditor(m.id)"
+          >
+            {{ m.label }}
+          </button>
+          <button v-if="isMap" type="button" class="chip on-accent" @click="openMapEditor(currentMapStyle()!)">
+            Ajustar encuadre
+          </button>
+        </div>
+        <p class="hint">El mapa se encuadra a mano (mover, zoom, rotar, inclinar). Usa datos en línea.</p>
+      </div>
+
+      <!-- Efectos -->
+      <div v-else class="chips">
         <button
           v-for="name in EFFECT_NAMES"
           :key="name"
@@ -312,19 +330,66 @@ const currentLabel = computed(() => themeLabel(theme.value));
       <AppButton size="lg" block variant="ghost" :disabled="busy" @press="onSave">Guardar</AppButton>
       <AppButton size="lg" block icon="export" :disabled="busy" @press="onShare">Compartir</AppButton>
     </div>
-    <p class="saved-note">Lo que guardes o compartas queda en <b>Info › Compartidos</b>.</p>
-  </AppSubScreen>
+  </section>
+
+  <MapEditor
+    v-if="editingMap"
+    :points="editorPoints"
+    :map-style="editingStyle"
+    :aspect-w="layout.w"
+    :aspect-h="layout.h"
+    :route-color="palette.route"
+    :start-color="palette.startDot"
+    :end-color="palette.endDot"
+    :camera="editorCamera"
+    @done="onMapDone"
+    @cancel="editingMap = false"
+  />
 </template>
 
 <style scoped>
+.share {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--safe-t) + var(--sp-3)) var(--sp-4) calc(var(--safe-b) + var(--sp-3));
+  gap: var(--sp-3);
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: none;
+}
+.back {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-left: -8px;
+  border-radius: var(--r-md);
+  color: var(--ink);
+}
+.back:active {
+  background: var(--surface-2);
+}
+.title {
+  margin: 0;
+  font-family: var(--font-cond);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
 .preview {
+  flex: none;
   position: relative;
   display: flex;
   justify-content: center;
 }
 .preview img {
   max-width: 100%;
-  max-height: 46vh;
+  max-height: 38vh;
   border-radius: var(--r-lg);
   border: 1px solid var(--line);
 }
@@ -336,12 +401,38 @@ const currentLabel = computed(() => themeLabel(theme.value));
   background: color-mix(in srgb, var(--bg) 55%, transparent);
   border-radius: var(--r-lg);
 }
-.hint {
-  margin: 0;
-  font-size: 12px;
-  color: var(--muted);
+.tabs {
+  flex: none;
+  display: flex;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
 }
-.picker {
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+.tab {
+  flex: none;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+.tab.on {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: var(--surface-2);
+}
+.panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.group {
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
@@ -364,6 +455,10 @@ const currentLabel = computed(() => themeLabel(theme.value));
   color: var(--ink);
   background: var(--surface-2);
 }
+.chip.on-accent {
+  border-color: var(--accent);
+  color: var(--accent);
+}
 .chip.file {
   position: relative;
   overflow: hidden;
@@ -381,8 +476,8 @@ const currentLabel = computed(() => themeLabel(theme.value));
   flex-wrap: wrap;
 }
 .swatch {
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border-radius: var(--r-md);
   border: 2px solid var(--line);
   display: grid;
@@ -392,44 +487,18 @@ const currentLabel = computed(() => themeLabel(theme.value));
   border-color: var(--accent);
 }
 .swatch .line {
-  width: 26px;
+  width: 24px;
   height: 5px;
   border-radius: 999px;
 }
-.actions {
-  display: flex;
-  gap: var(--sp-3);
-}
-.saved-note {
-  margin: 0;
+.hint {
+  margin: var(--sp-1) 0 0;
   font-size: 12px;
   color: var(--muted);
-  text-align: center;
 }
-.mapctl {
+.actions {
+  flex: none;
   display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  flex-wrap: wrap;
-}
-.mc {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--r-md);
-  border: 1px solid var(--line);
-  background: var(--surface);
-  color: var(--ink);
-  font-size: 18px;
-  font-weight: 600;
-  display: grid;
-  place-items: center;
-}
-.mc:active {
-  background: var(--surface-2);
-}
-.mc-sep {
-  width: 1px;
-  height: 24px;
-  background: var(--line);
+  gap: var(--sp-3);
 }
 </style>

@@ -44,16 +44,21 @@ export type ShareBackground =
       adjust: "auto" | "manual";
     }
   | {
-      /** Real streets under the route via CARTO tiles (static mosaic). Needs
-       *  network for tiles; the route always draws on top. */
+      /** Real streets, framed interactively (drag / zoom / rotate / tilt) in the
+       *  map editor. `src` is the captured snapshot with the route baked in;
+       *  `camera` lets the editor reopen on the same framing. */
       kind: "map";
       style: MapStyleId;
-      /** Zoom offset from the auto-fit level (− out, + in). */
-      zoom: number;
-      /** Pan the framing, in card pixels. */
-      offsetX: number;
-      offsetY: number;
+      src: string;
+      camera: MapCamera;
     };
+
+export interface MapCamera {
+  center: [number, number];
+  zoom: number;
+  bearing: number;
+  pitch: number;
+}
 
 export interface MapStyleDef {
   id: MapStyleId;
