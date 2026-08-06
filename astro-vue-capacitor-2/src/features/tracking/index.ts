@@ -54,6 +54,7 @@ export {
   splits,
 } from "./domain/analytics";
 export { cleanTrack } from "./domain/clean";
+export { routeSegments } from "./domain/segments";
 export {
   applyFilter,
   type TrackFilterDef,

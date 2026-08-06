@@ -2,6 +2,7 @@
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { onMounted, onUnmounted, ref, watch } from "vue";
+import { routeSegments } from "../domain/segments";
 import type { TrackPoint } from "../domain/track-point";
 
 /**
@@ -32,8 +33,9 @@ function accent(): string {
   return v || "#12A150";
 }
 
-function latlngs(): [number, number][] {
-  return props.points.map((p) => [p.lat, p.lng]);
+function segLatLngs(): [number, number][][] {
+  // One polyline per continuous segment so a pause never bridges as a straight line.
+  return routeSegments(props.points).map((seg) => seg.map((p) => [p.lat, p.lng]));
 }
 
 function render(): void {
@@ -42,20 +44,21 @@ function render(): void {
     pendingRender = true; // don't mutate layers mid-pinch
     return;
   }
-  const pts = latlngs();
-  hasRoute.value = pts.length > 0;
-  if (pts.length === 0) return;
+  const raw = props.points;
+  hasRoute.value = raw.length > 0;
+  if (raw.length === 0) return;
+  const segs = segLatLngs();
 
   const color = accent();
   if (!line) {
-    line = L.polyline(pts, { color, weight: 4, lineJoin: "round", lineCap: "round" }).addTo(map);
+    line = L.polyline(segs, { color, weight: 4, lineJoin: "round", lineCap: "round" }).addTo(map);
   } else {
-    line.setLatLngs(pts);
+    line.setLatLngs(segs);
     line.setStyle({ color });
   }
 
-  const start = pts[0]!;
-  const end = pts[pts.length - 1]!;
+  const start: [number, number] = [raw[0]!.lat, raw[0]!.lng];
+  const end: [number, number] = [raw[raw.length - 1]!.lat, raw[raw.length - 1]!.lng];
   if (!startDot) {
     startDot = L.circleMarker(start, { radius: 6, color, fillColor: color, fillOpacity: 1, weight: 0 }).addTo(map);
     endDot = L.circleMarker(end, { radius: 6, color, weight: 3, fillColor: "#111", fillOpacity: 1 }).addTo(map);
@@ -68,7 +71,7 @@ function render(): void {
   // fix would fight the user's zoom/pan. The polyline scales with the map on its
   // own, so growth stays in sync; the user pans/zooms freely.
   if (!fitted) {
-    if (pts.length === 1) map.setView(start, 16);
+    if (raw.length === 1) map.setView(start, 16);
     else map.fitBounds(line.getBounds(), { padding: [24, 24], maxZoom: 17 });
     fitted = true;
   }

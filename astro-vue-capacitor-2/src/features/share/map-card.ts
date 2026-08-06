@@ -154,7 +154,9 @@ export async function renderMapBackground(
     ctx.beginPath();
     points.forEach((p, i) => {
       const [x, y] = px(p);
-      if (i === 0) ctx.moveTo(x, y);
+      // Break at a pause (big time gap) so it doesn't bridge as a straight line.
+      const paused = i > 0 && p.t - points[i - 1]!.t > 10_000;
+      if (i === 0 || paused) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     });
     ctx.stroke();

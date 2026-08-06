@@ -284,7 +284,13 @@ function drawRoute(
   ctx.lineJoin = "round";
   ctx.lineCap = "round";
   ctx.beginPath();
-  points.forEach((_, i) => (i === 0 ? ctx.moveTo(px(i), py(i)) : ctx.lineTo(px(i), py(i))));
+  points.forEach((p, i) => {
+    // Break the line at a pause (big time gap) so it doesn't draw a straight
+    // bridge between the pause and resume points.
+    const paused = i > 0 && p.t - points[i - 1]!.t > 10_000;
+    if (i === 0 || paused) ctx.moveTo(px(i), py(i));
+    else ctx.lineTo(px(i), py(i));
+  });
   ctx.stroke();
 
   const dot = (i: number, fill: string): void => {
