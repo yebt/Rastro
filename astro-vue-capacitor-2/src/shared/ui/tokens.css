@@ -1,0 +1,167 @@
+/**
+ * Rastro design tokens — the single source of truth for look & feel.
+ *
+ * Every color, radius, spacing step and font in the app resolves to one of
+ * these custom properties. UI primitives (AppButton, Card, AppScreen…) consume
+ * tokens only; they never hard-code a hex value. Change a token here and the
+ * whole app shifts coherently.
+ *
+ * Theme model: light is the default; dark applies automatically via the OS
+ * preference, and `data-theme="light|dark"` on <html> forces either one (used
+ * by the future theme switch). Both directions are covered so an explicit
+ * choice always wins over the OS.
+ */
+
+:root {
+  /* ---- Palette: light ---- */
+  --bg: #e7e8e4;
+  --surface: #f3f4f0;
+  --surface-2: #e9eae5;
+  --line: #d2d5cf;
+  --line-2: #c3c7bf;
+
+  --ink: #12161a;
+  --muted: #5b635f;
+  --faint: #8a918c;
+
+  --accent: #0e7a45;
+  --accent-ink: #ffffff;
+
+  --danger: #c4381d;
+
+  /* ---- Radii ---- */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+  --r-pill: 999px;
+
+  /* ---- Spacing scale ---- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+
+  /* ---- Type ----
+     Self-hosted via the Astro Fonts API (see astro.config + Layout <Font>).
+     The --font-roboto / --font-barlow / --font-roboto-mono vars are emitted by
+     the <Font> components; these fall back to system stacks if a face fails. */
+  --font-sans: var(--font-roboto, system-ui), -apple-system, sans-serif;
+  --font-mono: var(--font-roboto-mono, ui-monospace), "SF Mono", Menlo, monospace;
+  --font-cond: var(--font-barlow, var(--font-sans)), sans-serif;
+
+  /* ---- Elevation ---- */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-2: 0 12px 30px -14px rgba(0, 0, 0, 0.35);
+
+  /* ---- Safe areas (notch / gesture bar) ---- */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+
+  /* ---- Layout ---- */
+  --nav-h: 58px;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* ---- Palette: dark (the committed "instrument" skin) ---- */
+    --bg: #0a0c0d;
+    --surface: #14181a;
+    --surface-2: #1b2124;
+    --line: #232a2d;
+    --line-2: #2d3538;
+
+    --ink: #eef1ee;
+    --muted: #838c86;
+    --faint: #565e59;
+
+    --accent: #4ce08c;
+    --accent-ink: #04140a;
+
+    --danger: #ff6a58;
+
+    --shadow-2: 0 12px 30px -14px rgba(0, 0, 0, 0.6);
+
+    color-scheme: dark;
+  }
+}
+
+/* Explicit choice always overrides the OS preference. */
+:root[data-theme="light"] {
+  --bg: #e7e8e4;
+  --surface: #f3f4f0;
+  --surface-2: #e9eae5;
+  --line: #d2d5cf;
+  --line-2: #c3c7bf;
+  --ink: #12161a;
+  --muted: #5b635f;
+  --faint: #8a918c;
+  --accent: #0e7a45;
+  --accent-ink: #ffffff;
+  --danger: #c4381d;
+  --shadow-2: 0 12px 30px -14px rgba(0, 0, 0, 0.35);
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0a0c0d;
+  --surface: #14181a;
+  --surface-2: #1b2124;
+  --line: #232a2d;
+  --line-2: #2d3538;
+  --ink: #eef1ee;
+  --muted: #838c86;
+  --faint: #565e59;
+  --accent: #4ce08c;
+  --accent-ink: #04140a;
+  --danger: #ff6a58;
+  --shadow-2: 0 12px 30px -14px rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+
+/* ---- Minimal reset ---- */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* Local-first mobile app: no rubber-band scroll on the shell. */
+  overscroll-behavior: none;
+}
+
+button {
+  font-family: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+/* Tabular numerals everywhere numbers carry meaning. */
+.num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}

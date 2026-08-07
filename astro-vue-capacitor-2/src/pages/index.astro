@@ -1,0 +1,19 @@
+---
+import AppRoot from '../features/shell/AppRoot.vue';
+import Layout from '../shared/layouts/Layout.astro';
+---
+
+<Layout>
+  <!--
+    Single Vue island for the whole app. `client:only` keeps it a true SPA shell:
+    the app never does a full page reload, so in-progress GPS recording state
+    survives every tab switch.
+  -->
+  <AppRoot client:only="vue" />
+</Layout>
+
+<script>
+if (import.meta.env.DEV) {
+  import('eruda').then((m) => m.default.init());
+}
+</script>

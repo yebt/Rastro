@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Adaptive icon foreground: trail mark kept inside the 66% safe zone so no
+       launcher mask (circle / squircle / rounded square) clips the goal dot. -->
+  <g transform="translate(512 512) scale(24) translate(-16 -16)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 23c4-2 3-7 7-8s6-3 9-6" stroke="#4ce08c" stroke-width="2.4"/>
+    <circle cx="8" cy="23" r="2.7" fill="#eef1ee" stroke="none"/>
+    <circle cx="24" cy="9" r="2.7" fill="#4ce08c" stroke="none"/>
+  </g>
+</svg>
