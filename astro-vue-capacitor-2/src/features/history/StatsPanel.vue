@@ -16,6 +16,7 @@ import {
   speedExtremes,
   splitStats,
   splits,
+  strideSeries,
   type TrackPoint,
 } from "../tracking";
 import SplitBars from "../tracking/ui/SplitBars.vue";
@@ -28,6 +29,9 @@ const splitData = computed(() => splits(props.points));
 const series = computed(() => movementSeries(props.points, 60));
 const speedKmh = computed(() => series.value.map((p) => p.mps * 3.6));
 const paceSeries = computed(() => series.value.map((p) => (p.paceSecPerKm ? p.paceSecPerKm / 60 : 0)));
+const strideOverTime = computed(() => strideSeries(props.points, 40));
+const strideM = computed(() => strideOverTime.value.map((s) => s.strideM ?? 0));
+const cadenceOverTime = computed(() => strideOverTime.value.map((s) => s.cadence ?? 0));
 
 const sStats = computed(() => splitStats(splitData.value));
 const spd = computed(() => speedExtremes(series.value));
@@ -100,6 +104,16 @@ const dash = (v: string | number | null | undefined): string => (v == null ? "â€
   <Card v-if="series.length">
     <Label>Ritmo en el tiempo</Label>
     <TrendChart :values="paceSeries" :format="(v) => `${v.toFixed(1)} min/km`" />
+  </Card>
+
+  <Card v-if="strideOverTime.length">
+    <Label>Zancada en el tiempo</Label>
+    <TrendChart :values="strideM" :format="(v) => `${v.toFixed(2)} m`" />
+  </Card>
+
+  <Card v-if="strideOverTime.length">
+    <Label>Cadencia en el tiempo</Label>
+    <TrendChart :values="cadenceOverTime" :format="(v) => `${Math.round(v)} p/min`" />
   </Card>
 </template>
 

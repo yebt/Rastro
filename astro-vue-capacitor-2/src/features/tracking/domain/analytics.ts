@@ -202,3 +202,48 @@ export function elevationStats(points: TrackPoint[]): ElevationStats {
     minAlt: alts.length ? Math.min(...alts) : null,
   };
 }
+
+export interface StridePoint {
+  tMs: number;
+  /** Metres per step in this bucket, or null when steps weren't captured. */
+  strideM: number | null;
+  /** Steps per minute in this bucket, or null. */
+  cadence: number | null;
+}
+
+/**
+ * Stride length and cadence resampled over time, from per-point cumulative steps
+ * (`st`, stamped by the recorder). Only available for activities recorded with
+ * step capture; returns [] when no point carries `st`.
+ */
+export function strideSeries(points: TrackPoint[], buckets = 40, maxGapMs = 10_000): StridePoint[] {
+  if (points.length < 2 || !points.some((p) => p.st != null)) return [];
+  const t0 = points[0]!.t;
+  const total = points[points.length - 1]!.t - t0;
+  if (total <= 0) return [];
+
+  const bucketMs = total / buckets;
+  const dist = new Array<number>(buckets).fill(0);
+  const steps = new Array<number>(buckets).fill(0);
+  const time = new Array<number>(buckets).fill(0);
+
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1]!;
+    const b = points[i]!;
+    const dt = b.t - a.t;
+    if (dt <= 0 || dt > maxGapMs) continue;
+    if (a.st == null || b.st == null) continue;
+    const ds = Math.max(0, b.st - a.st);
+    const mid = (a.t + b.t) / 2 - t0;
+    const bi = Math.min(buckets - 1, Math.max(0, Math.floor(mid / bucketMs)));
+    dist[bi]! += haversineMeters(a, b);
+    steps[bi]! += ds;
+    time[bi]! += dt;
+  }
+
+  return Array.from({ length: buckets }, (_, i) => ({
+    tMs: (i + 0.5) * bucketMs,
+    strideM: steps[i]! > 0 ? dist[i]! / steps[i]! : null,
+    cadence: time[i]! > 0 && steps[i]! > 0 ? Math.round(steps[i]! / (time[i]! / 60_000)) : null,
+  }));
+}

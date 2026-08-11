@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { useStore } from "@nanostores/vue";
 import { computed, onMounted, ref, watch } from "vue";
 import { AppButton, AppIcon, Label, Spinner } from "../../shared/ui";
 import { cleanTrack, type MoveActivity } from "../tracking";
+import { $favorites, addFavorite, removeFavorite } from "./favorites.store";
 import { shareGallery } from "./gallery-store";
 import MapEditor from "./MapEditor.vue";
 import { renderRouteCard } from "./route-card";
@@ -12,7 +14,9 @@ import {
   getPalette,
   type MapCamera,
   MAP_STYLES,
+  MARKERS,
   type MapStyleId,
+  type MarkerStyle,
   SHARE_GRADIENTS,
   SHARE_LAYOUTS,
   SHARE_PALETTES,
@@ -36,14 +40,46 @@ const theme = ref<ShareTheme>({ ...DEFAULT_THEME, effects: [] });
 const preview = ref("");
 const busy = ref(false);
 const previewing = ref(false);
+const fullscreen = ref(false);
 let renderToken = 0;
 
+// Cache rendered previews by a signature of the theme, so re-selecting a config
+// you already tried is instant (no recompute) — including its map/photo snapshot.
+const cache = new Map<string, string>();
+function signature(t: ShareTheme): string {
+  const bg = t.background;
+  let b: string = bg?.kind ?? "solid";
+  if (bg?.kind === "gradient") b += `:${bg.from}:${bg.to}:${bg.angle}`;
+  else if (bg?.kind === "photo") b += `:${bg.adjust}:${bg.src.length}:${bg.src.slice(-24)}`;
+  else if (bg?.kind === "map") b += `:${bg.style}:${bg.src.length}:${bg.src.slice(-24)}`;
+  return [
+    t.layoutId,
+    t.paletteId,
+    t.typographyId ?? "mono",
+    t.marker ?? "dot",
+    JSON.stringify(t.override ?? {}),
+    JSON.stringify(t.effects ?? []),
+    b,
+  ].join("|");
+}
+
 async function renderPreview(): Promise<void> {
+  const key = signature(theme.value);
+  const hit = cache.get(key);
+  if (hit) {
+    preview.value = hit;
+    previewing.value = false;
+    return;
+  }
   const token = ++renderToken;
   previewing.value = true;
   try {
     const url = await renderRouteCard(props.activity, theme.value);
-    if (token === renderToken) preview.value = url;
+    if (token === renderToken) {
+      preview.value = url;
+      cache.set(key, url);
+      if (cache.size > 30) cache.delete(cache.keys().next().value as string);
+    }
   } finally {
     if (token === renderToken) previewing.value = false;
   }
@@ -52,7 +88,7 @@ onMounted(renderPreview);
 watch(theme, renderPreview, { deep: true });
 
 // ---- Tabs ----
-type Tab = "formato" | "color" | "texto" | "fondo" | "efectos";
+type Tab = "formato" | "color" | "texto" | "fondo" | "efectos" | "favoritos";
 const tab = ref<Tab>("formato");
 const TABS: { id: Tab; label: string }[] = [
   { id: "formato", label: "Formato" },
@@ -60,7 +96,28 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "texto", label: "Texto" },
   { id: "fondo", label: "Fondo" },
   { id: "efectos", label: "Efectos" },
+  { id: "favoritos", label: "Favoritos" },
 ];
+
+// ---- Favorites ----
+const favorites = useStore($favorites);
+function saveFavorite(): void {
+  addFavorite(theme.value);
+}
+function applyFavorite(fav: ShareTheme): void {
+  // Keep the current per-activity background (photo/map) unless the favorite has one.
+  theme.value = { ...fav };
+}
+
+// ---- Manual route color override ----
+const routeColor = computed(() => theme.value.override?.route ?? getPalette(theme.value.paletteId).route);
+function setRouteColor(hex: string): void {
+  theme.value = { ...theme.value, override: { ...theme.value.override, route: hex } };
+}
+function clearOverride(): void {
+  theme.value = { ...theme.value, override: undefined };
+}
+const hasOverride = computed(() => !!theme.value.override?.route);
 
 // ---- Basic pickers ----
 function pickLayout(id: string): void {
@@ -71,6 +128,9 @@ function pickPalette(id: string): void {
 }
 function pickTypography(id: string): void {
   theme.value = { ...theme.value, typographyId: id };
+}
+function pickMarker(id: MarkerStyle): void {
+  theme.value = { ...theme.value, marker: id };
 }
 const currentLabel = computed(() => themeLabel(theme.value));
 
@@ -138,9 +198,12 @@ const EFFECT_PRESETS: Record<string, { label: string; effect: ShareEffect }> = {
   blur: { label: "Desenfoque", effect: { kind: "blur", radius: 16 } },
   oscurecer: { label: "Oscurecer", effect: { kind: "exposure", amount: -0.32 } },
   vineta: { label: "Viñeta", effect: { kind: "vignette", strength: 0.55 } },
+  aclarar: { label: "Aclarar", effect: { kind: "exposure", amount: 0.28 } },
   duotono: { label: "Duotono", effect: { kind: "duotone", shadow: "#0a0c1f", highlight: "#7b3ff2" } },
   puntos: { label: "Puntos", effect: { kind: "halftone", color: "#ffffff", alpha: 0.1, gap: 26, radius: 3 } },
   sombra: { label: "Sombra", effect: { kind: "textShadow", blur: 14, color: "#000000" } },
+  tinte: { label: "Tinte", effect: { kind: "tint", color: "#ff5a1f", alpha: 0.14 } },
+  marco: { label: "Marco", effect: { kind: "frame", color: "#ffffff", inset: 40, width: 4 } },
 };
 type EffectName = keyof typeof EFFECT_PRESETS;
 const EFFECT_NAMES = Object.keys(EFFECT_PRESETS) as EffectName[];
@@ -192,9 +255,12 @@ async function onSave(): Promise<void> {
         <AppIcon name="back" size="22px" />
       </button>
       <h1 class="title">Compartir</h1>
+      <button type="button" class="hbtn" aria-label="Pantalla completa" @click="fullscreen = true">
+        <AppIcon name="expand" size="20px" />
+      </button>
     </header>
 
-    <div class="preview">
+    <div class="preview" @click="preview && (fullscreen = true)">
       <img v-if="preview" :src="preview" alt="Vista previa de la tarjeta" />
       <div v-if="previewing" class="prev-busy"><Spinner size="26px" /></div>
     </div>
@@ -214,17 +280,33 @@ async function onSave(): Promise<void> {
 
     <div class="panel">
       <!-- Formato -->
-      <div v-if="tab === 'formato'" class="chips">
-        <button
-          v-for="l in SHARE_LAYOUTS"
-          :key="l.id"
-          type="button"
-          class="chip"
-          :class="{ on: theme.layoutId === l.id }"
-          @click="pickLayout(l.id)"
-        >
-          {{ l.label }}
-        </button>
+      <div v-if="tab === 'formato'" class="group">
+        <Label>Layout</Label>
+        <div class="chips">
+          <button
+            v-for="l in SHARE_LAYOUTS"
+            :key="l.id"
+            type="button"
+            class="chip"
+            :class="{ on: theme.layoutId === l.id }"
+            @click="pickLayout(l.id)"
+          >
+            {{ l.label }}
+          </button>
+        </div>
+        <Label>Marcador de meta</Label>
+        <div class="chips">
+          <button
+            v-for="m in MARKERS"
+            :key="m.id"
+            type="button"
+            class="chip"
+            :class="{ on: (theme.marker ?? 'dot') === m.id }"
+            @click="pickMarker(m.id)"
+          >
+            {{ m.label }}
+          </button>
+        </div>
       </div>
 
       <!-- Color -->
@@ -243,6 +325,15 @@ async function onSave(): Promise<void> {
           >
             <span class="line" :style="{ background: p.route }"></span>
           </button>
+        </div>
+
+        <Label>Color de ruta</Label>
+        <div class="rowline">
+          <label class="colorpick" :style="{ background: routeColor }">
+            <input type="color" :value="routeColor" @input="setRouteColor(($event.target as HTMLInputElement).value)" />
+          </label>
+          <span class="hex">{{ routeColor }}</span>
+          <button v-if="hasOverride" type="button" class="chip" @click="clearOverride">Usar paleta</button>
         </div>
       </div>
 
@@ -312,7 +403,7 @@ async function onSave(): Promise<void> {
       </div>
 
       <!-- Efectos -->
-      <div v-else class="chips">
+      <div v-else-if="tab === 'efectos'" class="chips">
         <button
           v-for="name in EFFECT_NAMES"
           :key="name"
@@ -324,6 +415,18 @@ async function onSave(): Promise<void> {
           {{ EFFECT_PRESETS[name].label }}
         </button>
       </div>
+
+      <!-- Favoritos -->
+      <div v-else class="group">
+        <AppButton block variant="ghost" icon="plus" @press="saveFavorite">Guardar tema actual</AppButton>
+        <div v-if="favorites.length" class="favs">
+          <div v-for="(f, i) in favorites" :key="i" class="favitem">
+            <button type="button" class="chip fav" @click="applyFavorite(f)">{{ themeLabel(f) }}</button>
+            <button type="button" class="fav-x" aria-label="Quitar" @click="removeFavorite(i)">×</button>
+          </div>
+        </div>
+        <p v-else class="hint">Guardá tu combinación (formato, color, efectos) para reusarla en otra tarjeta.</p>
+      </div>
     </div>
 
     <div class="actions">
@@ -331,6 +434,11 @@ async function onSave(): Promise<void> {
       <AppButton size="lg" block icon="export" :disabled="busy" @press="onShare">Compartir</AppButton>
     </div>
   </section>
+
+  <div v-if="fullscreen && preview" class="lightbox" @click="fullscreen = false">
+    <img :src="preview" alt="Tarjeta a pantalla completa" />
+    <p class="lb-hint">Tocá para cerrar</p>
+  </div>
 
   <MapEditor
     v-if="editingMap"
@@ -356,10 +464,24 @@ async function onSave(): Promise<void> {
   gap: var(--sp-3);
 }
 .head {
+  order: 0;
   display: flex;
   align-items: center;
   gap: var(--sp-2);
   flex: none;
+}
+.hbtn {
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+.hbtn:active {
+  background: var(--surface-2);
 }
 .back {
   display: grid;
@@ -382,10 +504,12 @@ async function onSave(): Promise<void> {
   text-transform: uppercase;
 }
 .preview {
+  order: 1;
   flex: none;
   position: relative;
   display: flex;
   justify-content: center;
+  cursor: zoom-in;
 }
 .preview img {
   max-width: 100%;
@@ -402,12 +526,14 @@ async function onSave(): Promise<void> {
   border-radius: var(--r-lg);
 }
 .tabs {
+  order: 4;
   flex: none;
   display: flex;
   gap: var(--sp-2);
   overflow-x: auto;
   scrollbar-width: none;
-  padding-bottom: 2px;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line);
 }
 .tabs::-webkit-scrollbar {
   display: none;
@@ -427,10 +553,12 @@ async function onSave(): Promise<void> {
   background: var(--surface-2);
 }
 .panel {
+  order: 2;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  padding-top: var(--sp-1);
 }
 .group {
   display: flex;
@@ -496,9 +624,86 @@ async function onSave(): Promise<void> {
   font-size: 12px;
   color: var(--muted);
 }
+.rowline {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.colorpick {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-md);
+  border: 2px solid var(--line);
+  overflow: hidden;
+  flex: none;
+}
+.colorpick input {
+  position: absolute;
+  inset: -4px;
+  width: calc(100% + 8px);
+  height: calc(100% + 8px);
+  opacity: 0;
+  cursor: pointer;
+}
+.hex {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.favs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.favitem {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.fav {
+  flex: 1;
+  text-align: left;
+}
+.fav-x {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 18px;
+  display: grid;
+  place-items: center;
+}
 .actions {
+  order: 3;
   flex: none;
   display: flex;
   gap: var(--sp-3);
+}
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  padding: var(--sp-5);
+  background: color-mix(in srgb, black 84%, transparent);
+  backdrop-filter: blur(4px);
+}
+.lightbox img {
+  max-width: 100%;
+  max-height: 82vh;
+  border-radius: var(--r-lg);
+}
+.lb-hint {
+  margin: 0;
+  font-size: 12px;
+  color: color-mix(in srgb, white 72%, transparent);
 }
 </style>

@@ -89,7 +89,11 @@ export type ShareEffect =
   /** Halftone dot pattern over the background (the v1 "dots" look). */
   | { kind: "halftone"; color: string; alpha: number; gap: number; radius: number }
   /** Shadow behind all text, for legibility over busy photos. */
-  | { kind: "textShadow"; blur: number; color: string };
+  | { kind: "textShadow"; blur: number; color: string }
+  /** Flat color wash over the whole card. */
+  | { kind: "tint"; color: string; alpha: number }
+  /** Inset border frame. */
+  | { kind: "frame"; color: string; inset: number; width: number };
 
 export interface ShareGradient {
   id: string;
@@ -119,6 +123,16 @@ export interface ShareTypography {
   meta: string;
 }
 
+/** How the finish point is marked on the route. */
+export type MarkerStyle = "dot" | "ring" | "pin" | "flag";
+
+export const MARKERS: { id: MarkerStyle; label: string }[] = [
+  { id: "dot", label: "Punto" },
+  { id: "ring", label: "Aro" },
+  { id: "pin", label: "Pin" },
+  { id: "flag", label: "Bandera" },
+];
+
 export interface ShareTheme {
   layoutId: string;
   paletteId: string;
@@ -126,16 +140,25 @@ export interface ShareTheme {
   typographyId?: string;
   background?: ShareBackground;
   effects?: ShareEffect[];
+  /** Manual color overrides (win over the palette and photo auto-adjust). */
+  override?: { route?: string; ink?: string };
+  /** Finish-marker style (default "dot"). */
+  marker?: MarkerStyle;
 }
 
 const COND = "'Barlow Condensed', sans-serif";
 const MONO = "'Roboto Mono', monospace";
 const SANS = "'Roboto', system-ui, sans-serif";
+const SPACE = "'Space Grotesk', sans-serif";
 
 export const SHARE_TYPOGRAPHIES: ShareTypography[] = [
   { id: "mono", label: "Mono", headline: MONO, title: COND, meta: MONO },
   { id: "grotesk", label: "Grotesk", headline: COND, title: SANS, meta: MONO },
   { id: "tecnica", label: "Técnica", headline: MONO, title: MONO, meta: MONO },
+  { id: "space", label: "Space", headline: SPACE, title: SPACE, meta: MONO },
+  { id: "editorial", label: "Editorial", headline: SPACE, title: COND, meta: MONO },
+  { id: "display", label: "Display", headline: COND, title: COND, meta: COND },
+  { id: "sans", label: "Sans", headline: SANS, title: SANS, meta: SANS },
 ];
 
 export function getTypography(id: string | undefined): ShareTypography {
@@ -203,6 +226,10 @@ export const SHARE_LAYOUTS: ShareLayout[] = [
   { id: "overlay", label: "Overlay", w: 1080, h: 1350 },
   { id: "editorial", label: "Editorial", w: 1080, h: 1350 },
   { id: "dataGrid", label: "Datos", w: 1080, h: 1350 },
+  { id: "blueprint", label: "Plano", w: 1080, h: 1350 },
+  { id: "techCard", label: "Ficha", w: 1080, h: 1080 },
+  { id: "cover", label: "Portada", w: 1080, h: 1350 },
+  { id: "vinilo", label: "Vinilo", w: 1080, h: 1080 },
 ];
 
 export const DEFAULT_THEME: ShareTheme = { layoutId: "clasico", paletteId: "noche" };

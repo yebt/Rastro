@@ -23,6 +23,7 @@ import {
   getLayout,
   getPalette,
   getTypography,
+  type MarkerStyle,
   type ShareBackground,
   type ShareEffect,
   type SharePalette,
@@ -46,6 +47,7 @@ interface Style {
   textShadow: { blur: number; color: string } | null;
   /** When the background already contains the route (map mode), skip drawing it. */
   skipRoute: boolean;
+  marker: MarkerStyle;
 }
 
 interface CardStats {
@@ -302,8 +304,70 @@ function drawRoute(
     ctx.stroke();
   };
   dot(0, st.pal.startDot);
-  dot(points.length - 1, st.pal.endDot);
+  drawEndMarker(ctx, px(points.length - 1), py(points.length - 1), st, lineWidth);
   ctx.restore();
+}
+
+/** The finish marker, in the theme's style. */
+function drawEndMarker(ctx: CanvasRenderingContext2D, x: number, y: number, st: Style, lw: number): void {
+  const route = st.pal.route;
+  const r = lw * 1.9;
+  if (st.marker === "ring") {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.lineWidth = lw * 0.9;
+    ctx.strokeStyle = route;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(x, y, lw * 0.6, 0, Math.PI * 2);
+    ctx.fillStyle = route;
+    ctx.fill();
+    return;
+  }
+  if (st.marker === "pin") {
+    const cy = y - r * 2.2; // circle sits above the point; tip touches (x,y)
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x - r * 0.75, cy + r * 0.55);
+    ctx.lineTo(x + r * 0.75, cy + r * 0.55);
+    ctx.closePath();
+    ctx.fillStyle = route;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = route;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x, cy, r * 0.4, 0, Math.PI * 2);
+    ctx.fillStyle = st.pal.bg;
+    ctx.fill();
+    return;
+  }
+  if (st.marker === "flag") {
+    const h = r * 4;
+    ctx.lineWidth = lw * 0.6;
+    ctx.strokeStyle = route;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y - h);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y - h);
+    ctx.lineTo(x + r * 2.2, y - h + r * 0.9);
+    ctx.lineTo(x, y - h + r * 1.8);
+    ctx.closePath();
+    ctx.fillStyle = route;
+    ctx.fill();
+    return;
+  }
+  // dot
+  ctx.beginPath();
+  ctx.arc(x, y, lw * 1.7, 0, Math.PI * 2);
+  ctx.fillStyle = st.pal.endDot;
+  ctx.fill();
+  ctx.lineWidth = lw * 0.65;
+  ctx.strokeStyle = route;
+  ctx.stroke();
 }
 
 // ---- Layouts ------------------------------------------------------------------
@@ -494,6 +558,124 @@ function drawDataGrid(ctx: CanvasRenderingContext2D, W: number, H: number, pts: 
   wordmark(ctx, W - 70, H - 50, st);
 }
 
+/** Blueprint: technical "plan" — coords row, titled route box, mono stat line. */
+function drawBlueprint(ctx: CanvasRenderingContext2D, W: number, H: number, pts: TrackPoint[], s: CardStats, st: Style, first: TrackPoint | undefined): void {
+  ctx.textAlign = "left";
+  ctx.fillStyle = st.pal.muted;
+  ctx.font = `400 26px ${st.meta}`;
+  ctx.fillText(formatCoords(first), 70, 100);
+  ctx.fillStyle = st.pal.ink;
+  ctx.font = `700 84px ${st.title}`;
+  ctx.fillText(s.type, 66, 205);
+  ctx.strokeStyle = st.pal.muted;
+  ctx.globalAlpha = 0.4;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(70, 260, W - 140, H - 560);
+  ctx.globalAlpha = 1;
+  drawRoute(ctx, pts, { x: 70, y: 260, w: W - 140, h: H - 560 }, st, 7);
+  ctx.fillStyle = st.pal.ink;
+  ctx.font = `600 42px ${st.meta}`;
+  ctx.fillText(`${s.distValue} ${s.distUnit}`, 70, H - 160);
+  ctx.fillStyle = st.pal.muted;
+  ctx.font = `400 28px ${st.meta}`;
+  ctx.fillText(`${s.duration}  ·  ${s.pace}/km  ·  ${s.date}`, 70, H - 112);
+  wordmark(ctx, W - 70, H - 112, st);
+}
+
+/** TechCard: specimen sheet — headline + line-art route + key→value mini table. */
+function drawTechCard(ctx: CanvasRenderingContext2D, W: number, H: number, pts: TrackPoint[], s: CardStats, st: Style): void {
+  ctx.textAlign = "left";
+  ctx.fillStyle = st.pal.route;
+  ctx.font = `600 28px ${st.meta}`;
+  ctx.fillText("REGISTRO", 70, 100);
+  ctx.fillStyle = st.pal.ink;
+  ctx.font = `700 72px ${st.title}`;
+  ctx.fillText(s.type, 66, 180);
+  drawRoute(ctx, pts, { x: 70, y: 210, w: W - 140, h: 470 }, st, 6);
+  const rows: [string, string][] = [
+    ["DISTANCIA", `${s.distValue} ${s.distUnit}`],
+    ["TIEMPO", s.duration],
+    ["RITMO", `${s.pace}/km`],
+    ["FECHA", s.date],
+  ];
+  let y = H - 300;
+  for (const [k, v] of rows) {
+    ctx.fillStyle = st.pal.muted;
+    ctx.font = `600 24px ${st.meta}`;
+    ctx.textAlign = "left";
+    ctx.fillText(k, 70, y);
+    ctx.fillStyle = st.pal.ink;
+    ctx.font = `600 30px ${st.meta}`;
+    ctx.textAlign = "right";
+    ctx.fillText(v, W - 70, y);
+    ctx.textAlign = "left";
+    ctx.strokeStyle = st.pal.muted;
+    ctx.globalAlpha = 0.22;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(70, y + 16);
+    ctx.lineTo(W - 70, y + 16);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    y += 58;
+  }
+  wordmark(ctx, W - 70, H - 44, st);
+}
+
+/** Cover: route as art to the bleed, big title + stats bottom-left. */
+function drawCoverLayout(ctx: CanvasRenderingContext2D, W: number, H: number, pts: TrackPoint[], s: CardStats, st: Style): void {
+  drawRoute(ctx, pts, { x: 60, y: 60, w: W - 120, h: H - 360 }, st, 8);
+  ctx.textAlign = "left";
+  ctx.fillStyle = st.pal.route;
+  ctx.font = `600 30px ${st.meta}`;
+  ctx.fillText(s.date.toUpperCase(), 70, H - 250);
+  ctx.fillStyle = st.pal.ink;
+  ctx.font = `700 128px ${st.title}`;
+  ctx.fillText(s.type, 60, H - 130);
+  ctx.font = `600 52px ${st.headline}`;
+  ctx.fillText(s.distValue, 66, H - 60);
+  const dw = ctx.measureText(s.distValue).width;
+  ctx.fillStyle = st.pal.muted;
+  ctx.font = `600 32px ${st.headline}`;
+  ctx.fillText(` ${s.distUnit}   ${s.duration}   ${s.pace}/km`, 78 + dw, H - 60);
+  wordmark(ctx, W - 70, H - 60, st);
+}
+
+/** Vinilo: the route inside a record disc, title beneath. */
+function drawVinilo(ctx: CanvasRenderingContext2D, W: number, H: number, pts: TrackPoint[], s: CardStats, st: Style): void {
+  const cx = W / 2;
+  const cy = H / 2 - 40;
+  const R = Math.min(W, H) * 0.36;
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.strokeStyle = st.pal.muted;
+  ctx.globalAlpha = 0.3;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, R - 6, 0, Math.PI * 2);
+  ctx.clip();
+  drawRoute(ctx, pts, { x: cx - R, y: cy - R, w: 2 * R, h: 2 * R }, st, 7);
+  ctx.restore();
+  ctx.beginPath();
+  ctx.arc(cx, cy, 11, 0, Math.PI * 2);
+  ctx.fillStyle = st.pal.bg;
+  ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = st.pal.route;
+  ctx.stroke();
+  ctx.textAlign = "center";
+  ctx.fillStyle = st.pal.ink;
+  ctx.font = `700 56px ${st.title}`;
+  ctx.fillText(s.type, cx, H - 120);
+  ctx.fillStyle = st.pal.muted;
+  ctx.font = `400 30px ${st.meta}`;
+  ctx.fillText(`${s.distValue} ${s.distUnit}  ·  ${s.duration}  ·  ${s.pace}/km`, cx, H - 72);
+  ctx.textAlign = "left";
+}
+
 function wordmark(ctx: CanvasRenderingContext2D, x: number, y: number, st: Style): void {
   ctx.fillStyle = st.pal.muted;
   ctx.font = `600 30px ${st.title}`;
@@ -598,6 +780,21 @@ function applyDuotone(ctx: CanvasRenderingContext2D, W: number, H: number, shado
   ctx.putImageData(img, 0, 0);
 }
 
+function applyTint(ctx: CanvasRenderingContext2D, W: number, H: number, color: string, alpha: number): void {
+  ctx.save();
+  ctx.fillStyle = rgba(color, alpha);
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+}
+
+function applyFrame(ctx: CanvasRenderingContext2D, W: number, H: number, e: Extract<ShareEffect, { kind: "frame" }>): void {
+  ctx.save();
+  ctx.strokeStyle = e.color;
+  ctx.lineWidth = e.width;
+  ctx.strokeRect(e.inset, e.inset, W - e.inset * 2, H - e.inset * 2);
+  ctx.restore();
+}
+
 function applyHalftone(ctx: CanvasRenderingContext2D, W: number, H: number, e: Extract<ShareEffect, { kind: "halftone" }>): void {
   ctx.save();
   ctx.fillStyle = rgba(e.color, e.alpha);
@@ -624,6 +821,9 @@ export async function renderRouteCard(
   activity: MoveActivity,
   theme: ShareTheme = DEFAULT_THEME,
 ): Promise<string> {
+  // Ensure custom faces are loaded so canvas text doesn't fall back on first render.
+  await document.fonts?.ready;
+
   const layout = getLayout(theme.layoutId);
   const pal0 = getPalette(theme.paletteId);
   const typo = getTypography(theme.typographyId);
@@ -642,7 +842,16 @@ export async function renderRouteCard(
   const blurFx = effects.find((e) => e.kind === "blur");
   const blurRadius = blurFx?.kind === "blur" ? blurFx.radius : 0;
   const painted = await paintBackground(ctx, W, H, background, pal0, blurRadius);
-  const pal = painted.pal;
+  const ovr = theme.override;
+  const pal =
+    ovr?.route || ovr?.ink
+      ? {
+          ...painted.pal,
+          route: ovr.route ?? painted.pal.route,
+          startDot: ovr.route ?? painted.pal.startDot,
+          ink: ovr.ink ?? painted.pal.ink,
+        }
+      : painted.pal;
 
   // 2. Background passes, in array order (route-level & text-level handled later).
   for (const e of effects) {
@@ -652,6 +861,7 @@ export async function renderRouteCard(
     else if (e.kind === "scrim") applyScrim(ctx, W, H, e);
     else if (e.kind === "grain") applyGrain(ctx, W, H, e.opacity);
     else if (e.kind === "vignette") applyVignette(ctx, W, H, e.strength);
+    else if (e.kind === "tint") applyTint(ctx, W, H, e.color, e.alpha);
   }
 
   const glow = effects.find((e) => e.kind === "routeGlow");
@@ -664,6 +874,7 @@ export async function renderRouteCard(
     glow: glow?.kind === "routeGlow" ? glow.blur : 0,
     textShadow: shadow?.kind === "textShadow" ? { blur: shadow.blur, color: shadow.color } : null,
     skipRoute: painted.skipRoute,
+    marker: theme.marker ?? "dot",
   };
 
   // 3. Text shadow is a global canvas state; drawRoute scopes its own shadow so
@@ -693,9 +904,25 @@ export async function renderRouteCard(
     case "dataGrid":
       drawDataGrid(ctx, W, H, clean, s, st);
       break;
+    case "blueprint":
+      drawBlueprint(ctx, W, H, clean, s, st, clean[0]);
+      break;
+    case "techCard":
+      drawTechCard(ctx, W, H, clean, s, st);
+      break;
+    case "cover":
+      drawCoverLayout(ctx, W, H, clean, s, st);
+      break;
+    case "vinilo":
+      drawVinilo(ctx, W, H, clean, s, st);
+      break;
     default:
       drawClasico(ctx, W, H, clean, s, st);
   }
+
+  // Frame sits on top of everything.
+  const frame = effects.find((e) => e.kind === "frame");
+  if (frame?.kind === "frame") applyFrame(ctx, W, H, frame);
 
   return canvas.toDataURL("image/png");
 }

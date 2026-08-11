@@ -5,7 +5,14 @@
 
 import { atom } from "nanostores";
 
-export type InfoView = "menu" | "progress" | "calendar" | "history" | "shared";
+export type InfoView =
+  | "menu"
+  | "analytics"
+  | "progress"
+  | "segments"
+  | "calendar"
+  | "history"
+  | "shared";
 
 export const $infoView = atom<InfoView>("menu");
 

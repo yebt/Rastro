@@ -18,7 +18,10 @@ import {
   formatSpeed,
   hasElevation,
   MOVE_LABEL,
+  newId,
   pausedMs,
+  saveSegment,
+  segmentFromActivity,
   setTrackFilter,
   splits,
   $trackFilter,
@@ -106,6 +109,19 @@ const elevLoss = computed(() =>
 );
 
 const showShare = ref(false);
+const segmentSaved = ref(false);
+
+function onSaveSegment(): void {
+  const m = move.value;
+  if (!m) return;
+  const name = globalThis.prompt?.("Nombre del tramo", MOVE_LABEL[m.type]);
+  if (!name?.trim()) return;
+  const seg = segmentFromActivity(newId(), name.trim(), m, Date.now());
+  if (seg) {
+    saveSegment(seg);
+    segmentSaved.value = true;
+  }
+}
 
 async function onDelete(): Promise<void> {
   await deleteActivity(props.activity.id);
@@ -157,6 +173,9 @@ async function onDelete(): Promise<void> {
       <StatsPanel v-else :points="clean" :move="move" />
 
       <AppButton block variant="ghost" icon="export" @press="showShare = true">Compartir</AppButton>
+      <AppButton block variant="ghost" icon="list" :disabled="segmentSaved" @press="onSaveSegment">
+        {{ segmentSaved ? "Tramo guardado" : "Guardar como tramo" }}
+      </AppButton>
     </template>
 
     <template v-else-if="rt">

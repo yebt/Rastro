@@ -74,7 +74,10 @@ export function createRecorder(deps: RecorderDeps): Recorder {
       (sample) => {
         const act = $activity.get();
         if (!act || $status.get() !== "recording") return;
-        $activity.set({ ...act, points: [...act.points, toTrackPoint(sample)] });
+        // Stamp the live cumulative step count so stride/cadence can be derived
+        // over time, not just as a session total.
+        const point = { ...toTrackPoint(sample), st: deps.pedometer.$steps.get() };
+        $activity.set({ ...act, points: [...act.points, point] });
       },
       (error) => $error.set(error),
     );
@@ -114,7 +117,7 @@ export function createRecorder(deps: RecorderDeps): Recorder {
         .then((sample) => {
           const a = $activity.get();
           if (a && $status.get() === "recording" && a.points.length === 0) {
-            $activity.set({ ...a, points: [toTrackPoint(sample)] });
+            $activity.set({ ...a, points: [{ ...toTrackPoint(sample), st: deps.pedometer.$steps.get() }] });
           }
         })
         .catch(() => {});

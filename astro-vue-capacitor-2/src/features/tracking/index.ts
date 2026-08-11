@@ -60,9 +60,20 @@ export {
   type SplitStats,
   splits,
   splitStats,
+  type StridePoint,
+  strideSeries,
 } from "./domain/analytics";
 export { cleanTrack } from "./domain/clean";
 export { routeSegments } from "./domain/segments";
+export {
+  type LngLat,
+  matchSegment,
+  type Segment,
+  type SegmentEffort,
+  segmentEfforts,
+  segmentFromActivity,
+} from "./domain/segment";
+export { $segments, deleteSegment, saveSegment } from "./segments.store";
 export {
   applyFilter,
   type TrackFilterDef,
