@@ -126,6 +126,8 @@ export interface ShareTheme {
   typographyId?: string;
   background?: ShareBackground;
   effects?: ShareEffect[];
+  /** Manual color overrides (win over the palette and photo auto-adjust). */
+  override?: { route?: string; ink?: string };
 }
 
 const COND = "'Barlow Condensed', sans-serif";

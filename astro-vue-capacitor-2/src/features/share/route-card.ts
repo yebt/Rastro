@@ -642,7 +642,16 @@ export async function renderRouteCard(
   const blurFx = effects.find((e) => e.kind === "blur");
   const blurRadius = blurFx?.kind === "blur" ? blurFx.radius : 0;
   const painted = await paintBackground(ctx, W, H, background, pal0, blurRadius);
-  const pal = painted.pal;
+  const ovr = theme.override;
+  const pal =
+    ovr?.route || ovr?.ink
+      ? {
+          ...painted.pal,
+          route: ovr.route ?? painted.pal.route,
+          startDot: ovr.route ?? painted.pal.startDot,
+          ink: ovr.ink ?? painted.pal.ink,
+        }
+      : painted.pal;
 
   // 2. Background passes, in array order (route-level & text-level handled later).
   for (const e of effects) {

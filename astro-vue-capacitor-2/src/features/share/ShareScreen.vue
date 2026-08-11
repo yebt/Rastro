@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { useStore } from "@nanostores/vue";
 import { computed, onMounted, ref, watch } from "vue";
 import { AppButton, AppIcon, Label, Spinner } from "../../shared/ui";
 import { cleanTrack, type MoveActivity } from "../tracking";
+import { $favorites, addFavorite, removeFavorite } from "./favorites.store";
 import { shareGallery } from "./gallery-store";
 import MapEditor from "./MapEditor.vue";
 import { renderRouteCard } from "./route-card";
@@ -52,7 +54,7 @@ onMounted(renderPreview);
 watch(theme, renderPreview, { deep: true });
 
 // ---- Tabs ----
-type Tab = "formato" | "color" | "texto" | "fondo" | "efectos";
+type Tab = "formato" | "color" | "texto" | "fondo" | "efectos" | "favoritos";
 const tab = ref<Tab>("formato");
 const TABS: { id: Tab; label: string }[] = [
   { id: "formato", label: "Formato" },
@@ -60,7 +62,28 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "texto", label: "Texto" },
   { id: "fondo", label: "Fondo" },
   { id: "efectos", label: "Efectos" },
+  { id: "favoritos", label: "Favoritos" },
 ];
+
+// ---- Favorites ----
+const favorites = useStore($favorites);
+function saveFavorite(): void {
+  addFavorite(theme.value);
+}
+function applyFavorite(fav: ShareTheme): void {
+  // Keep the current per-activity background (photo/map) unless the favorite has one.
+  theme.value = { ...fav };
+}
+
+// ---- Manual route color override ----
+const routeColor = computed(() => theme.value.override?.route ?? getPalette(theme.value.paletteId).route);
+function setRouteColor(hex: string): void {
+  theme.value = { ...theme.value, override: { ...theme.value.override, route: hex } };
+}
+function clearOverride(): void {
+  theme.value = { ...theme.value, override: undefined };
+}
+const hasOverride = computed(() => !!theme.value.override?.route);
 
 // ---- Basic pickers ----
 function pickLayout(id: string): void {
@@ -244,6 +267,15 @@ async function onSave(): Promise<void> {
             <span class="line" :style="{ background: p.route }"></span>
           </button>
         </div>
+
+        <Label>Color de ruta</Label>
+        <div class="rowline">
+          <label class="colorpick" :style="{ background: routeColor }">
+            <input type="color" :value="routeColor" @input="setRouteColor(($event.target as HTMLInputElement).value)" />
+          </label>
+          <span class="hex">{{ routeColor }}</span>
+          <button v-if="hasOverride" type="button" class="chip" @click="clearOverride">Usar paleta</button>
+        </div>
       </div>
 
       <!-- Texto -->
@@ -312,7 +344,7 @@ async function onSave(): Promise<void> {
       </div>
 
       <!-- Efectos -->
-      <div v-else class="chips">
+      <div v-else-if="tab === 'efectos'" class="chips">
         <button
           v-for="name in EFFECT_NAMES"
           :key="name"
@@ -323,6 +355,18 @@ async function onSave(): Promise<void> {
         >
           {{ EFFECT_PRESETS[name].label }}
         </button>
+      </div>
+
+      <!-- Favoritos -->
+      <div v-else class="group">
+        <AppButton block variant="ghost" icon="plus" @press="saveFavorite">Guardar tema actual</AppButton>
+        <div v-if="favorites.length" class="favs">
+          <div v-for="(f, i) in favorites" :key="i" class="favitem">
+            <button type="button" class="chip fav" @click="applyFavorite(f)">{{ themeLabel(f) }}</button>
+            <button type="button" class="fav-x" aria-label="Quitar" @click="removeFavorite(i)">×</button>
+          </div>
+        </div>
+        <p v-else class="hint">Guardá tu combinación (formato, color, efectos) para reusarla en otra tarjeta.</p>
       </div>
     </div>
 
@@ -495,6 +539,59 @@ async function onSave(): Promise<void> {
   margin: var(--sp-1) 0 0;
   font-size: 12px;
   color: var(--muted);
+}
+.rowline {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.colorpick {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-md);
+  border: 2px solid var(--line);
+  overflow: hidden;
+  flex: none;
+}
+.colorpick input {
+  position: absolute;
+  inset: -4px;
+  width: calc(100% + 8px);
+  height: calc(100% + 8px);
+  opacity: 0;
+  cursor: pointer;
+}
+.hex {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.favs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.favitem {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.fav {
+  flex: 1;
+  text-align: left;
+}
+.fav-x {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 18px;
+  display: grid;
+  place-items: center;
 }
 .actions {
   flex: none;

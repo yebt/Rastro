@@ -6,6 +6,7 @@
 export { renderRouteCard } from "./route-card";
 export { shareImage, shareRoute } from "./share-route";
 export { type GalleryStore, shareGallery, type SharedImage } from "./gallery-store";
+export { $favorites, addFavorite, removeFavorite } from "./favorites.store";
 export {
   DEFAULT_THEME,
   getLayout,
