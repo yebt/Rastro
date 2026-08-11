@@ -53,6 +53,10 @@ function goHistory(): void {
   setInfoView("history");
   setTab("profile");
 }
+function goAnalytics(): void {
+  setInfoView("analytics");
+  setTab("profile");
+}
 </script>
 
 <template>
@@ -66,12 +70,13 @@ function goHistory(): void {
       <AppIcon name="chevron" size="22px" class="hero-ic" />
     </Card>
 
-    <!-- Week graph -->
-    <Card>
+    <!-- Week graph → analytics -->
+    <Card class="week" role="button" tabindex="0" @click="goAnalytics">
       <div class="wk-head">
         <Label>Esta semana</Label>
         <span class="wk-tot">
           {{ useDist ? `${weekDist.value} ${weekDist.unit}` : `${week.count} act.` }} · {{ weekTime }}
+          <AppIcon name="chevron" size="14px" class="wk-chev" />
         </span>
       </div>
       <div class="chart">
@@ -134,17 +139,29 @@ function goHistory(): void {
 .hero-ic {
   color: var(--accent);
 }
+.week {
+  cursor: pointer;
+}
+.week:active {
+  border-color: var(--ink);
+}
 .wk-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--sp-2);
 }
 .wk-tot {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
+}
+.wk-chev {
+  color: var(--faint);
 }
 .chart {
   display: grid;

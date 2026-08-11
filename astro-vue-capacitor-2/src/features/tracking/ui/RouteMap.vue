@@ -13,7 +13,17 @@ import type { TrackPoint } from "../domain/track-point";
 const props = defineProps<{ points: TrackPoint[]; fill?: boolean }>();
 const emit = defineEmits<{ tap: [] }>();
 
-const TILES = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+/** Effective dark/light, resolving the "auto" theme via the OS preference. */
+function isDark(): boolean {
+  const attr = globalThis.document?.documentElement.getAttribute("data-theme");
+  if (attr === "dark") return true;
+  if (attr === "light") return false;
+  return globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches ?? true;
+}
+const dark = isDark();
+// Basemap follows the app theme instead of always-dark (was hardcoded dark_all).
+const TILES = `https://{s}.basemaps.cartocdn.com/${dark ? "dark_all" : "light_all"}/{z}/{x}/{y}{r}.png`;
+const endFill = dark ? "#eef1ee" : "#12161a";
 
 const host = ref<HTMLElement | null>(null);
 const hasRoute = ref(false);
@@ -61,7 +71,7 @@ function render(): void {
   const end: [number, number] = [raw[raw.length - 1]!.lat, raw[raw.length - 1]!.lng];
   if (!startDot) {
     startDot = L.circleMarker(start, { radius: 6, color, fillColor: color, fillOpacity: 1, weight: 0 }).addTo(map);
-    endDot = L.circleMarker(end, { radius: 6, color, weight: 3, fillColor: "#111", fillOpacity: 1 }).addTo(map);
+    endDot = L.circleMarker(end, { radius: 6, color, weight: 3, fillColor: endFill, fillOpacity: 1 }).addTo(map);
   } else {
     startDot.setLatLng(start).setStyle({ color, fillColor: color });
     endDot!.setLatLng(end).setStyle({ color });

@@ -14,6 +14,7 @@ import {
 } from "../tracking";
 import { GalleryScreen } from "../share";
 import { useBackHandler } from "../shell/useBackHandler";
+import AnalyticsScreen from "./AnalyticsScreen.vue";
 import CalendarScreen from "./CalendarScreen.vue";
 import HistoryScreen from "./HistoryScreen.vue";
 import ProgressScreen from "./ProgressScreen.vue";
@@ -52,7 +53,8 @@ const reps = computed(() =>
 </script>
 
 <template>
-  <ProgressScreen v-if="view === 'progress'" @back="setInfoView('menu')" />
+  <AnalyticsScreen v-if="view === 'analytics'" @back="setInfoView('menu')" />
+  <ProgressScreen v-else-if="view === 'progress'" @back="setInfoView('menu')" />
   <CalendarScreen v-else-if="view === 'calendar'" @back="setInfoView('menu')" />
   <HistoryScreen v-else-if="view === 'history'" @back="setInfoView('menu')" />
   <GalleryScreen v-else-if="view === 'shared'" @back="setInfoView('menu')" />
@@ -72,6 +74,7 @@ const reps = computed(() =>
     </Card>
 
     <RowGroup>
+      <Row icon="data" label="Analíticas" value="Tu resumen completo" @press="setInfoView('analytics')" />
       <Row icon="workout" label="Progreso" value="Tendencias por tipo" @press="setInfoView('progress')" />
       <Row icon="calendar" label="Calendario" value="Días activos" @press="setInfoView('calendar')" />
       <Row icon="list" label="Historial" value="Todas tus actividades" @press="setInfoView('history')" />
