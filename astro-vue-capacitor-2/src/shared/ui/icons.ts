@@ -17,6 +17,7 @@ import IconCalendar from "~icons/lucide/calendar-days";
 import IconCheck from "~icons/lucide/check";
 import IconChevron from "~icons/lucide/chevron-right";
 import IconEdit from "~icons/lucide/pencil";
+import IconExpand from "~icons/lucide/maximize-2";
 import IconList from "~icons/lucide/list";
 import IconDatabase from "~icons/lucide/database";
 import IconDownload from "~icons/lucide/download";
@@ -79,6 +80,7 @@ export const ICONS = {
   check: IconCheck,
   skip: IconSkip,
   edit: IconEdit,
+  expand: IconExpand,
 } satisfies Record<string, Component>;
 
 export type IconName = keyof typeof ICONS;

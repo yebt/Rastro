@@ -104,6 +104,16 @@ export default defineConfig({
       subsets: ["latin"],
       fallbacks: ["ui-monospace", "monospace"],
     },
+    {
+      // A distinctive display grotesk for share-card typography options.
+      provider: fontProviders.fontsource(),
+      name: "Space Grotesk",
+      cssVariable: "--font-space",
+      weights: [500, 700],
+      styles: ["normal"],
+      subsets: ["latin"],
+      fallbacks: ["sans-serif"],
+    },
   ],
 
   vite: {
