@@ -20,6 +20,8 @@ export {
   type MapStyleDef,
   type MapStyleId,
   MAP_STYLES,
+  type MarkerStyle,
+  MARKERS,
   type SharePalette,
   type ShareLayout,
   SHARE_LAYOUTS,

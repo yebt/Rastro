@@ -119,6 +119,16 @@ export interface ShareTypography {
   meta: string;
 }
 
+/** How the finish point is marked on the route. */
+export type MarkerStyle = "dot" | "ring" | "pin" | "flag";
+
+export const MARKERS: { id: MarkerStyle; label: string }[] = [
+  { id: "dot", label: "Punto" },
+  { id: "ring", label: "Aro" },
+  { id: "pin", label: "Pin" },
+  { id: "flag", label: "Bandera" },
+];
+
 export interface ShareTheme {
   layoutId: string;
   paletteId: string;
@@ -128,6 +138,8 @@ export interface ShareTheme {
   effects?: ShareEffect[];
   /** Manual color overrides (win over the palette and photo auto-adjust). */
   override?: { route?: string; ink?: string };
+  /** Finish-marker style (default "dot"). */
+  marker?: MarkerStyle;
 }
 
 const COND = "'Barlow Condensed', sans-serif";

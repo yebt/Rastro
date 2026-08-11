@@ -23,6 +23,7 @@ import {
   getLayout,
   getPalette,
   getTypography,
+  type MarkerStyle,
   type ShareBackground,
   type ShareEffect,
   type SharePalette,
@@ -46,6 +47,7 @@ interface Style {
   textShadow: { blur: number; color: string } | null;
   /** When the background already contains the route (map mode), skip drawing it. */
   skipRoute: boolean;
+  marker: MarkerStyle;
 }
 
 interface CardStats {
@@ -302,8 +304,70 @@ function drawRoute(
     ctx.stroke();
   };
   dot(0, st.pal.startDot);
-  dot(points.length - 1, st.pal.endDot);
+  drawEndMarker(ctx, px(points.length - 1), py(points.length - 1), st, lineWidth);
   ctx.restore();
+}
+
+/** The finish marker, in the theme's style. */
+function drawEndMarker(ctx: CanvasRenderingContext2D, x: number, y: number, st: Style, lw: number): void {
+  const route = st.pal.route;
+  const r = lw * 1.9;
+  if (st.marker === "ring") {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.lineWidth = lw * 0.9;
+    ctx.strokeStyle = route;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(x, y, lw * 0.6, 0, Math.PI * 2);
+    ctx.fillStyle = route;
+    ctx.fill();
+    return;
+  }
+  if (st.marker === "pin") {
+    const cy = y - r * 2.2; // circle sits above the point; tip touches (x,y)
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x - r * 0.75, cy + r * 0.55);
+    ctx.lineTo(x + r * 0.75, cy + r * 0.55);
+    ctx.closePath();
+    ctx.fillStyle = route;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = route;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x, cy, r * 0.4, 0, Math.PI * 2);
+    ctx.fillStyle = st.pal.bg;
+    ctx.fill();
+    return;
+  }
+  if (st.marker === "flag") {
+    const h = r * 4;
+    ctx.lineWidth = lw * 0.6;
+    ctx.strokeStyle = route;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y - h);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y - h);
+    ctx.lineTo(x + r * 2.2, y - h + r * 0.9);
+    ctx.lineTo(x, y - h + r * 1.8);
+    ctx.closePath();
+    ctx.fillStyle = route;
+    ctx.fill();
+    return;
+  }
+  // dot
+  ctx.beginPath();
+  ctx.arc(x, y, lw * 1.7, 0, Math.PI * 2);
+  ctx.fillStyle = st.pal.endDot;
+  ctx.fill();
+  ctx.lineWidth = lw * 0.65;
+  ctx.strokeStyle = route;
+  ctx.stroke();
 }
 
 // ---- Layouts ------------------------------------------------------------------
@@ -673,6 +737,7 @@ export async function renderRouteCard(
     glow: glow?.kind === "routeGlow" ? glow.blur : 0,
     textShadow: shadow?.kind === "textShadow" ? { blur: shadow.blur, color: shadow.color } : null,
     skipRoute: painted.skipRoute,
+    marker: theme.marker ?? "dot",
   };
 
   // 3. Text shadow is a global canvas state; drawRoute scopes its own shadow so

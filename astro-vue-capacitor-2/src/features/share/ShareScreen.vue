@@ -14,7 +14,9 @@ import {
   getPalette,
   type MapCamera,
   MAP_STYLES,
+  MARKERS,
   type MapStyleId,
+  type MarkerStyle,
   SHARE_GRADIENTS,
   SHARE_LAYOUTS,
   SHARE_PALETTES,
@@ -94,6 +96,9 @@ function pickPalette(id: string): void {
 }
 function pickTypography(id: string): void {
   theme.value = { ...theme.value, typographyId: id };
+}
+function pickMarker(id: MarkerStyle): void {
+  theme.value = { ...theme.value, marker: id };
 }
 const currentLabel = computed(() => themeLabel(theme.value));
 
@@ -237,17 +242,33 @@ async function onSave(): Promise<void> {
 
     <div class="panel">
       <!-- Formato -->
-      <div v-if="tab === 'formato'" class="chips">
-        <button
-          v-for="l in SHARE_LAYOUTS"
-          :key="l.id"
-          type="button"
-          class="chip"
-          :class="{ on: theme.layoutId === l.id }"
-          @click="pickLayout(l.id)"
-        >
-          {{ l.label }}
-        </button>
+      <div v-if="tab === 'formato'" class="group">
+        <Label>Layout</Label>
+        <div class="chips">
+          <button
+            v-for="l in SHARE_LAYOUTS"
+            :key="l.id"
+            type="button"
+            class="chip"
+            :class="{ on: theme.layoutId === l.id }"
+            @click="pickLayout(l.id)"
+          >
+            {{ l.label }}
+          </button>
+        </div>
+        <Label>Marcador de meta</Label>
+        <div class="chips">
+          <button
+            v-for="m in MARKERS"
+            :key="m.id"
+            type="button"
+            class="chip"
+            :class="{ on: (theme.marker ?? 'dot') === m.id }"
+            @click="pickMarker(m.id)"
+          >
+            {{ m.label }}
+          </button>
+        </div>
       </div>
 
       <!-- Color -->
