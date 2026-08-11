@@ -60,6 +60,8 @@ export {
   type SplitStats,
   splits,
   splitStats,
+  type StridePoint,
+  strideSeries,
 } from "./domain/analytics";
 export { cleanTrack } from "./domain/clean";
 export { routeSegments } from "./domain/segments";

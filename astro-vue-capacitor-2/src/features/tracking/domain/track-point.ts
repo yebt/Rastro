@@ -21,6 +21,8 @@ export interface TrackPoint {
   altAcc: number | null;
   /** Instantaneous speed in m/s as reported by the GPS, or null. */
   spd: number | null;
+  /** Cumulative step count at this fix (recorder-stamped); absent on old data. */
+  st?: number;
 }
 
 /**

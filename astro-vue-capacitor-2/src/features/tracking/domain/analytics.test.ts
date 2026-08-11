@@ -6,6 +6,7 @@ import {
   speedExtremes,
   splits,
   splitStats,
+  strideSeries,
 } from "./analytics";
 import type { TrackPoint } from "./track-point";
 
@@ -95,5 +96,35 @@ describe("aggregate analytics", () => {
     const e = elevationStats(pts);
     expect(e.maxAlt).toBeNull();
     expect(e.gainM).toBe(0);
+  });
+});
+
+describe("strideSeries", () => {
+  // steps captured via `st`: ~2 steps per 5s, moving ~1.67 m/s → stride ~0.83 m
+  function pts(): TrackPoint[] {
+    const out: TrackPoint[] = [];
+    let st = 0;
+    for (let s = 0; s <= 600; s += 5) {
+      out.push({ t: s * 1000, lat: 0, lng: (s / 600) * KM_DEG, alt: null, acc: null, altAcc: null, spd: null, st });
+      st += 10; // 10 steps every 5s → 120 spm
+    }
+    return out;
+  }
+
+  it("derives stride and cadence over time when steps are captured", () => {
+    const series = strideSeries(pts(), 10);
+    expect(series).toHaveLength(10);
+    const withData = series.filter((s) => s.strideM != null);
+    expect(withData.length).toBeGreaterThan(0);
+    for (const s of withData) {
+      expect(s.strideM!).toBeGreaterThan(0.4);
+      expect(s.strideM!).toBeLessThan(1.5);
+      expect(s.cadence).toBe(120);
+    }
+  });
+
+  it("is empty when no point carries steps", () => {
+    const noSteps = pts().map(({ st: _st, ...p }) => p) as TrackPoint[];
+    expect(strideSeries(noSteps)).toEqual([]);
   });
 });
