@@ -65,6 +65,7 @@ export {
   strideSeries,
 } from "./domain/analytics";
 export { cleanTrack } from "./domain/clean";
+export { toGpx } from "./domain/gpx";
 export { routeSegments } from "./domain/segments";
 export {
   type LngLat,

@@ -24,10 +24,12 @@ import {
   segmentFromActivity,
   setTrackFilter,
   splits,
+  toGpx,
   $trackFilter,
   totalReps,
   TRACK_FILTERS,
 } from "../tracking";
+import { shareTextFile } from "../data/backup";
 import { ShareScreen } from "../share";
 import RouteMap from "../tracking/ui/RouteMap.vue";
 import { deleteActivity } from "./history.store";
@@ -137,6 +139,11 @@ function saveSeg(): void {
   }
 }
 
+async function onExportGpx(): Promise<void> {
+  if (!move.value) return;
+  await shareTextFile(toGpx(move.value), `rastro-${move.value.id}.gpx`, "Recorrido GPX");
+}
+
 async function onDelete(): Promise<void> {
   await deleteActivity(props.activity.id);
   emit("back");
@@ -202,6 +209,7 @@ async function onDelete(): Promise<void> {
       <AppButton v-else block variant="ghost" icon="list" :disabled="segmentSaved" @press="openSegForm">
         {{ segmentSaved ? "Tramo guardado" : "Guardar como tramo" }}
       </AppButton>
+      <AppButton block variant="ghost" icon="import" @press="onExportGpx">Exportar GPX</AppButton>
     </template>
 
     <template v-else-if="rt">

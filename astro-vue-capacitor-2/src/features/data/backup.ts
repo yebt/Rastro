@@ -177,6 +177,28 @@ export async function saveBackupFile(json: string, filename: string): Promise<st
   }
 }
 
+/** Share any text file (e.g. a GPX export) via the OS sheet / web download. */
+export async function shareTextFile(content: string, filename: string, title = "Rastro"): Promise<boolean> {
+  if (!Capacitor.isNativePlatform()) {
+    webDownload(content, filename);
+    return true;
+  }
+  await Filesystem.writeFile({
+    path: filename,
+    data: content,
+    directory: Directory.Cache,
+    encoding: Encoding.UTF8,
+  });
+  const { uri } = await Filesystem.getUri({ path: filename, directory: Directory.Cache });
+  try {
+    await Share.share({ title, url: uri });
+    return true;
+  } catch (e) {
+    if (/cancel/i.test(String(e))) return false;
+    throw e;
+  }
+}
+
 /** Hand the backup to another app. Returns false when the user cancels. */
 export async function shareBackupFile(json: string, filename: string): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) {
