@@ -90,6 +90,10 @@ watch(theme, renderPreview, { deep: true });
 // ---- Tabs ----
 type Tab = "formato" | "color" | "texto" | "fondo" | "efectos" | "favoritos";
 const tab = ref<Tab>("formato");
+const tabsEl = ref<HTMLElement | null>(null);
+function scrollTabs(dir: number): void {
+  tabsEl.value?.scrollBy({ left: dir * 150, behavior: "smooth" });
+}
 const TABS: { id: Tab; label: string }[] = [
   { id: "formato", label: "Formato" },
   { id: "color", label: "Color" },
@@ -265,18 +269,26 @@ async function onSave(): Promise<void> {
       <div v-if="previewing" class="prev-busy"><Spinner size="26px" /></div>
     </div>
 
-    <nav class="tabs">
-      <button
-        v-for="t in TABS"
-        :key="t.id"
-        type="button"
-        class="tab"
-        :class="{ on: tab === t.id }"
-        @click="tab = t.id"
-      >
-        {{ t.label }}
+    <div class="tabbar">
+      <button type="button" class="tarr" aria-label="Anterior" @click="scrollTabs(-1)">
+        <AppIcon name="back" size="18px" />
       </button>
-    </nav>
+      <nav ref="tabsEl" class="tabs">
+        <button
+          v-for="t in TABS"
+          :key="t.id"
+          type="button"
+          class="tab"
+          :class="{ on: tab === t.id }"
+          @click="tab = t.id"
+        >
+          {{ t.label }}
+        </button>
+      </nav>
+      <button type="button" class="tarr" aria-label="Siguiente" @click="scrollTabs(1)">
+        <AppIcon name="chevron" size="18px" />
+      </button>
+    </div>
 
     <div class="panel">
       <!-- Formato -->
@@ -525,15 +537,34 @@ async function onSave(): Promise<void> {
   background: color-mix(in srgb, var(--bg) 55%, transparent);
   border-radius: var(--r-lg);
 }
-.tabs {
-  order: 4;
+.tabbar {
+  order: 2;
   flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--line);
+}
+.tarr {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 34px;
+  border-radius: var(--r-md);
+  color: var(--muted);
+}
+.tarr:active {
+  background: var(--surface-2);
+}
+.tabs {
+  flex: 1;
+  min-width: 0;
   display: flex;
   gap: var(--sp-2);
   overflow-x: auto;
   scrollbar-width: none;
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--line);
 }
 .tabs::-webkit-scrollbar {
   display: none;
@@ -553,12 +584,12 @@ async function onSave(): Promise<void> {
   background: var(--surface-2);
 }
 .panel {
-  order: 2;
+  order: 3;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding-top: var(--sp-1);
+  padding-top: var(--sp-3);
 }
 .group {
   display: flex;
@@ -678,10 +709,11 @@ async function onSave(): Promise<void> {
   place-items: center;
 }
 .actions {
-  order: 3;
+  order: 4;
   flex: none;
   display: flex;
   gap: var(--sp-3);
+  padding-top: var(--sp-3);
 }
 .lightbox {
   position: fixed;

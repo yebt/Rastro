@@ -21,8 +21,8 @@ function isDark(): boolean {
   return globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches ?? true;
 }
 const dark = isDark();
-// Basemap follows the app theme instead of always-dark (was hardcoded dark_all).
-const TILES = `https://{s}.basemaps.cartocdn.com/${dark ? "dark_all" : "light_all"}/{z}/{x}/{y}{r}.png`;
+// Basemap follows the app theme; canonical CARTO host (no {s} subdomains).
+const TILES = `https://basemaps.cartocdn.com/${dark ? "dark_all" : "light_all"}/{z}/{x}/{y}{r}.png`;
 const endFill = dark ? "#eef1ee" : "#12161a";
 
 const host = ref<HTMLElement | null>(null);
@@ -99,7 +99,7 @@ onMounted(() => {
     zoomAnimation: false,
     fadeAnimation: false,
   }).setView([0, 0], 2);
-  L.tileLayer(TILES, { subdomains: "abcd", maxZoom: 20, detectRetina: true }).addTo(map);
+  L.tileLayer(TILES, { maxZoom: 20, detectRetina: true }).addTo(map);
 
   // A tap on the map (not a drag/pinch) is a toggle signal for the caller.
   map.on("click", () => emit("tap"));

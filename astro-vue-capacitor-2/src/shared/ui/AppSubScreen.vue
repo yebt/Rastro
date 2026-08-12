@@ -29,7 +29,7 @@ const emit = defineEmits<{ back: [] }>();
   height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: calc(var(--safe-t) + var(--sp-4)) var(--sp-4) var(--sp-5);
+  padding: calc(var(--safe-t) + var(--sp-4)) var(--sp-4) calc(var(--safe-b) + var(--sp-5));
 }
 .sub-head {
   display: flex;

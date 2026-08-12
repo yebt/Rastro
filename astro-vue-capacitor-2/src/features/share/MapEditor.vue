@@ -59,9 +59,8 @@ onMounted(async () => {
   sizeBox();
   const ml = await import("maplibre-gl");
   const coords = props.points.map((p) => [p.lng, p.lat] as [number, number]);
-  const tiles = ["a", "b", "c", "d"].map(
-    (s) => `https://${s}.basemaps.cartocdn.com/${TILE_PATH[props.mapStyle]}/{z}/{x}/{y}.png`,
-  );
+  // Canonical CARTO host (no {s} subdomains — those are deprecated).
+  const tiles = [`https://basemaps.cartocdn.com/${TILE_PATH[props.mapStyle]}/{z}/{x}/{y}.png`];
 
   map = new ml.Map({
     container: host.value!,
@@ -126,9 +125,13 @@ onMounted(async () => {
     for (const c of coords) b.extend(c);
     m.fitBounds(b, { padding: 36, duration: 0 });
   }
-  m.once("idle", () => {
+  // Clear the spinner on idle OR after a timeout, so a slow/blocked tile server
+  // never leaves the editor stuck loading — you can still frame the route.
+  const settle = (): void => {
     loading.value = false;
-  });
+  };
+  m.once("idle", settle);
+  setTimeout(settle, 5000);
   window.addEventListener("resize", onResize);
 });
 
