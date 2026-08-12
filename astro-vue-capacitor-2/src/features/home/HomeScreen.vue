@@ -101,11 +101,11 @@ function goAnalytics(): void {
       <Label>Metas</Label>
       <Card v-if="goals.kmWeekly > 0">
         <div class="g-head"><span>Semanal</span><b>{{ weekKm.toFixed(1) }} / {{ goals.kmWeekly }} km</b></div>
-        <div class="pbar"><span :style="{ width: `${pct(weekKm, goals.kmWeekly)}%` }"></span></div>
+        <div class="pbar"><span :style="{ transform: `scaleX(${pct(weekKm, goals.kmWeekly) / 100})` }"></span></div>
       </Card>
       <Card v-if="goals.repsDaily > 0">
         <div class="g-head"><span>Reps de hoy</span><b>{{ todayRepsN }} / {{ goals.repsDaily }}</b></div>
-        <div class="pbar"><span :style="{ width: `${pct(todayRepsN, goals.repsDaily)}%` }"></span></div>
+        <div class="pbar"><span :style="{ transform: `scaleX(${pct(todayRepsN, goals.repsDaily) / 100})` }"></span></div>
       </Card>
     </template>
 
@@ -249,9 +249,11 @@ function goAnalytics(): void {
 .pbar span {
   display: block;
   height: 100%;
+  width: 100%;
   background: var(--accent);
   border-radius: 999px;
-  transition: width 0.3s ease;
+  transform-origin: left;
+  transition: transform 0.3s ease;
 }
 .favs {
   display: flex;
