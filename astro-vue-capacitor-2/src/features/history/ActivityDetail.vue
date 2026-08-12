@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { useStore } from "@nanostores/vue";
 import { computed, ref } from "vue";
-import { AppButton, AppSubScreen, Card, Field, Label, SegmentedControl } from "../../shared/ui";
+import { AppButton, AppIcon, AppSubScreen, Card, Field, Label, SegmentedControl } from "../../shared/ui";
 import {
   type Activity,
+  activityBadges,
   applyFilter,
   avgPaceSecPerKm,
   avgSpeedMps,
@@ -31,6 +32,7 @@ import {
   TRACK_FILTERS,
 } from "../tracking";
 import { shareTextFile } from "../data/backup";
+import { $activities } from "./history.store";
 import { latestWeight } from "../profile/profile.store";
 import { ShareScreen } from "../share";
 import RouteMap from "../tracking/ui/RouteMap.vue";
@@ -43,6 +45,9 @@ const emit = defineEmits<{ back: [] }>();
 const move = computed(() => (props.activity.kind === "move" ? props.activity : null));
 const ex = computed(() => (props.activity.kind === "exercise" ? props.activity : null));
 const rt = computed(() => (props.activity.kind === "routine" ? props.activity : null));
+
+const allActivities = useStore($activities);
+const badges = computed(() => activityBadges(props.activity, allActivities.value));
 
 const title = computed(() => {
   const a = props.activity;
@@ -159,6 +164,10 @@ async function onDelete(): Promise<void> {
   <ShareScreen v-if="showShare && move" :activity="move" @back="showShare = false" />
 
   <AppSubScreen v-else :title="title" @back="emit('back')">
+    <div v-if="badges.length" class="badges">
+      <span v-for="b in badges" :key="b" class="badge"><AppIcon name="award" size="14px" /> {{ b }}</span>
+    </div>
+
     <template v-if="move">
       <RouteMap :points="clean" />
 
@@ -311,6 +320,22 @@ async function onDelete(): Promise<void> {
   font-size: 15px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px var(--sp-3);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
 }
 .seg-range {
   display: grid;

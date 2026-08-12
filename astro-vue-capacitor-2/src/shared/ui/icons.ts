@@ -11,6 +11,7 @@
 
 import type { Component } from "vue";
 import IconActivity from "~icons/lucide/activity";
+import IconAward from "~icons/lucide/award";
 import IconBack from "~icons/lucide/chevron-left";
 import IconBell from "~icons/lucide/bell";
 import IconCalendar from "~icons/lucide/calendar-days";
@@ -83,6 +84,7 @@ export const ICONS = {
   edit: IconEdit,
   expand: IconExpand,
   target: IconTarget,
+  award: IconAward,
 } satisfies Record<string, Component>;
 
 export type IconName = keyof typeof ICONS;
