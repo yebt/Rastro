@@ -49,6 +49,7 @@ export {
 export { $routines, deleteRoutine, getRoutine, saveRoutine, setRoutines } from "./routines.store";
 export {
   type ElevationStats,
+  elevationProfile,
   elevationStats,
   type HalfSplit,
   halfSplit,

@@ -5,6 +5,7 @@ import {
   avgPaceSecPerKm,
   avgSpeedMps,
   distanceMeters,
+  elevationProfile,
   elevationStats,
   formatDuration,
   formatPace,
@@ -29,6 +30,7 @@ const splitData = computed(() => splits(props.points));
 const series = computed(() => movementSeries(props.points, 60));
 const speedKmh = computed(() => series.value.map((p) => p.mps * 3.6));
 const paceSeries = computed(() => series.value.map((p) => (p.paceSecPerKm ? p.paceSecPerKm / 60 : 0)));
+const altProfile = computed(() => elevationProfile(props.points, 60));
 const strideOverTime = computed(() => strideSeries(props.points, 40));
 const strideM = computed(() => strideOverTime.value.map((s) => s.strideM ?? 0));
 const cadenceOverTime = computed(() => strideOverTime.value.map((s) => s.cadence ?? 0));
@@ -104,6 +106,11 @@ const dash = (v: string | number | null | undefined): string => (v == null ? "â€
   <Card v-if="series.length">
     <Label>Ritmo en el tiempo</Label>
     <TrendChart :values="paceSeries" :format="(v) => `${v.toFixed(1)} min/km`" />
+  </Card>
+
+  <Card v-if="altProfile.length">
+    <Label>Altitud</Label>
+    <TrendChart :values="altProfile" baseline="min" :format="(v) => `${Math.round(v)} m`" />
   </Card>
 
   <Card v-if="strideOverTime.length">

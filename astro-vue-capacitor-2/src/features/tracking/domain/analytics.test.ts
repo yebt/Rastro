@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  elevationProfile,
   elevationStats,
   halfSplit,
   movementSeries,
@@ -126,5 +127,27 @@ describe("strideSeries", () => {
   it("is empty when no point carries steps", () => {
     const noSteps = pts().map(({ st: _st, ...p }) => p) as TrackPoint[];
     expect(strideSeries(noSteps)).toEqual([]);
+  });
+});
+
+describe("elevationProfile", () => {
+  function climb(): TrackPoint[] {
+    const out: TrackPoint[] = [];
+    for (let s = 0; s <= 600; s += 5) {
+      out.push({ t: s * 1000, lat: 0, lng: (s / 600) * KM_DEG, alt: 100 + s / 6, acc: null, altAcc: null, spd: null });
+    }
+    return out; // climbs from 100 m to 200 m
+  }
+
+  it("samples altitude over distance, rising with the climb", () => {
+    const prof = elevationProfile(climb(), 10);
+    expect(prof).toHaveLength(10);
+    expect(prof[0]!).toBeLessThan(prof[9]!);
+    expect(prof[0]!).toBeGreaterThanOrEqual(100);
+    expect(prof[9]!).toBeLessThanOrEqual(200);
+  });
+
+  it("is empty without altitude", () => {
+    expect(elevationProfile([pt(0, 0), pt(5, KM_DEG)])).toEqual([]);
   });
 });

@@ -12,8 +12,10 @@ const props = withDefaults(
     /** Formats the peak/low annotations. */
     format?: (v: number) => string;
     height?: number;
+    /** "zero" (default) maps from 0; "min" zooms to the data range (relief). */
+    baseline?: "zero" | "min";
   }>(),
-  { format: (v: number) => String(Math.round(v)), height: 120 },
+  { format: (v: number) => String(Math.round(v)), height: 120, baseline: "zero" },
 );
 
 const W = 300;
@@ -31,8 +33,10 @@ const path = computed(() => {
   if (vs.length < 2) return { line: "", area: "" };
   const H = props.height;
   const max = stats.value.max;
+  const base = props.baseline === "min" ? stats.value.min : 0;
+  const span = Math.max(1e-6, max - base);
   const stepX = (W - PAD * 2) / (vs.length - 1);
-  const y = (v: number): number => H - PAD - (v / max) * (H - PAD * 2);
+  const y = (v: number): number => H - PAD - ((v - base) / span) * (H - PAD * 2);
   const pts = vs.map((v, i) => [PAD + i * stepX, y(v)] as const);
   const line = pts.map(([x, yy], i) => `${i ? "L" : "M"}${x.toFixed(1)} ${yy.toFixed(1)}`).join(" ");
   const area = `${line} L${(PAD + (vs.length - 1) * stepX).toFixed(1)} ${props.height - PAD} L${PAD} ${props.height - PAD} Z`;

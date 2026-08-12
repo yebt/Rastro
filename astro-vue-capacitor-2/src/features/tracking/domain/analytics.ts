@@ -247,3 +247,32 @@ export function strideSeries(points: TrackPoint[], buckets = 40, maxGapMs = 10_0
     cadence: time[i]! > 0 && steps[i]! > 0 ? Math.round(steps[i]! / (time[i]! / 60_000)) : null,
   }));
 }
+
+/**
+ * Altitude sampled over distance (metres), for an elevation profile. Empty when
+ * no point carries altitude. Empty buckets carry the last known altitude forward.
+ */
+export function elevationProfile(points: TrackPoint[], buckets = 60): number[] {
+  const pts = points.filter((p): p is TrackPoint & { alt: number } => p.alt != null);
+  if (pts.length < 2) return [];
+  const cum = [0];
+  for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1]! + haversineMeters(pts[i - 1]!, pts[i]!));
+  const total = cum[cum.length - 1]!;
+  if (total <= 0) return pts.map((p) => p.alt);
+
+  const bucketM = total / buckets;
+  const sum = new Array<number>(buckets).fill(0);
+  const cnt = new Array<number>(buckets).fill(0);
+  for (let i = 0; i < pts.length; i++) {
+    const bi = Math.min(buckets - 1, Math.floor(cum[i]! / bucketM));
+    sum[bi]! += pts[i]!.alt;
+    cnt[bi]! += 1;
+  }
+  const out: number[] = [];
+  let last = pts[0]!.alt;
+  for (let i = 0; i < buckets; i++) {
+    if (cnt[i]! > 0) last = sum[i]! / cnt[i]!;
+    out.push(last);
+  }
+  return out;
+}
