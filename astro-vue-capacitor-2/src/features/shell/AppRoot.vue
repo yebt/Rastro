@@ -37,9 +37,15 @@ let disposeBack: (() => void) | null = null;
 onMounted(() => {
   applyTheme();
   applyAccent();
-  // Cache map tiles (CARTO) so maps load fast on repeat views and offline.
+  // The tile-caching service worker broke map tiles in the WebView (they never
+  // loaded). Unregister any previously-installed SW and drop its cache — a stale
+  // registration keeps intercepting even after the code is removed.
   if ("serviceWorker" in navigator) {
-    void navigator.serviceWorker.register("/sw.js").catch(() => {});
+    void navigator.serviceWorker
+      .getRegistrations?.()
+      .then((regs) => regs.forEach((r) => void r.unregister()))
+      .catch(() => {});
+    void globalThis.caches?.delete?.("rastro-tiles-v1").catch(() => {});
   }
   disposeBack = registerBackButton();
   // First run asks inside the setup; once it's done the setup never shows again,
