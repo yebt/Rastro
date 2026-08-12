@@ -64,6 +64,11 @@ export {
   type StridePoint,
   strideSeries,
 } from "./domain/analytics";
+export {
+  type CadenceAnalysis,
+  cadenceAnalysis,
+  type CadenceBin,
+} from "./domain/cadence";
 export { cleanTrack } from "./domain/clean";
 export { toGpx } from "./domain/gpx";
 export { routeSegments } from "./domain/segments";

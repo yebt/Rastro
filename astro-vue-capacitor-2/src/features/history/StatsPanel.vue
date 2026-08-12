@@ -4,6 +4,7 @@ import { Card, Label } from "../../shared/ui";
 import {
   avgPaceSecPerKm,
   avgSpeedMps,
+  cadenceAnalysis,
   distanceMeters,
   elevationProfile,
   elevationStats,
@@ -20,6 +21,7 @@ import {
   strideSeries,
   type TrackPoint,
 } from "../tracking";
+import CadenceChart from "../tracking/ui/CadenceChart.vue";
 import SplitBars from "../tracking/ui/SplitBars.vue";
 import TrendChart from "../tracking/ui/TrendChart.vue";
 
@@ -31,6 +33,7 @@ const series = computed(() => movementSeries(props.points, 60));
 const speedKmh = computed(() => series.value.map((p) => p.mps * 3.6));
 const paceSeries = computed(() => series.value.map((p) => (p.paceSecPerKm ? p.paceSecPerKm / 60 : 0)));
 const altProfile = computed(() => elevationProfile(props.points, 60));
+const cadence = computed(() => cadenceAnalysis(props.points));
 const strideOverTime = computed(() => strideSeries(props.points, 40));
 const strideM = computed(() => strideOverTime.value.map((s) => s.strideM ?? 0));
 const cadenceOverTime = computed(() => strideOverTime.value.map((s) => s.cadence ?? 0));
@@ -113,6 +116,18 @@ const dash = (v: string | number | null | undefined): string => (v == null ? "�
     <TrendChart :values="altProfile" baseline="min" :format="(v) => `${Math.round(v)} m`" />
   </Card>
 
+  <Card v-if="cadence.bestStride">
+    <Label>Cadencia óptima</Label>
+    <CadenceChart :bins="cadence.bins" :best="cadence.bestStride" />
+    <p class="insight">
+      Tu zancada más eficiente fue a ~<b>{{ cadence.bestStride.cadence }}</b> pasos/min
+      (≈ {{ cadence.bestStride.strideM.toFixed(2) }} m por paso).
+      <template v-if="cadence.peakSpeed && cadence.peakSpeed.cadence > cadence.bestStride.cadence">
+        Por encima de ahí subiste la cadencia pero acortaste el paso.
+      </template>
+    </p>
+  </Card>
+
   <Card v-if="strideOverTime.length">
     <Label>Zancada en el tiempo</Label>
     <TrendChart :values="strideM" :format="(v) => `${v.toFixed(2)} m`" />
@@ -154,6 +169,16 @@ const dash = (v: string | number | null | undefined): string => (v == null ? "�
   margin: 0;
   display: flex;
   flex-direction: column;
+}
+.insight {
+  margin: var(--sp-3) 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.insight b {
+  color: var(--ink);
+  font-family: var(--font-mono);
 }
 .r {
   display: flex;
