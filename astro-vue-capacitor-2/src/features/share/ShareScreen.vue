@@ -571,17 +571,17 @@ async function onSave(): Promise<void> {
 }
 .tab {
   flex: none;
-  padding: var(--sp-2) var(--sp-3);
-  border-radius: var(--r-pill);
-  border: 1px solid var(--line);
+  padding: var(--sp-2) var(--sp-1);
+  border-bottom: 2px solid transparent;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 .tab.on {
-  border-color: var(--ink);
   color: var(--ink);
-  background: var(--surface-2);
+  border-bottom-color: var(--accent);
 }
 .panel {
   order: 3;

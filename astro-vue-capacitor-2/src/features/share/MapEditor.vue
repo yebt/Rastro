@@ -85,6 +85,13 @@ onMounted(async () => {
     data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords } },
   });
   m.addLayer({
+    id: "route-casing",
+    type: "line",
+    source: "route",
+    layout: { "line-join": "round", "line-cap": "round" },
+    paint: { "line-color": "#ffffff", "line-width": 9, "line-opacity": 0.85 },
+  });
+  m.addLayer({
     id: "route-line",
     type: "line",
     source: "route",
@@ -106,10 +113,12 @@ onMounted(async () => {
     type: "circle",
     source: "ends",
     paint: {
-      "circle-radius": 6,
-      "circle-color": ["match", ["get", "r"], "s", props.startColor, props.endColor],
-      "circle-stroke-width": 2,
-      "circle-stroke-color": props.routeColor,
+      // Start = solid dot, end = hollow ring, so they stay distinct on a loop.
+      "circle-radius": ["match", ["get", "r"], "s", 6, 9],
+      "circle-color": props.startColor,
+      "circle-opacity": ["match", ["get", "r"], "s", 1, 0],
+      "circle-stroke-width": ["match", ["get", "r"], "s", 2, 3],
+      "circle-stroke-color": ["match", ["get", "r"], "s", "#ffffff", props.routeColor],
     },
   });
 

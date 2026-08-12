@@ -23,12 +23,14 @@ function isDark(): boolean {
 const dark = isDark();
 // Basemap follows the app theme; canonical CARTO host (no {s} subdomains).
 const TILES = `https://basemaps.cartocdn.com/${dark ? "dark_all" : "light_all"}/{z}/{x}/{y}{r}.png`;
-const endFill = dark ? "#eef1ee" : "#12161a";
+// A casing under the route so it reads clearly over any basemap.
+const casingColor = dark ? "#0a0c0d" : "#ffffff";
 
 const host = ref<HTMLElement | null>(null);
 const hasRoute = ref(false);
 
 let map: L.Map | null = null;
+let casing: L.Polyline | null = null;
 let line: L.Polyline | null = null;
 let startDot: L.CircleMarker | null = null;
 let endDot: L.CircleMarker | null = null;
@@ -61,8 +63,12 @@ function render(): void {
 
   const color = accent();
   if (!line) {
+    // Casing first (under), then the colored line, then the markers — all in the
+    // overlay pane, above the tiles.
+    casing = L.polyline(segs, { color: casingColor, weight: 8, opacity: 0.9, lineJoin: "round", lineCap: "round" }).addTo(map);
     line = L.polyline(segs, { color, weight: 4, lineJoin: "round", lineCap: "round" }).addTo(map);
   } else {
+    casing!.setLatLngs(segs);
     line.setLatLngs(segs);
     line.setStyle({ color });
   }
@@ -70,10 +76,12 @@ function render(): void {
   const start: [number, number] = [raw[0]!.lat, raw[0]!.lng];
   const end: [number, number] = [raw[raw.length - 1]!.lat, raw[raw.length - 1]!.lng];
   if (!startDot) {
-    startDot = L.circleMarker(start, { radius: 6, color, fillColor: color, fillOpacity: 1, weight: 0 }).addTo(map);
-    endDot = L.circleMarker(end, { radius: 6, color, weight: 3, fillColor: endFill, fillOpacity: 1 }).addTo(map);
+    // Start: solid dot. End: a hollow ring — so they stay distinct even when a
+    // closed loop ends where it began.
+    startDot = L.circleMarker(start, { radius: 6, color: casingColor, fillColor: color, fillOpacity: 1, weight: 2 }).addTo(map);
+    endDot = L.circleMarker(end, { radius: 10, color, weight: 3, fillOpacity: 0 }).addTo(map);
   } else {
-    startDot.setLatLng(start).setStyle({ color, fillColor: color });
+    startDot.setLatLng(start).setStyle({ fillColor: color });
     endDot!.setLatLng(end).setStyle({ color });
   }
 

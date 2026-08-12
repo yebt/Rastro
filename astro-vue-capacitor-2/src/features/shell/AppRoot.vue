@@ -37,14 +37,10 @@ let disposeBack: (() => void) | null = null;
 onMounted(() => {
   applyTheme();
   applyAccent();
-  // The tile-caching service worker broke map tiles in the WebView (they never
-  // loaded). Unregister any previously-installed SW and drop its cache — a stale
-  // registration keeps intercepting even after the code is removed.
+  // Cache CARTO tiles so maps load instantly on repeat views (the canonical host
+  // works now, so the worker no longer breaks loading). Drop the old v1 cache.
   if ("serviceWorker" in navigator) {
-    void navigator.serviceWorker
-      .getRegistrations?.()
-      .then((regs) => regs.forEach((r) => void r.unregister()))
-      .catch(() => {});
+    void navigator.serviceWorker.register("/sw.js").catch(() => {});
     void globalThis.caches?.delete?.("rastro-tiles-v1").catch(() => {});
   }
   disposeBack = registerBackButton();
