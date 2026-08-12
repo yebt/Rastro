@@ -24,10 +24,12 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{ done: [payload: { src: string; camera: MapCamera }]; cancel: [] }>();
 
-const TILE_PATH: Record<MapStyleId, string> = {
-  dark: "dark_all",
-  light: "light_all",
-  voyager: "rastertiles/voyager",
+const TILE_URL: Record<MapStyleId, string> = {
+  dark: "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+  light: "https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+  voyager: "https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+  // Real cartographic map with contour lines (free, no key; max zoom 17).
+  topo: "https://tile.opentopomap.org/{z}/{x}/{y}.png",
 };
 
 const host = ref<HTMLDivElement | null>(null);
@@ -59,8 +61,9 @@ onMounted(async () => {
   sizeBox();
   const ml = await import("maplibre-gl");
   const coords = props.points.map((p) => [p.lng, p.lat] as [number, number]);
-  // Canonical CARTO host (no {s} subdomains — those are deprecated).
-  const tiles = [`https://basemaps.cartocdn.com/${TILE_PATH[props.mapStyle]}/{z}/{x}/{y}.png`];
+  const isTopo = props.mapStyle === "topo";
+  const tiles = [TILE_URL[props.mapStyle]];
+  const attribution = isTopo ? "© OpenTopoMap (CC-BY-SA)" : "© OpenStreetMap · CARTO";
 
   map = new ml.Map({
     container: host.value!,
@@ -71,7 +74,7 @@ onMounted(async () => {
     style: {
       version: 8,
       sources: {
-        carto: { type: "raster", tiles, tileSize: 256, attribution: "© OpenStreetMap · CARTO" },
+        carto: { type: "raster", tiles, tileSize: 256, maxzoom: isTopo ? 17 : 20, attribution },
       },
       layers: [{ id: "carto", type: "raster", source: "carto" }],
     },
@@ -149,6 +152,13 @@ onBeforeUnmount(() => {
   map?.remove();
 });
 
+function toggleTilt(): void {
+  map?.easeTo({ pitch: (map.getPitch() ?? 0) > 5 ? 0 : 55, duration: 300 });
+}
+function resetView(): void {
+  map?.easeTo({ pitch: 0, bearing: 0, duration: 300 });
+}
+
 function done(): void {
   if (!map) return;
   const c = map.getCenter();
@@ -168,6 +178,10 @@ function done(): void {
     <div class="frame">
       <div ref="host" class="map"></div>
       <div v-if="loading" class="loading"><Spinner size="28px" /></div>
+    </div>
+    <div class="mapctl">
+      <button type="button" class="mc" @click="toggleTilt">Inclinar 3D</button>
+      <button type="button" class="mc" @click="resetView">Aplanar</button>
     </div>
     <p class="hint">Arrastrá para mover · pellizcá para zoom · dos dedos para rotar e inclinar</p>
     <div class="actions">
@@ -211,6 +225,22 @@ function done(): void {
   display: grid;
   place-items: center;
   background: var(--bg);
+}
+.mapctl {
+  display: flex;
+  gap: var(--sp-2);
+}
+.mc {
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-pill);
+  border: 1px solid color-mix(in srgb, white 30%, transparent);
+  background: color-mix(in srgb, white 8%, transparent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+.mc:active {
+  background: color-mix(in srgb, white 16%, transparent);
 }
 .hint {
   margin: 0;

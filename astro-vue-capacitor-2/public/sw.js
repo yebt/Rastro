@@ -15,7 +15,7 @@ self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
 
 function isTile(url) {
-  return /(^|\.)cartocdn\.com$/.test(url.hostname);
+  return /(^|\.)cartocdn\.com$/.test(url.hostname) || /(^|\.)opentopomap\.org$/.test(url.hostname);
 }
 
 async function trim(cache) {

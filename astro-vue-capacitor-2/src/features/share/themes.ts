@@ -30,7 +30,7 @@ export interface ShareLayout {
   h: number;
 }
 
-export type MapStyleId = "dark" | "light" | "voyager";
+export type MapStyleId = "dark" | "light" | "voyager" | "topo";
 
 /** Where a card's background comes from. Photo stays offline (local dataURL). */
 export type ShareBackground =
@@ -71,6 +71,7 @@ export const MAP_STYLES: MapStyleDef[] = [
   { id: "voyager", label: "Mapa", dark: false },
   { id: "dark", label: "Mapa noche", dark: true },
   { id: "light", label: "Mapa claro", dark: false },
+  { id: "topo", label: "Topográfico", dark: false },
 ];
 
 /** Stackable canvas passes, drawn in array order. */
