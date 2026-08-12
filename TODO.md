@@ -65,7 +65,8 @@ hexagonal, diseño monocromo, offline-first / local-first / sin cuenta).
 - [x] **Mapas** de fondo **inclinados** (pitch 3D) como en v1 — MapLibre + tiles
       CARTO (Mapa / noche / claro + Inclinar), lazy-load, ruta horneada en el
       snapshot, degrada offline (dibuja solo la ruta). Spec §6.
-- [ ] **Tema topográfico** (curvas de nivel line-art, 100% offline) — fallback.
+- [x] **Mapa topográfico** en el share (OpenTopoMap, curvas de nivel, sin key) +
+      **inclinación 3D** explícita en el editor de mapa.
 - [ ] Más layouts abstraídos del spec: editorial, dataGrid, blueprint, techCard.
 - [ ] **Marcador de meta** (flag/pin/ring) más marcado en la llegada.
 - [ ] Guardar una configuración de tema como **favorito**.
@@ -140,6 +141,19 @@ hexagonal, diseño monocromo, offline-first / local-first / sin cuenta).
 - [ ] Íconos PWA 192/512 maskable reales.
 
 ---
+
+## Pendiente de SPECS.md (features del producto aún sin hacer en v2)
+
+- [ ] **F8 — Motor de cadencia óptima** (la "idea central" del spec §8): a qué
+      cadencia tu **zancada** rinde más (velocidad = zancada × cadencia). Ya
+      capturamos pasos por punto → es factible: scatter zancada-vs-cadencia +
+      insight ("tu zancada más eficiente fue a ~X p/min"). **Alto valor.**
+- [ ] **F10 — Metas + PR automáticos**: meta semanal de km / diaria de reps con
+      barra de progreso; récords auto al guardar (tenemos récords en Analíticas,
+      falta metas y badges).
+- [ ] **F11 — Calorías estimadas**: aprox. por MET × peso × tiempo (ya guardamos
+      el peso en el perfil). Siempre etiquetado "estimado".
+- [ ] F16 — Sync online opcional (Google) — futuro, no rompe local-first.
 
 ## Auditoría — cosas que se saltaron / quedaron a medias
 
