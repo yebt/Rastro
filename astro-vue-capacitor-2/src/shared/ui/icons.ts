@@ -39,6 +39,7 @@ import IconSettings from "~icons/lucide/settings";
 import IconShield from "~icons/lucide/shield-check";
 import IconSkip from "~icons/lucide/skip-forward";
 import IconSquare from "~icons/lucide/square";
+import IconTarget from "~icons/lucide/target";
 import IconTheme from "~icons/lucide/sun-moon";
 import IconTrash from "~icons/lucide/trash-2";
 import IconUpload from "~icons/lucide/upload";
@@ -81,6 +82,7 @@ export const ICONS = {
   skip: IconSkip,
   edit: IconEdit,
   expand: IconExpand,
+  target: IconTarget,
 } satisfies Record<string, Component>;
 
 export type IconName = keyof typeof ICONS;

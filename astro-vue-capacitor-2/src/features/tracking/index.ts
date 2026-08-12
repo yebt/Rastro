@@ -69,6 +69,7 @@ export {
   cadenceAnalysis,
   type CadenceBin,
 } from "./domain/cadence";
+export { estimateCalories } from "./domain/calories";
 export { cleanTrack } from "./domain/clean";
 export { toGpx } from "./domain/gpx";
 export { routeSegments } from "./domain/segments";

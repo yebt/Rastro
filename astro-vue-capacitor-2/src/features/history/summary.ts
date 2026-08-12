@@ -5,7 +5,7 @@
  */
 
 import type { Activity, MoveActivity } from "../tracking";
-import { cleanTrack, distanceMeters } from "../tracking";
+import { cleanTrack, distanceMeters, routineEntriesReps, totalReps } from "../tracking";
 
 const DAY_MS = 86_400_000;
 
@@ -71,6 +71,17 @@ export function weekSummary(activities: Activity[], now: number): WeekSummary {
     }),
     { count: 0, distanceM: 0, movingMs: 0 },
   );
+}
+
+/** Reps logged today (exercise sets + routine sessions). */
+export function todayReps(activities: Activity[], now: number): number {
+  const from = startOfDay(now);
+  return activities.reduce((sum, a) => {
+    if (a.startedAt < from) return sum;
+    if (a.kind === "exercise") return sum + totalReps(a.sets);
+    if (a.kind === "routine") return sum + routineEntriesReps(a.entries);
+    return sum;
+  }, 0);
 }
 
 /**

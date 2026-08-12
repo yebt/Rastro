@@ -9,7 +9,7 @@
 import { atom } from "nanostores";
 import type { IconName } from "../../shared/ui";
 
-export type SettingsPage = "profile" | "appearance" | "recording" | "data" | "about";
+export type SettingsPage = "profile" | "goals" | "appearance" | "recording" | "data" | "about";
 
 export interface SettingsCategory {
   id: SettingsPage;
@@ -21,6 +21,7 @@ export interface SettingsCategory {
 /** Menu order and copy. Each entry maps to a dedicated page component. */
 export const SETTINGS_CATEGORIES: SettingsCategory[] = [
   { id: "profile", label: "Perfil", hint: "Nombre, apodo, peso y altura", icon: "profile" },
+  { id: "goals", label: "Metas", hint: "Km por semana, reps por día", icon: "target" },
   { id: "appearance", label: "Apariencia", hint: "Tema y color de acento", icon: "theme" },
   { id: "recording", label: "Registro", hint: "Permisos y captura", icon: "location" },
   { id: "data", label: "Datos", hint: "Exportar, importar y borrar", icon: "data" },

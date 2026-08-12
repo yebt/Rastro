@@ -10,6 +10,7 @@ import {
   distanceMeters,
   distanceParts,
   elevationGainM,
+  estimateCalories,
   elevationLossM,
   exerciseLabel,
   formatActivityDate,
@@ -30,6 +31,7 @@ import {
   TRACK_FILTERS,
 } from "../tracking";
 import { shareTextFile } from "../data/backup";
+import { latestWeight } from "../profile/profile.store";
 import { ShareScreen } from "../share";
 import RouteMap from "../tracking/ui/RouteMap.vue";
 import { deleteActivity } from "./history.store";
@@ -109,6 +111,9 @@ const stride = computed(() => {
 const elevLoss = computed(() =>
   hasElevation(points.value) ? `−${Math.round(elevationLossM(points.value))} m` : "—",
 );
+const calories = computed(() =>
+  move.value ? estimateCalories(move.value.type, move.value.movingMs ?? 0, latestWeight()) : null,
+);
 
 const showShare = ref(false);
 const segmentSaved = ref(false);
@@ -182,6 +187,7 @@ async function onDelete(): Promise<void> {
           <div class="row"><dt>Ritmo medio</dt><dd>{{ pace }} /km</dd></div>
           <div v-if="bestKm" class="row"><dt>Mejor km</dt><dd>{{ bestKm }} /km</dd></div>
           <div class="row"><dt>Velocidad media</dt><dd>{{ speed }} km/h</dd></div>
+          <div v-if="calories != null" class="row"><dt>Calorías (est.)</dt><dd>{{ calories }} kcal</dd></div>
           <div class="row"><dt>Desnivel +</dt><dd>{{ elevation }}</dd></div>
           <div class="row"><dt>Desnivel −</dt><dd>{{ elevLoss }}</dd></div>
           <div class="row"><dt>Pasos</dt><dd>{{ move.steps ?? "—" }}</dd></div>

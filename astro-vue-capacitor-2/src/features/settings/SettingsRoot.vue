@@ -6,6 +6,7 @@ import SettingsMenu from "./SettingsMenu.vue";
 import AboutSettings from "./pages/AboutSettings.vue";
 import AppearanceSettings from "./pages/AppearanceSettings.vue";
 import DataSettings from "./pages/DataSettings.vue";
+import GoalsSettings from "./pages/GoalsSettings.vue";
 import ProfileSettings from "./pages/ProfileSettings.vue";
 import RecordingSettings from "./pages/RecordingSettings.vue";
 
@@ -23,6 +24,7 @@ const page = useStore($settingsPage);
 
 const PAGES = {
   profile: ProfileSettings,
+  goals: GoalsSettings,
   appearance: AppearanceSettings,
   recording: RecordingSettings,
   data: DataSettings,

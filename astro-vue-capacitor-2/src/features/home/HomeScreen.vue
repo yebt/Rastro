@@ -3,7 +3,8 @@ import { useStore } from "@nanostores/vue";
 import { computed, onMounted } from "vue";
 import { AppIcon, AppScreen, Card, Label } from "../../shared/ui";
 import { $activities, loadActivities } from "../history/history.store";
-import { currentStreak, dailyTotals, weekSummary } from "../history/summary";
+import { $goals } from "../history/goals.store";
+import { currentStreak, dailyTotals, todayReps, weekSummary } from "../history/summary";
 import { distanceParts, formatDuration, type MoveType, setStartIntent } from "../tracking";
 import { setInfoView } from "../history/info-view.store";
 import { setTab } from "../shell/nav.store";
@@ -23,6 +24,12 @@ const streak = computed(() => currentStreak(activities.value, now()));
 const week = computed(() => weekSummary(activities.value, now()));
 const weekDist = computed(() => distanceParts(week.value.distanceM));
 const weekTime = computed(() => formatDuration(week.value.movingMs));
+
+const goals = useStore($goals);
+const weekKm = computed(() => week.value.distanceM / 1000);
+const todayRepsN = computed(() => todayReps(activities.value, now()));
+const pct = (v: number, target: number): number => (target > 0 ? Math.min(100, Math.round((v / target) * 100)) : 0);
+const hasGoals = computed(() => goals.value.kmWeekly > 0 || goals.value.repsDaily > 0);
 
 const DOW = ["D", "L", "M", "M", "J", "V", "S"];
 const days = computed(() => dailyTotals(activities.value, now(), 7));
@@ -88,6 +95,19 @@ function goAnalytics(): void {
         </div>
       </div>
     </Card>
+
+    <!-- Goals -->
+    <template v-if="hasGoals">
+      <Label>Metas</Label>
+      <Card v-if="goals.kmWeekly > 0">
+        <div class="g-head"><span>Semanal</span><b>{{ weekKm.toFixed(1) }} / {{ goals.kmWeekly }} km</b></div>
+        <div class="pbar"><span :style="{ width: `${pct(weekKm, goals.kmWeekly)}%` }"></span></div>
+      </Card>
+      <Card v-if="goals.repsDaily > 0">
+        <div class="g-head"><span>Reps de hoy</span><b>{{ todayRepsN }} / {{ goals.repsDaily }}</b></div>
+        <div class="pbar"><span :style="{ width: `${pct(todayRepsN, goals.repsDaily)}%` }"></span></div>
+      </Card>
+    </template>
 
     <!-- Quick-start favorites -->
     <Label>Empezá ahora</Label>
@@ -202,6 +222,36 @@ function goAnalytics(): void {
 .col small.on {
   color: var(--accent);
   font-weight: 600;
+}
+.g-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+.g-head span {
+  font-size: 13px;
+  color: var(--muted);
+}
+.g-head b {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.pbar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.pbar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width 0.3s ease;
 }
 .favs {
   display: flex;
