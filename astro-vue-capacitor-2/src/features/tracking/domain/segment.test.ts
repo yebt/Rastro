@@ -42,6 +42,17 @@ describe("segments", () => {
     expect(matchSegment(seg, far)).toBeNull();
   });
 
+  it("builds a sub-range segment from a distance window", () => {
+    // base is 2 km; take the 2nd km (1000..2000 m)
+    const sub = segmentFromActivity("seg2", "2do km", base, 0, 1000, 2000)!;
+    expect(sub).not.toBeNull();
+    expect(sub.distanceM).toBeCloseTo(1000, -2);
+    expect(sub.start.lng).toBeGreaterThan(0); // starts partway in, not at 0
+    const e = matchSegment(sub, base)!;
+    expect(e.paceSecPerKm).toBeGreaterThan(560);
+    expect(e.paceSecPerKm).toBeLessThan(640);
+  });
+
   it("ranks efforts fastest first", () => {
     const faster = run("c", 3000, 480, 2); // quicker
     const efforts = segmentEfforts(seg, [base, faster]);

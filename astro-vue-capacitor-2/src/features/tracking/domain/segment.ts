@@ -34,18 +34,45 @@ export interface SegmentEffort {
   paceSecPerKm: number | null;
 }
 
-/** Build a segment from a cleaned activity route (whole route). */
-export function segmentFromActivity(id: string, name: string, act: MoveActivity, createdAt: number): Segment | null {
+/** The point reached at cumulative distance `target` along the route. */
+function pointAtDistance(pts: TrackPoint[], target: number): TrackPoint {
+  if (target <= 0) return pts[0]!;
+  let acc = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const d = haversineMeters(pts[i - 1]!, pts[i]!);
+    if (acc + d >= target) return pts[i]!;
+    acc += d;
+  }
+  return pts[pts.length - 1]!;
+}
+
+/**
+ * Build a segment from a cleaned activity route. Without a range it's the whole
+ * route; with `fromM`/`toM` (metres) it's the sub-stretch between those distances
+ * — so you can save just the hill or the last km and compare only that.
+ */
+export function segmentFromActivity(
+  id: string,
+  name: string,
+  act: MoveActivity,
+  createdAt: number,
+  fromM?: number,
+  toM?: number,
+): Segment | null {
   const pts = cleanTrack(act.points);
   if (pts.length < 2) return null;
-  const start = pts[0]!;
-  const end = pts[pts.length - 1]!;
+  const total = distanceMeters(pts);
+  const from = fromM == null ? 0 : Math.max(0, Math.min(fromM, total));
+  const to = toM == null ? total : Math.max(from, Math.min(toM, total));
+  if (to - from < 1) return null;
+  const start = pointAtDistance(pts, from);
+  const end = pointAtDistance(pts, to);
   return {
     id,
     name,
     start: { lat: start.lat, lng: start.lng },
     end: { lat: end.lat, lng: end.lng },
-    distanceM: distanceMeters(pts),
+    distanceM: to - from,
     fromActivityId: act.id,
     createdAt,
   };

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useStore } from "@nanostores/vue";
 import { computed, ref } from "vue";
-import { AppButton, AppSubScreen, Card, Label, SegmentedControl } from "../../shared/ui";
+import { AppButton, AppSubScreen, Card, Field, Label, SegmentedControl } from "../../shared/ui";
 import {
   type Activity,
   applyFilter,
@@ -110,16 +110,30 @@ const elevLoss = computed(() =>
 
 const showShare = ref(false);
 const segmentSaved = ref(false);
+const segForm = ref(false);
+const segName = ref("");
+const segFrom = ref("0");
+const segTo = ref("0");
 
-function onSaveSegment(): void {
+const totalKm = computed(() => distanceMeters(clean.value) / 1000);
+
+function openSegForm(): void {
+  if (!move.value) return;
+  segName.value = MOVE_LABEL[move.value.type];
+  segFrom.value = "0";
+  segTo.value = totalKm.value.toFixed(2);
+  segForm.value = true;
+}
+function saveSeg(): void {
   const m = move.value;
-  if (!m) return;
-  const name = globalThis.prompt?.("Nombre del tramo", MOVE_LABEL[m.type]);
-  if (!name?.trim()) return;
-  const seg = segmentFromActivity(newId(), name.trim(), m, Date.now());
+  if (!m || !segName.value.trim()) return;
+  const fromM = Math.max(0, (Number(segFrom.value) || 0) * 1000);
+  const toM = (Number(segTo.value) || totalKm.value) * 1000;
+  const seg = segmentFromActivity(newId(), segName.value.trim(), m, Date.now(), fromM, toM);
   if (seg) {
     saveSegment(seg);
     segmentSaved.value = true;
+    segForm.value = false;
   }
 }
 
@@ -173,7 +187,19 @@ async function onDelete(): Promise<void> {
       <StatsPanel v-else :points="clean" :move="move" />
 
       <AppButton block variant="ghost" icon="export" @press="showShare = true">Compartir</AppButton>
-      <AppButton block variant="ghost" icon="list" :disabled="segmentSaved" @press="onSaveSegment">
+
+      <Card v-if="segForm">
+        <Field v-model="segName" label="Nombre del tramo" placeholder="Ej. Subida al mirador" />
+        <div class="seg-range">
+          <Field v-model="segFrom" label="Desde (km)" type="number" inputmode="decimal" />
+          <Field v-model="segTo" label="Hasta (km)" type="number" inputmode="decimal" />
+        </div>
+        <div class="seg-actions">
+          <AppButton block variant="ghost" @press="segForm = false">Cancelar</AppButton>
+          <AppButton block :disabled="!segName.trim()" @press="saveSeg">Guardar tramo</AppButton>
+        </div>
+      </Card>
+      <AppButton v-else block variant="ghost" icon="list" :disabled="segmentSaved" @press="openSegForm">
         {{ segmentSaved ? "Tramo guardado" : "Guardar como tramo" }}
       </AppButton>
     </template>
@@ -271,5 +297,16 @@ async function onDelete(): Promise<void> {
   font-size: 15px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+.seg-range {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+.seg-actions {
+  display: flex;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
 }
 </style>
