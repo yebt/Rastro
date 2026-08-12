@@ -144,15 +144,11 @@ hexagonal, diseño monocromo, offline-first / local-first / sin cuenta).
 
 ## Pendiente de SPECS.md (features del producto aún sin hacer en v2)
 
-- [ ] **F8 — Motor de cadencia óptima** (la "idea central" del spec §8): a qué
-      cadencia tu **zancada** rinde más (velocidad = zancada × cadencia). Ya
-      capturamos pasos por punto → es factible: scatter zancada-vs-cadencia +
-      insight ("tu zancada más eficiente fue a ~X p/min"). **Alto valor.**
-- [ ] **F10 — Metas + PR automáticos**: meta semanal de km / diaria de reps con
-      barra de progreso; récords auto al guardar (tenemos récords en Analíticas,
-      falta metas y badges).
-- [ ] **F11 — Calorías estimadas**: aprox. por MET × peso × tiempo (ya guardamos
-      el peso en el perfil). Siempre etiquetado "estimado".
+- [x] **F8 — Motor de cadencia óptima** (§8): `cadence.ts` bin por cadencia
+      (zancada/velocidad por bin) + gráfica con la zona óptima + insight en Análisis.
+- [x] **F11 — Calorías estimadas** (MET × peso × tiempo) en el detalle del recorrido.
+- [x] **F10 — Metas**: km/semana + reps/día en Ajustes › Metas, con barra de
+      progreso en Inicio. *(Falta: PR/badges automáticos — récords ya están en Analíticas.)*
 - [ ] F16 — Sync online opcional (Google) — futuro, no rompe local-first.
 
 ## Auditoría — cosas que se saltaron / quedaron a medias
