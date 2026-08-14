@@ -147,8 +147,9 @@ hexagonal, diseño monocromo, offline-first / local-first / sin cuenta).
 - [x] **F8 — Motor de cadencia óptima** (§8): `cadence.ts` bin por cadencia
       (zancada/velocidad por bin) + gráfica con la zona óptima + insight en Análisis.
 - [x] **F11 — Calorías estimadas** (MET × peso × tiempo) en el detalle del recorrido.
-- [x] **F10 — Metas**: km/semana + reps/día en Ajustes › Metas, con barra de
-      progreso en Inicio. *(Falta: PR/badges automáticos — récords ya están en Analíticas.)*
+- [x] **F10 — Metas + PR automáticos**: km/semana + reps/día (Ajustes › Metas) con
+      barra de progreso en Inicio; **badges de récord** automáticos en el detalle
+      y medalla en las filas de historial/calendario.
 - [ ] F16 — Sync online opcional (Google) — futuro, no rompe local-first.
 
 ## Auditoría — cosas que se saltaron / quedaron a medias
