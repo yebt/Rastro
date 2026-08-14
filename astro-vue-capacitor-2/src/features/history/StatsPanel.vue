@@ -15,6 +15,7 @@ import {
   type MoveActivity,
   movementSeries,
   pausedMs,
+  routeInsights,
   speedExtremes,
   splitStats,
   splits,
@@ -32,6 +33,7 @@ const splitData = computed(() => splits(props.points));
 const series = computed(() => movementSeries(props.points, 60));
 const speedKmh = computed(() => series.value.map((p) => p.mps * 3.6));
 const paceSeries = computed(() => series.value.map((p) => (p.paceSecPerKm ? p.paceSecPerKm / 60 : 0)));
+const insights = computed(() => routeInsights(props.points));
 const altProfile = computed(() => elevationProfile(props.points, 60));
 const cadenceOpt = computed(() => cadenceAnalysis(props.points));
 const strideOverTime = computed(() => strideSeries(props.points, 40));
@@ -70,6 +72,13 @@ const dash = (v: string | number | null | undefined): string => (v == null ? "‚Ä
       <div class="h"><b>{{ formatSpeed(spd.maxMps) }}</b><small>vel. m√°x km/h</small></div>
       <div class="h"><b>{{ half.kind === "even" ? "=" : half.kind === "negative" ? "‚ñ≤" : "‚ñº" }}</b><small>pacing</small></div>
     </div>
+  </Card>
+
+  <Card v-if="insights.length">
+    <Label>Del recorrido</Label>
+    <ul class="insights">
+      <li v-for="(i, k) in insights" :key="k">{{ i }}</li>
+    </ul>
   </Card>
 
   <Card>
@@ -175,6 +184,21 @@ const dash = (v: string | number | null | undefined): string => (v == null ? "‚Ä
   font-size: 13px;
   line-height: 1.5;
   color: var(--muted);
+}
+.insights {
+  margin: var(--sp-2) 0 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.insights li {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.insights li::marker {
+  color: var(--accent);
 }
 .insight b {
   color: var(--ink);

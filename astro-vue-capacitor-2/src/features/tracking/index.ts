@@ -73,6 +73,7 @@ export { activityBadges, recordActivityIds } from "./domain/badges";
 export { estimateCalories } from "./domain/calories";
 export { cleanTrack } from "./domain/clean";
 export { toGpx } from "./domain/gpx";
+export { routeInsights } from "./domain/insights";
 export { routeSegments } from "./domain/segments";
 export {
   type LngLat,
