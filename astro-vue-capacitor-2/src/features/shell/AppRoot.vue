@@ -33,10 +33,14 @@ const recording = computed(() => recStatus.value === "recording" || recStatus.va
 const activeLabel = computed(() => TABS.find((t) => t.id === active.value)?.label ?? "");
 
 let disposeBack: (() => void) | null = null;
+const osScheme = globalThis.matchMedia?.("(prefers-color-scheme: dark)");
+// In 'auto' the CSS re-themes on its own, but the theme-color meta needs a nudge.
+const onSchemeChange = () => applyTheme();
 
 onMounted(() => {
   applyTheme();
   applyAccent();
+  osScheme?.addEventListener("change", onSchemeChange);
   // Cache CARTO tiles so maps load instantly on repeat views (the canonical host
   // works now, so the worker no longer breaks loading). Drop the old v1 cache.
   if ("serviceWorker" in navigator) {
@@ -61,6 +65,7 @@ watch(recStatus, (s) => {
 
 onBeforeUnmount(() => {
   disposeBack?.();
+  osScheme?.removeEventListener("change", onSchemeChange);
 });
 </script>
 

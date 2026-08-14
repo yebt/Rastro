@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { ExerciseActivity, MoveActivity, TrackPoint } from "../tracking";
+import type { ExerciseActivity, MoveActivity } from "./activity";
+import type { TrackPoint } from "./track-point";
 import { activityBadges, recordActivityIds } from "./badges";
 
 const KM_DEG = 0.008993;
