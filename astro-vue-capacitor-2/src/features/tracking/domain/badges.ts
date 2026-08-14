@@ -57,3 +57,58 @@ export function activityBadges(activity: Activity, all: Activity[]): string[] {
   if (reps > 0 && reps >= Math.max(...rts.map((a) => routineEntriesReps(a.entries)))) out.push("Mejor rutina");
   return out;
 }
+
+/**
+ * The ids of every activity that holds at least one record — computed in a
+ * single pass over the history (maxima once, then flag), so a list can show a
+ * medal per row without the O(n²) cost of badging each row separately.
+ */
+export function recordActivityIds(all: Activity[]): Set<string> {
+  const ids = new Set<string>();
+
+  const moves = all
+    .filter((a): a is MoveActivity => a.kind === "move")
+    .map((m) => {
+      const clean = cleanTrack(m.points);
+      return { id: m.id, dist: distanceMeters(clean), pace: avgPaceSecPerKm(clean), bs: bestSplit(m), steps: m.steps ?? 0 };
+    });
+  if (moves.length) {
+    const maxDist = Math.max(...moves.map((m) => m.dist));
+    const paces = moves.map((m) => m.pace).filter((x): x is number => x != null);
+    const minPace = paces.length ? Math.min(...paces) : Infinity;
+    const bss = moves.map((m) => m.bs).filter((x): x is number => x != null);
+    const minBs = bss.length ? Math.min(...bss) : Infinity;
+    const maxSteps = Math.max(...moves.map((m) => m.steps));
+    for (const m of moves) {
+      if (
+        (m.dist > 0 && m.dist >= maxDist) ||
+        (m.pace != null && m.pace <= minPace) ||
+        (m.bs != null && m.bs <= minBs) ||
+        (m.steps > 0 && m.steps >= maxSteps)
+      ) {
+        ids.add(m.id);
+      }
+    }
+  }
+
+  const exs = all.filter((a): a is ExerciseActivity => a.kind === "exercise");
+  if (exs.length) {
+    const maxSession = Math.max(...exs.map((a) => totalReps(a.sets)));
+    const maxSet = Math.max(0, ...exs.flatMap((a) => a.sets.map((s) => s.reps)));
+    for (const a of exs) {
+      const set = Math.max(0, ...a.sets.map((s) => s.reps));
+      if ((totalReps(a.sets) > 0 && totalReps(a.sets) >= maxSession) || (set > 0 && set >= maxSet)) ids.add(a.id);
+    }
+  }
+
+  const rts = all.filter((a): a is RoutineActivity => a.kind === "routine");
+  if (rts.length) {
+    const maxReps = Math.max(...rts.map((a) => routineEntriesReps(a.entries)));
+    for (const a of rts) {
+      const reps = routineEntriesReps(a.entries);
+      if (reps > 0 && reps >= maxReps) ids.add(a.id);
+    }
+  }
+
+  return ids;
+}

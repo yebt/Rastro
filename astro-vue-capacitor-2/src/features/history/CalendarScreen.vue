@@ -2,6 +2,7 @@
 import { useStore } from "@nanostores/vue";
 import { computed, onMounted, ref } from "vue";
 import { AppIcon, AppSubScreen, Card } from "../../shared/ui";
+import { recordActivityIds } from "../tracking";
 import ActivityRow from "./ActivityRow.vue";
 import { buildMonth } from "./calendar";
 import { openActivity } from "./detail.store";
@@ -29,6 +30,7 @@ const monthLabel = computed(() =>
   ),
 );
 const grid = computed(() => buildMonth(viewYear.value, viewMonth.value, activities.value));
+const records = computed(() => recordActivityIds(activities.value));
 
 const isThisMonth = computed(
   () => viewYear.value === now.getFullYear() && viewMonth.value === now.getMonth(),
@@ -101,6 +103,7 @@ function step(delta: number): void {
           v-for="a in dayActivities"
           :key="a.id"
           :activity="a"
+          :record="records.has(a.id)"
           @open="openActivity(a.id)"
         />
       </div>

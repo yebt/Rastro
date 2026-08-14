@@ -14,7 +14,7 @@ import {
   totalReps,
 } from "../tracking";
 
-const props = defineProps<{ activity: Activity }>();
+const props = defineProps<{ activity: Activity; record?: boolean }>();
 defineEmits<{ open: [] }>();
 
 const date = computed(() => formatActivityDate(props.activity.startedAt));
@@ -47,7 +47,10 @@ const secondary = computed(() => {
 <template>
   <button type="button" class="row" @click="$emit('open')">
     <span class="main">
-      <b class="type">{{ title }}</b>
+      <b class="type">
+        {{ title }}
+        <AppIcon v-if="record" name="award" size="14px" class="rec" />
+      </b>
       <small class="date">{{ date }}</small>
     </span>
     <span class="stats">
@@ -83,6 +86,11 @@ const secondary = computed(() => {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.01em;
+}
+.rec {
+  color: var(--accent);
+  vertical-align: -2px;
+  margin-left: 2px;
 }
 .date {
   font-size: 12px;

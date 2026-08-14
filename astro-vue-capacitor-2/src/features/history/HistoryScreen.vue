@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { useStore } from "@nanostores/vue";
-import { onMounted } from "vue";
+import { computed, onMounted } from "vue";
 import { AppSubScreen, Card } from "../../shared/ui";
+import { recordActivityIds } from "../tracking";
 import ActivityRow from "./ActivityRow.vue";
 import { openActivity } from "./detail.store";
 import { $activities, loadActivities } from "./history.store";
@@ -10,6 +11,7 @@ import { $activities, loadActivities } from "./history.store";
 defineEmits<{ back: [] }>();
 
 const activities = useStore($activities);
+const records = computed(() => recordActivityIds(activities.value));
 
 onMounted(() => {
   void loadActivities();
@@ -20,7 +22,13 @@ onMounted(() => {
   <AppSubScreen title="Historial" @back="$emit('back')">
     <Card>
       <div v-if="activities.length" class="list">
-        <ActivityRow v-for="a in activities" :key="a.id" :activity="a" @open="openActivity(a.id)" />
+        <ActivityRow
+          v-for="a in activities"
+          :key="a.id"
+          :activity="a"
+          :record="records.has(a.id)"
+          @open="openActivity(a.id)"
+        />
       </div>
       <p v-else class="empty">Todavía no registraste ninguna actividad.</p>
     </Card>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ExerciseActivity, MoveActivity, TrackPoint } from "../tracking";
-import { activityBadges } from "./badges";
+import { activityBadges, recordActivityIds } from "./badges";
 
 const KM_DEG = 0.008993;
 
@@ -37,5 +37,17 @@ describe("activityBadges", () => {
     expect(badges).toContain("Mejor sesión");
     expect(badges).toContain("Mejor serie");
     expect(activityBadges(a, [a, b])).not.toContain("Mejor sesión");
+  });
+});
+
+describe("recordActivityIds", () => {
+  it("flags every record holder in one pass", () => {
+    const short = move("s", 600, 2);
+    const long = move("l", 600, 5); // distance record
+    const fast = move("f", 400, 2); // pace record
+    const ids = recordActivityIds([short, long, fast]);
+    expect(ids.has("l")).toBe(true);
+    expect(ids.has("f")).toBe(true);
+    expect(ids.has("s")).toBe(false);
   });
 });
