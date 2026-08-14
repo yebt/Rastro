@@ -6,6 +6,7 @@ import { cleanTrack, type MoveActivity } from "../tracking";
 import { $favorites, addFavorite, removeFavorite } from "./favorites.store";
 import { shareGallery } from "./gallery-store";
 import MapEditor from "./MapEditor.vue";
+import { extractPalette } from "./palette-extract";
 import { renderRouteCard } from "./route-card";
 import { shareImage } from "./share-route";
 import {
@@ -122,6 +123,15 @@ function clearOverride(): void {
   theme.value = { ...theme.value, override: undefined };
 }
 const hasOverride = computed(() => !!theme.value.override?.route);
+
+// Dominant colors pulled from the photo, offered as route-color choices.
+const photoPalette = ref<string[]>([]);
+watch(
+  () => (theme.value.background?.kind === "photo" ? theme.value.background.src : null),
+  async (src) => {
+    photoPalette.value = src ? await extractPalette(src, 6) : [];
+  },
+);
 
 // ---- Basic pickers ----
 function pickLayout(id: string): void {
@@ -347,6 +357,21 @@ async function onSave(): Promise<void> {
           <span class="hex">{{ routeColor }}</span>
           <button v-if="hasOverride" type="button" class="chip" @click="clearOverride">Usar paleta</button>
         </div>
+
+        <template v-if="photoPalette.length">
+          <Label>De la foto</Label>
+          <div class="swatches">
+            <button
+              v-for="c in photoPalette"
+              :key="c"
+              type="button"
+              class="swatch grad"
+              :style="{ background: c }"
+              :aria-label="`Usar ${c}`"
+              @click="setRouteColor(c)"
+            ></button>
+          </div>
+        </template>
       </div>
 
       <!-- Texto -->
