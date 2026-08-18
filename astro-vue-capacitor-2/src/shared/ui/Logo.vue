@@ -10,15 +10,15 @@ withDefaults(defineProps<{ size?: string }>(), { size: "32px" });
 <template>
   <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
     <path
-      d="M8 23c4-2 3-7 7-8s6-3 9-6"
+      d="M10 27 L10 11 C10 6.5 21 6 21 12.5 C21 17 13.5 17 11 16.5 C15.5 17.5 18.5 23 22.5 27"
       fill="none"
       stroke="var(--accent)"
-      stroke-width="2.6"
+      stroke-width="2.8"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
-    <circle cx="8" cy="23" r="2.6" fill="var(--ink)" />
-    <circle cx="24" cy="9" r="2.6" fill="var(--accent)" />
+    <circle cx="10" cy="27" r="2.6" fill="var(--ink)" />
+    <circle cx="22.5" cy="27" r="2.6" fill="none" stroke="var(--accent)" stroke-width="2" />
   </svg>
 </template>
 

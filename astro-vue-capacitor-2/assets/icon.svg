@@ -2,8 +2,8 @@
   <!-- Rastro launcher icon: the trail mark (start point + goal) on brand dark. -->
   <rect width="1024" height="1024" fill="#0a0c0d"/>
   <g transform="scale(32)" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M8 23c4-2 3-7 7-8s6-3 9-6" stroke="#4ce08c" stroke-width="2.4"/>
-    <circle cx="8" cy="23" r="2.7" fill="#eef1ee" stroke="none"/>
-    <circle cx="24" cy="9" r="2.7" fill="#4ce08c" stroke="none"/>
+    <path d="M10 27 L10 11 C10 6.5 21 6 21 12.5 C21 17 13.5 17 11 16.5 C15.5 17.5 18.5 23 22.5 27" stroke="#4ce08c" stroke-width="2.4"/>
+    <circle cx="10" cy="27" r="2.7" fill="#eef1ee" stroke="none"/>
+    <circle cx="22.5" cy="27" r="2.7" fill="none" stroke="#4ce08c" stroke-width="2"/>
   </g>
 </svg>
