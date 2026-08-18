@@ -1,24 +1,27 @@
 <script setup lang="ts">
 /**
- * Rastro brand mark — a trail with a start point and a goal. Theme-aware (uses
- * tokens), transparent background, so it sits anywhere in the app. The same
- * glyph, in fixed colors, is the favicon (public/favicon.svg).
+ * Rastro brand mark — a filled accent-green tile with an angular R cut in dark
+ * negative space. Brand-fixed colors (not theme tokens) so it looks identical
+ * in light and dark. The same mark, in the same colors, is the favicon
+ * (public/favicon.svg) and the app launcher icon.
  */
 withDefaults(defineProps<{ size?: string }>(), { size: "32px" });
 </script>
 
 <template>
   <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
-    <path
-      d="M10 27 L10 11 C10 6.5 21 6 21 12.5 C21 17 13.5 17 11 16.5 C15.5 17.5 18.5 23 22.5 27"
+    <rect width="32" height="32" rx="7" fill="#4ce08c" />
+    <g
       fill="none"
-      stroke="var(--accent)"
-      stroke-width="2.8"
+      stroke="#0a0c0d"
+      stroke-width="4.7"
       stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-    <circle cx="10" cy="27" r="2.6" fill="var(--ink)" />
-    <circle cx="22.5" cy="27" r="2.6" fill="none" stroke="var(--accent)" stroke-width="2" />
+      stroke-linejoin="miter"
+      transform="skewX(-8) translate(2.2 0)"
+    >
+      <path d="M11 25.2 L11 6.8 L19.2 6.8 L23.4 11 L23.4 12.8 L19.2 17 L11 17" />
+      <path d="M15 17 L23.4 25.2" />
+    </g>
   </svg>
 </template>
 

@@ -1,9 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <!-- Adaptive icon foreground: trail mark kept inside the 66% safe zone so no
-       launcher mask (circle / squircle / rounded square) clips the goal dot. -->
-  <g transform="translate(512 512) scale(24) translate(-16 -16)" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M10 27 L10 11 C10 6.5 21 6 21 12.5 C21 17 13.5 17 11 16.5 C15.5 17.5 18.5 23 22.5 27" stroke="#4ce08c" stroke-width="2.4"/>
-    <circle cx="10" cy="27" r="2.7" fill="#eef1ee" stroke="none"/>
-    <circle cx="22.5" cy="27" r="2.7" fill="none" stroke="#4ce08c" stroke-width="2"/>
+  <!-- Adaptive icon foreground: the dark R glyph only, centered inside the
+       safe zone (~56% of the canvas) so no launcher mask clips it. The
+       accent-green sits on the adaptive background layer. -->
+  <g transform="translate(512 512) scale(25) translate(-16.91 -16)">
+    <g fill="none" stroke="#0a0c0d" stroke-width="4.7" stroke-linecap="round" stroke-linejoin="miter" transform="skewX(-8) translate(2.2 0)">
+      <path d="M11 25.2 L11 6.8 L19.2 6.8 L23.4 11 L23.4 12.8 L19.2 17 L11 17"/>
+      <path d="M15 17 L23.4 25.2"/>
+    </g>
   </g>
 </svg>

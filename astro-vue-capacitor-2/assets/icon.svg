@@ -1,9 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <!-- Rastro launcher icon: the trail mark (start point + goal) on brand dark. -->
-  <rect width="1024" height="1024" fill="#0a0c0d"/>
-  <g transform="scale(32)" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M10 27 L10 11 C10 6.5 21 6 21 12.5 C21 17 13.5 17 11 16.5 C15.5 17.5 18.5 23 22.5 27" stroke="#4ce08c" stroke-width="2.4"/>
-    <circle cx="10" cy="27" r="2.7" fill="#eef1ee" stroke="none"/>
-    <circle cx="22.5" cy="27" r="2.7" fill="none" stroke="#4ce08c" stroke-width="2"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 32 32">
+  <!-- Rastro launcher icon: filled accent-green tile with an angular R in dark negative space. -->
+  <rect width="32" height="32" rx="7" fill="#4ce08c"/>
+  <g fill="none" stroke="#0a0c0d" stroke-width="4.7" stroke-linecap="round" stroke-linejoin="miter" transform="skewX(-8) translate(2.2 0)">
+    <path d="M11 25.2 L11 6.8 L19.2 6.8 L23.4 11 L23.4 12.8 L19.2 17 L11 17"/>
+    <path d="M15 17 L23.4 25.2"/>
   </g>
 </svg>
