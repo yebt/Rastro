@@ -1,0 +1,742 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import { SITE_TITLE, SITE_DESCRIPTION, GITHUB_URL, RELEASES_URL } from '../consts';
+import { STRINGS } from '../i18n';
+
+// Single source of truth for copy: render Spanish at build, toggle swaps textContent.
+const t = (k: string): string => STRINGS[k]?.es ?? k;
+---
+
+<!doctype html>
+<html lang="es">
+	<head>
+		<BaseHead title={`${SITE_TITLE} — ${STRINGS['hero.title1'].es} ${STRINGS['hero.title2'].es}`} description={SITE_DESCRIPTION} />
+		<!-- Progressive enhancement flag: content is visible by default; reveals only arm when JS runs. -->
+		<script is:inline>document.documentElement.classList.add('js');</script>
+	</head>
+	<body>
+		<!--
+		DIRECTION CONTRACT — Rastro landing · seed a15b0ba6 · FORM: map-first immersion (7/7 of my grounded list)
+		THESIS: The landing is the instrument, not a brochure about it. Refuses the SaaS hero+3-card rut: the product's own map and readouts ARE the page.
+		OWN-WORLD: Inherited app skin — near-black #0a0c0d ground, one signal green #4ce08c, Barlow Condensed display, Space Mono numerals; a persistent faint topographic map behind instrument-surface panels; drawn route glyphs, no stock chrome.
+		STORY: Visitor sees a real recorded run, believes the measurement + privacy promise, downloads the APK or reads the source.
+		FIRST VIEWPORT: Full-bleed dark terrain; a large tilted route draws itself; headline left, HUD readout strip below, primary "Descargar APK" in accent.
+		FORM: map-first immersion; panels rise over a fixed map ground; seed key a15b0ba6.
+		FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+		-->
+
+		<!-- Persistent topographic map ground -->
+		<div class="terrain" aria-hidden="true">
+			<svg viewBox="0 0 1200 1600" preserveAspectRatio="xMidYMid slice">
+				<g class="contours">
+					<path d="M-100 300 C 200 220 420 380 640 300 S 1080 200 1320 320" />
+					<path d="M-100 420 C 220 340 440 500 660 420 S 1080 320 1320 440" />
+					<path d="M-100 560 C 240 470 470 640 700 560 S 1100 460 1320 590" />
+					<path d="M-100 720 C 260 620 500 800 760 720 S 1120 620 1320 760" />
+					<path d="M-100 900 C 300 790 540 980 800 900 S 1140 800 1320 940" />
+					<path d="M-100 1100 C 320 980 560 1180 840 1100 S 1160 1000 1320 1150" />
+					<path d="M-100 1320 C 340 1200 600 1400 880 1320 S 1180 1220 1320 1380" />
+				</g>
+			</svg>
+		</div>
+
+		<header class="nav">
+			<div class="wrap nav-in">
+				<a class="brand" href="#top" aria-label="Rastro">
+					<svg class="glyph" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+						<rect width="32" height="32" rx="7" fill="#0a0c0d" stroke="#232a2d"></rect>
+						<path d="M8 23c4-2 3-7 7-8s6-3 9-6" fill="none" stroke="#4ce08c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
+						<circle cx="8" cy="23" r="2.6" fill="#eef1ee"></circle>
+						<circle cx="24" cy="9" r="2.6" fill="#4ce08c"></circle>
+					</svg>
+					<span class="brand-name">Rastro</span>
+				</a>
+				<nav class="nav-links" aria-label="Secciones">
+					<a href="#records" data-i18n="nav.records">{t('nav.records')}</a>
+					<a href="#analysis" data-i18n="nav.analysis">{t('nav.analysis')}</a>
+					<a href="#share" data-i18n="nav.share">{t('nav.share')}</a>
+					<a href="#privacy" data-i18n="nav.privacy">{t('nav.privacy')}</a>
+					<a href={GITHUB_URL} data-i18n="nav.dev" rel="noopener">{t('nav.dev')}</a>
+				</nav>
+				<div class="nav-right">
+					<button id="lang" class="lang" type="button" aria-label="English / Español" data-i18n="cta.lang">{t('cta.lang')}</button>
+					<a class="btn btn-sm" href={RELEASES_URL} rel="noopener" data-i18n="cta.download">{t('cta.download')}</a>
+				</div>
+			</div>
+		</header>
+
+		<main id="top">
+			<!-- HERO -->
+			<section class="hero">
+				<div class="wrap hero-in">
+					<div class="hero-copy" data-reveal>
+						<h1 class="hero-title">
+							<span data-i18n="hero.title1">{t('hero.title1')}</span><br />
+							<em data-i18n="hero.title2">{t('hero.title2')}</em>
+						</h1>
+						<p class="hero-sub" data-i18n="hero.sub">{t('hero.sub')}</p>
+						<div class="hero-cta">
+							<a class="btn btn-lg" href={RELEASES_URL} rel="noopener">
+								<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M5 20h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+								<span data-i18n="cta.download">{t('cta.download')}</span>
+							</a>
+							<a class="btn btn-ghost btn-lg" href={GITHUB_URL} rel="noopener">
+								<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9 19c-4 1.4-4-2.2-6-2.6m12 4.6v-3.4a3 3 0 00-.8-2.3c2.7-.3 5.5-1.3 5.5-6a4.6 4.6 0 00-1.3-3.2 4.3 4.3 0 00-.1-3.2s-1-.3-3.4 1.3a11.6 11.6 0 00-6 0C7.9 2.9 6.9 3.2 6.9 3.2a4.3 4.3 0 00-.1 3.2A4.6 4.6 0 005.5 9.6c0 4.6 2.8 5.7 5.5 6a3 3 0 00-.8 2.3V21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+								<span data-i18n="cta.source">{t('cta.source')}</span>
+							</a>
+						</div>
+						<p class="hero-note cap" data-i18n="hero.note">{t('hero.note')}</p>
+					</div>
+
+					<div class="hero-instrument" data-reveal>
+						<div class="scope">
+							<span class="scope-cap cap" data-i18n="hero.kicker">{t('hero.kicker')}</span>
+							<svg class="route" viewBox="0 0 420 300" role="img" aria-label="Recorrido de ejemplo">
+								<defs>
+									<pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+										<circle cx="1.5" cy="1.5" r="1.1" fill="#1b2124"></circle>
+									</pattern>
+								</defs>
+								<g class="tilt">
+									<rect x="-40" y="-20" width="500" height="360" fill="url(#dots)"></rect>
+									<path class="route-line" d="M60 250 C 110 230 96 150 150 140 C 210 128 210 210 270 190 C 330 172 300 90 370 60" fill="none" stroke="#4ce08c" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"></path>
+									<circle class="km" cx="150" cy="140" r="3.2"></circle>
+									<circle class="km" cx="270" cy="190" r="3.2"></circle>
+									<circle class="p-start" cx="60" cy="250" r="7"></circle>
+									<circle class="p-end" cx="370" cy="60" r="7.5"></circle>
+								</g>
+							</svg>
+							<div class="hud">
+								<div class="hud-cell"><b class="mono">7.42</b><span data-i18n="hero.stat.dist">{t('hero.stat.dist')}</span><i class="mono">km</i></div>
+								<div class="hud-cell"><b class="mono">5'18"</b><span data-i18n="hero.stat.pace">{t('hero.stat.pace')}</span><i class="mono">/km</i></div>
+								<div class="hud-cell"><b class="mono">168</b><span data-i18n="hero.stat.cad">{t('hero.stat.cad')}</span><i class="mono">spm</i></div>
+								<div class="hud-cell"><b class="mono">+214</b><span data-i18n="hero.stat.elev">{t('hero.stat.elev')}</span><i class="mono">m</i></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- WHAT IT RECORDS -->
+			<section id="records" class="band">
+				<div class="wrap">
+					<header class="band-head" data-reveal>
+						<h2 data-i18n="rec.title">{t('rec.title')}</h2>
+						<p class="lead" data-i18n="rec.sub">{t('rec.sub')}</p>
+					</header>
+					<div class="kinds">
+						<article class="kind" data-reveal>
+							<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19c3-1.4 2.4-5.4 5-6s4.4-2.2 6.6-4.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="4" cy="19" r="2" fill="currentColor"></circle><circle cx="18.5" cy="6.5" r="2" fill="none" stroke="currentColor" stroke-width="1.8"></circle></svg>
+							<h3 data-i18n="rec.move.t">{t('rec.move.t')}</h3>
+							<p data-i18n="rec.move.d">{t('rec.move.d')}</p>
+						</article>
+						<article class="kind" data-reveal>
+							<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
+							<h3 data-i18n="rec.exercise.t">{t('rec.exercise.t')}</h3>
+							<p data-i18n="rec.exercise.d">{t('rec.exercise.d')}</p>
+						</article>
+						<article class="kind" data-reveal>
+							<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="M4 6l1 1 1.5-2M4 12l1 1 1.5-2M4 18l1 1 1.5-2" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+							<h3 data-i18n="rec.routine.t">{t('rec.routine.t')}</h3>
+							<p data-i18n="rec.routine.d">{t('rec.routine.d')}</p>
+						</article>
+					</div>
+				</div>
+			</section>
+
+			<!-- ANALYSIS -->
+			<section id="analysis" class="band">
+				<div class="wrap analysis">
+					<div class="analysis-copy" data-reveal>
+						<h2 class="split-title">
+							<span data-i18n="an.title1">{t('an.title1')}</span><br />
+							<em data-i18n="an.title2">{t('an.title2')}</em>
+						</h2>
+						<p class="lead" data-i18n="an.sub">{t('an.sub')}</p>
+						<div class="chips">
+							<span class="chip"><span data-i18n="an.records.cap">{t('an.records.cap')}</span></span>
+							<span class="chip" data-i18n="an.splits.cap">{t('an.splits.cap')}</span>
+							<span class="chip" data-i18n="an.cadence.cap">{t('an.cadence.cap')}</span>
+						</div>
+					</div>
+
+					<div class="panel" data-reveal>
+						<div class="panel-block">
+							<div class="panel-cap"><span class="cap" data-i18n="an.insights.cap">{t('an.insights.cap')}</span><svg class="medal" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="5" fill="none" stroke="var(--accent)" stroke-width="1.8"></circle><path d="M9 13l-2 8 5-3 5 3-2-8" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round"></path></svg></div>
+							<ul class="insights">
+								<li data-i18n="an.insight1">{t('an.insight1')}</li>
+								<li data-i18n="an.insight2">{t('an.insight2')}</li>
+								<li data-i18n="an.insight3">{t('an.insight3')}</li>
+							</ul>
+						</div>
+
+						<div class="panel-block">
+							<span class="cap" data-i18n="an.splits.cap">{t('an.splits.cap')}</span>
+							<div class="splits" role="img" aria-label="Ritmo por kilómetro">
+								<span style="--h:56%"><i class="mono">1</i></span>
+								<span style="--h:72%"><i class="mono">2</i></span>
+								<span style="--h:92%" class="best"><i class="mono">3</i></span>
+								<span style="--h:64%"><i class="mono">4</i></span>
+								<span style="--h:80%"><i class="mono">5</i></span>
+								<span style="--h:70%"><i class="mono">6</i></span>
+								<span style="--h:48%"><i class="mono">7</i></span>
+							</div>
+						</div>
+
+						<div class="panel-block">
+							<div class="panel-cap"><span class="cap" data-i18n="an.cadence.cap">{t('an.cadence.cap')}</span><b class="mono accent">168 spm</b></div>
+							<svg class="curve" viewBox="0 0 320 90" preserveAspectRatio="none" role="img" aria-label="Curva de cadencia">
+								<path d="M0 78 C 60 70 90 30 160 24 C 210 20 250 40 320 64" fill="none" stroke="#4ce08c" stroke-width="2.4" stroke-linecap="round"></path>
+								<path d="M0 78 C 60 70 90 30 160 24 C 210 20 250 40 320 64 L 320 90 L 0 90 Z" fill="url(#cad)"></path>
+								<defs><linearGradient id="cad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4ce08c" stop-opacity="0.22"></stop><stop offset="1" stop-color="#4ce08c" stop-opacity="0"></stop></linearGradient></defs>
+								<circle cx="160" cy="24" r="3.5" fill="#eef1ee"></circle>
+							</svg>
+							<p class="panel-note" data-i18n="an.cadence.note">{t('an.cadence.note')}</p>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- SHARE -->
+			<section id="share" class="band">
+				<div class="wrap">
+					<header class="band-head" data-reveal>
+						<h2 data-i18n="share.title">{t('share.title')}</h2>
+						<p class="lead" data-i18n="share.sub">{t('share.sub')}</p>
+					</header>
+					<div class="share-grid">
+						<div class="share-cards" data-reveal>
+							<figure class="scard scard-map">
+								<div class="scard-map-bg">
+									<svg viewBox="0 0 240 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+										<g class="scard-contours">
+											<path d="M-20 80 C 60 40 140 120 260 70"></path>
+											<path d="M-20 150 C 60 110 140 190 260 140"></path>
+											<path d="M-20 230 C 60 190 140 270 260 220"></path>
+										</g>
+										<path d="M40 280 C 70 250 60 180 110 168 C 160 156 150 100 200 70" fill="none" stroke="#4ce08c" stroke-width="4" stroke-linecap="round"></path>
+										<circle cx="40" cy="280" r="6" fill="#eef1ee"></circle>
+										<circle cx="200" cy="70" r="6" fill="none" stroke="#4ce08c" stroke-width="3"></circle>
+									</svg>
+								</div>
+								<figcaption>
+									<span class="cap" data-i18n="share.card.route">{t('share.card.route')}</span>
+									<div class="scard-row"><b class="mono">7.42 km</b><b class="mono">5'18"/km</b></div>
+								</figcaption>
+							</figure>
+							<figure class="scard scard-photo">
+								<div class="scard-photo-bg"></div>
+								<figcaption class="scard-photo-cap">
+									<b class="mono">42:18</b>
+									<span class="cap">MOV · 12 MAY</span>
+								</figcaption>
+							</figure>
+						</div>
+
+						<ul class="share-feats" data-reveal>
+							<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"></rect><circle cx="8.5" cy="10" r="1.6" fill="currentColor"></circle><path d="M4 17l5-4 4 3 3-2 4 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path></svg><span data-i18n="share.f1">{t('share.f1')}</span></li>
+							<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l9-4 9 4-9 4-9-4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path><path d="M3 8v8l9 4 9-4V8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path></svg><span data-i18n="share.f2">{t('share.f2')}</span></li>
+							<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18c3-1 3-6 6-7s5-2 8-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="M4 13c3-1 3-6 6-7s5-2 8-6" fill="none" stroke="var(--accent)" stroke-width="1.4" stroke-linecap="round" opacity="0.6"></path></svg><span data-i18n="share.f3">{t('share.f3')}</span></li>
+							<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="7" height="7" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.8"></rect><rect x="14" y="4" width="7" height="16" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.8"></rect><rect x="3" y="15" width="7" height="5" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.8"></rect></svg><span data-i18n="share.f4">{t('share.f4')}</span></li>
+						</ul>
+					</div>
+				</div>
+			</section>
+
+			<!-- PRIVACY -->
+			<section id="privacy" class="band band-quiet">
+				<div class="wrap privacy">
+					<div class="privacy-copy" data-reveal>
+						<h2 class="split-title big">
+							<span data-i18n="priv.title1">{t('priv.title1')}</span><br />
+							<em data-i18n="priv.title2">{t('priv.title2')}</em>
+						</h2>
+						<p class="lead" data-i18n="priv.body">{t('priv.body')}</p>
+					</div>
+					<ul class="pledge" data-reveal>
+						<li>
+							<svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.8"></rect><path d="M8 11V8a4 4 0 018 0v3" fill="none" stroke="var(--accent)" stroke-width="1.8"></path></svg>
+							<div><b data-i18n="priv.p1">{t('priv.p1')}</b><span data-i18n="priv.p1d">{t('priv.p1d')}</span></div>
+						</li>
+						<li>
+							<svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18a4 4 0 01-.5-8 6 6 0 0111.3-1.2A3.5 3.5 0 0118 18H7z" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round"></path><path d="M4 4l16 16" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round"></path></svg>
+							<div><b data-i18n="priv.p2">{t('priv.p2')}</b><span data-i18n="priv.p2d">{t('priv.p2d')}</span></div>
+						</li>
+						<li>
+							<svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0l-4-4m4 4l4-4M5 20h14" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+							<div><b data-i18n="priv.p3">{t('priv.p3')}</b><span data-i18n="priv.p3d">{t('priv.p3d')}</span></div>
+						</li>
+					</ul>
+				</div>
+			</section>
+
+			<!-- DEV -->
+			<section class="band">
+				<div class="wrap dev">
+					<div class="dev-copy" data-reveal>
+						<h2 data-i18n="dev.title">{t('dev.title')}</h2>
+						<p class="lead" data-i18n="dev.body">{t('dev.body')}</p>
+						<div class="tags">
+							<span class="tag mono">Astro</span>
+							<span class="tag mono">Vue</span>
+							<span class="tag mono">Capacitor</span>
+							<span class="tag mono">Hexagonal</span>
+							<span class="tag mono">IndexedDB</span>
+						</div>
+					</div>
+					<div class="readouts" data-reveal>
+						<div class="readout"><b class="mono">170</b><span data-i18n="dev.stat.tests">{t('dev.stat.tests')}</span></div>
+						<div class="readout"><b class="mono">0</b><span data-i18n="dev.stat.deps">{t('dev.stat.deps')}</span></div>
+						<div class="readout"><b class="mono accent">AGPL</b><span data-i18n="dev.stat.license">{t('dev.stat.license')}</span></div>
+					</div>
+				</div>
+			</section>
+
+			<!-- DOWNLOAD -->
+			<section class="closer">
+				<div class="wrap closer-in" data-reveal>
+					<svg class="closer-glyph" viewBox="0 0 32 32" width="52" height="52" aria-hidden="true">
+						<path d="M6 24c5-2.5 4-8.5 8.5-9.5S22 11 27 7" fill="none" stroke="#4ce08c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
+						<circle cx="6" cy="24" r="3" fill="#eef1ee"></circle>
+						<circle cx="27" cy="7" r="3" fill="none" stroke="#4ce08c" stroke-width="2.4"></circle>
+					</svg>
+					<h2 data-i18n="dl.title">{t('dl.title')}</h2>
+					<p class="lead" data-i18n="dl.sub">{t('dl.sub')}</p>
+					<div class="hero-cta center">
+						<a class="btn btn-lg" href={RELEASES_URL} rel="noopener">
+							<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M5 20h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+							<span data-i18n="cta.download">{t('cta.download')}</span>
+						</a>
+						<a class="btn btn-ghost btn-lg" href={GITHUB_URL} rel="noopener">
+							<span data-i18n="cta.source">{t('cta.source')}</span>
+						</a>
+					</div>
+					<p class="cap dl-req" data-i18n="dl.req">{t('dl.req')}</p>
+				</div>
+			</section>
+		</main>
+
+		<footer class="foot">
+			<div class="wrap foot-in">
+				<div class="foot-brand">
+					<svg class="glyph" viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
+						<rect width="32" height="32" rx="7" fill="#0a0c0d" stroke="#232a2d"></rect>
+						<path d="M8 23c4-2 3-7 7-8s6-3 9-6" fill="none" stroke="#4ce08c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
+						<circle cx="8" cy="23" r="2.6" fill="#eef1ee"></circle>
+						<circle cx="24" cy="9" r="2.6" fill="#4ce08c"></circle>
+					</svg>
+					<div>
+						<b>Rastro</b>
+						<span class="foot-tag" data-i18n="foot.tagline">{t('foot.tagline')}</span>
+					</div>
+				</div>
+				<div class="foot-links">
+					<a href={GITHUB_URL} rel="noopener">GitHub</a>
+					<a href={RELEASES_URL} rel="noopener" data-i18n="cta.download">{t('cta.download')}</a>
+					<span data-i18n="foot.license">{t('foot.license')}</span>
+				</div>
+				<span class="foot-made cap" data-i18n="foot.made">{t('foot.made')}</span>
+			</div>
+		</footer>
+
+		<script is:inline define:vars={{ strings: STRINGS }}>
+			(function () {
+				const KEY = 'rastro.lang';
+				const nodes = document.querySelectorAll('[data-i18n]');
+				function detect() {
+					try {
+						const s = localStorage.getItem(KEY);
+						if (s === 'es' || s === 'en') return s;
+					} catch (e) {}
+					return (navigator.language || 'es').toLowerCase().startsWith('en') ? 'en' : 'es';
+				}
+				function apply(lang) {
+					document.documentElement.lang = lang;
+					nodes.forEach(function (n) {
+						const k = n.getAttribute('data-i18n');
+						const entry = strings[k];
+						if (entry && entry[lang]) n.textContent = entry[lang];
+					});
+					const btn = document.getElementById('lang');
+					if (btn) btn.setAttribute('aria-pressed', String(lang === 'en'));
+					try { localStorage.setItem(KEY, lang); } catch (e) {}
+				}
+				let lang = detect();
+				apply(lang);
+				const btn = document.getElementById('lang');
+				if (btn) btn.addEventListener('click', function () {
+					lang = lang === 'es' ? 'en' : 'es';
+					apply(lang);
+				});
+
+				// One authored reveal — sections rise as they enter. Belt-and-suspenders:
+				// the observer staggers on scroll, a scroll sweep backs it up, and a hard
+				// fallback guarantees content is NEVER left hidden (bad JS timing, jump links).
+				const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+				const reveals = Array.prototype.slice.call(document.querySelectorAll('[data-reveal]'));
+				function reveal(n) { n.classList.add('in'); }
+				if (reduce || !('IntersectionObserver' in window)) {
+					reveals.forEach(reveal);
+				} else {
+					const io = new IntersectionObserver(function (entries) {
+						entries.forEach(function (e) {
+							if (e.isIntersecting) { reveal(e.target); io.unobserve(e.target); }
+						});
+					}, { rootMargin: '0px 0px -10% 0px', threshold: 0.08 });
+					reveals.forEach(function (n) { io.observe(n); });
+					function sweep() {
+						for (let i = reveals.length - 1; i >= 0; i--) {
+							const n = reveals[i];
+							if (n.classList.contains('in')) continue;
+							const r = n.getBoundingClientRect();
+							if (r.top < window.innerHeight * 0.92 && r.bottom > 0) { reveal(n); io.unobserve(n); }
+						}
+					}
+					window.addEventListener('scroll', sweep, { passive: true });
+					window.addEventListener('resize', sweep, { passive: true });
+					window.addEventListener('load', sweep);
+					sweep();
+					// Last resort: nothing stays invisible past this point, ever.
+					setTimeout(function () { reveals.forEach(reveal); }, 2200);
+				}
+			})();
+		</script>
+
+		<style>
+			/* ---------- Terrain ground ---------- */
+			.terrain {
+				position: fixed;
+				inset: 0;
+				z-index: -1;
+				background:
+					radial-gradient(120% 80% at 78% -8%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 46%),
+					radial-gradient(90% 70% at 8% 108%, color-mix(in srgb, var(--accent) 5%, transparent), transparent 50%),
+					var(--bg);
+			}
+			.terrain svg { width: 100%; height: 100%; }
+			.contours path {
+				fill: none;
+				stroke: var(--line);
+				stroke-width: 1.2;
+				opacity: 0.5;
+			}
+
+			/* ---------- Nav ---------- */
+			.nav {
+				position: sticky;
+				top: 0;
+				z-index: 50;
+				backdrop-filter: saturate(140%) blur(12px);
+				background: color-mix(in srgb, var(--bg) 78%, transparent);
+				border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+			}
+			.nav-in {
+				display: flex;
+				align-items: center;
+				gap: var(--sp-5);
+				height: 62px;
+			}
+			.brand { display: inline-flex; align-items: center; gap: 10px; }
+			.brand-name {
+				font-family: var(--font-display);
+				font-weight: 600;
+				font-size: 24px;
+				letter-spacing: 0.01em;
+			}
+			.nav-links {
+				display: flex;
+				gap: var(--sp-5);
+				margin-left: auto;
+				font-size: 14px;
+				color: var(--muted);
+			}
+			.nav-links a { transition: color 0.15s ease; }
+			.nav-links a:hover { color: var(--ink); }
+			.nav-right { display: flex; align-items: center; gap: var(--sp-3); }
+			.lang {
+				font-family: var(--font-mono);
+				font-size: 12px;
+				letter-spacing: 0.08em;
+				color: var(--muted);
+				background: transparent;
+				border: 1px solid var(--line-2);
+				border-radius: 8px;
+				padding: 6px 10px;
+				cursor: pointer;
+				transition: color 0.15s ease, border-color 0.15s ease;
+			}
+			.lang:hover { color: var(--ink); border-color: var(--faint); }
+
+			/* ---------- Buttons ---------- */
+			.btn {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				gap: 9px;
+				font-family: var(--font-display);
+				font-weight: 600;
+				font-size: 16px;
+				letter-spacing: 0.01em;
+				color: var(--accent-ink);
+				background: var(--accent);
+				border: 1px solid transparent;
+				border-radius: 12px;
+				padding: 11px 18px;
+				cursor: pointer;
+				transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.16s ease, background 0.16s ease;
+			}
+			.btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px -12px color-mix(in srgb, var(--accent) 60%, transparent); }
+			.btn:active { transform: translateY(0); }
+			.btn-sm { padding: 8px 14px; font-size: 14px; border-radius: 10px; }
+			.btn-lg { padding: 14px 24px; font-size: 18px; }
+			.btn-ghost {
+				color: var(--ink);
+				background: color-mix(in srgb, var(--surface) 70%, transparent);
+				border-color: var(--line-2);
+			}
+			.btn-ghost:hover {
+				background: var(--surface-2);
+				box-shadow: none;
+				border-color: var(--faint);
+			}
+
+			/* ---------- Hero ---------- */
+			.hero { padding: clamp(48px, 9vw, 104px) 0 var(--sp-9); }
+			.hero-in {
+				display: grid;
+				grid-template-columns: minmax(0, 1fr) clamp(300px, 34%, 420px);
+				gap: clamp(28px, 5vw, 72px);
+				align-items: center;
+			}
+			.hero-copy { min-width: 0; }
+			.hero-title {
+				font-size: clamp(52px, 9.5vw, 116px);
+				line-height: 0.9;
+				letter-spacing: -0.02em;
+				text-transform: uppercase;
+			}
+			.hero-title em { color: var(--accent); font-style: normal; }
+			.hero-sub {
+				margin-top: var(--sp-5);
+				max-width: 48ch;
+				font-size: clamp(16px, 2vw, 19px);
+				color: var(--muted);
+			}
+			.hero-cta { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
+			.hero-cta.center { justify-content: center; }
+			.hero-note { margin-top: var(--sp-5); }
+
+			/* Instrument scope */
+			.hero-instrument { display: flex; justify-content: center; }
+			.scope {
+				position: relative;
+				width: min(100%, 460px);
+				background: linear-gradient(180deg, var(--surface) 0%, var(--bg-2) 100%);
+				border: 1px solid var(--line-2);
+				border-radius: var(--radius-lg);
+				padding: var(--sp-5);
+				box-shadow: var(--shadow-lg);
+			}
+			.scope-cap { position: absolute; top: 14px; left: 18px; z-index: 2; }
+			.route { width: 100%; height: auto; border-radius: var(--radius); overflow: hidden; }
+			.tilt { transform: perspective(760px) rotateX(20deg) rotateZ(-11deg); transform-origin: 55% 60%; }
+			.route-line {
+				stroke-dasharray: 640;
+				stroke-dashoffset: 640;
+				filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 55%, transparent));
+			}
+			.hero-instrument.in .route-line { animation: draw 2.1s cubic-bezier(0.3, 0.9, 0.2, 1) 0.25s forwards; }
+			@keyframes draw { to { stroke-dashoffset: 0; } }
+			.km { fill: var(--bg); stroke: var(--accent); stroke-width: 2; }
+			.p-start { fill: var(--ink); }
+			.p-end { fill: var(--bg); stroke: var(--accent); stroke-width: 3; }
+			.hud {
+				display: grid;
+				grid-template-columns: repeat(4, 1fr);
+				gap: var(--sp-2);
+				margin-top: var(--sp-4);
+				padding-top: var(--sp-4);
+				border-top: 1px solid var(--line);
+			}
+			.hud-cell { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
+			.hud-cell b { font-size: clamp(15px, 2.5vw, 19px); font-weight: 700; white-space: nowrap; }
+			.hud-cell span { font-size: 10px; color: var(--muted); text-transform: capitalize; }
+			.hud-cell i { font-size: 9.5px; color: var(--faint); font-style: normal; }
+
+			/* ---------- Bands ---------- */
+			.band { padding: clamp(56px, 9vw, 120px) 0; }
+			.band-quiet { background: color-mix(in srgb, var(--bg-2) 60%, transparent); }
+			.band-head { max-width: 60ch; margin-bottom: var(--sp-8); }
+			h2 { font-size: clamp(34px, 5.5vw, 60px); text-transform: uppercase; }
+			.lead { margin-top: var(--sp-4); font-size: clamp(16px, 2vw, 19px); color: var(--muted); max-width: 62ch; }
+			.split-title { font-size: clamp(38px, 6vw, 72px); text-transform: uppercase; line-height: 0.92; }
+			.split-title.big { font-size: clamp(40px, 7vw, 84px); }
+			.split-title em { color: var(--accent); font-style: normal; }
+
+			/* Kinds */
+			.kinds { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); }
+			.kind {
+				background: color-mix(in srgb, var(--surface) 86%, transparent);
+				border: 1px solid var(--line);
+				border-radius: var(--radius-lg);
+				padding: var(--sp-6) var(--sp-5) var(--sp-5);
+			}
+			.ico { width: 40px; height: 40px; color: var(--ink); margin-bottom: var(--sp-4); }
+			.kind h3 { font-size: 27px; text-transform: uppercase; margin-bottom: var(--sp-2); }
+			.kind p { color: var(--muted); font-size: 15.5px; }
+
+			/* Analysis */
+			.analysis { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: clamp(28px, 5vw, 68px); align-items: center; }
+			.chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-5); }
+			.chip {
+				font-family: var(--font-mono);
+				font-size: 12px;
+				color: var(--muted);
+				border: 1px solid var(--line-2);
+				border-radius: 999px;
+				padding: 5px 12px;
+			}
+			.panel {
+				background: linear-gradient(180deg, var(--surface) 0%, var(--bg-2) 100%);
+				border: 1px solid var(--line-2);
+				border-radius: var(--radius-lg);
+				padding: var(--sp-5);
+				box-shadow: var(--shadow);
+				display: flex;
+				flex-direction: column;
+				gap: var(--sp-5);
+			}
+			.panel-block { display: flex; flex-direction: column; gap: var(--sp-3); }
+			.panel-block + .panel-block { padding-top: var(--sp-5); border-top: 1px solid var(--line); }
+			.panel-cap { display: flex; align-items: center; justify-content: space-between; }
+			.medal { width: 22px; height: 22px; }
+			.accent { color: var(--accent); }
+			.insights { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+			.insights li { position: relative; padding-left: 18px; font-size: 15px; color: var(--ink); }
+			.insights li::before { content: ''; position: absolute; left: 2px; top: 8px; width: 6px; height: 6px; border-radius: 999px; background: var(--accent); }
+			.splits { display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px; align-items: end; height: 116px; }
+			.splits span {
+				position: relative;
+				height: var(--h);
+				background: color-mix(in srgb, var(--muted) 30%, transparent);
+				border-radius: 5px 5px 2px 2px;
+				display: flex;
+				align-items: flex-end;
+				justify-content: center;
+			}
+			.splits span.best { background: color-mix(in srgb, var(--accent) 70%, transparent); }
+			.splits i { position: absolute; bottom: -18px; font-size: 10px; color: var(--faint); font-style: normal; }
+			.curve { width: 100%; height: 90px; }
+			.panel-note { font-size: 13.5px; color: var(--muted); }
+
+			/* Share */
+			.share-grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: clamp(28px, 5vw, 64px); align-items: center; }
+			.share-cards { display: flex; gap: var(--sp-4); justify-content: center; }
+			.scard {
+				margin: 0;
+				width: 200px;
+				aspect-ratio: 3 / 4;
+				border-radius: var(--radius-lg);
+				overflow: hidden;
+				border: 1px solid var(--line-2);
+				box-shadow: var(--shadow-lg);
+				position: relative;
+			}
+			.scard-map { background: linear-gradient(180deg, #10201a 0%, #0a0c0d 100%); }
+			.scard-map-bg { position: absolute; inset: 0; }
+			.scard-map-bg svg { width: 100%; height: 100%; }
+			.scard-contours path { fill: none; stroke: color-mix(in srgb, var(--accent) 22%, transparent); stroke-width: 1; }
+			.scard figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: var(--sp-4); background: linear-gradient(0deg, rgba(0, 0, 0, 0.6), transparent); }
+			.scard-row { display: flex; justify-content: space-between; margin-top: 6px; font-size: 13px; color: var(--ink); }
+			.scard-photo { transform: rotate(4deg) translateY(8px); }
+			.scard-photo-bg {
+				position: absolute; inset: 0;
+				background:
+					radial-gradient(80% 60% at 30% 20%, #3a2a1e, transparent 60%),
+					linear-gradient(150deg, #52381f 0%, #241a12 60%, #0a0c0d 100%);
+			}
+			.scard-photo-bg::after {
+				content: ''; position: absolute; inset: 0;
+				background: linear-gradient(0deg, rgba(0,0,0,0.55), rgba(0,0,0,0.15));
+			}
+			.scard-photo-cap { display: flex; flex-direction: column; gap: 2px; }
+			.scard-photo-cap b { font-size: 26px; color: #fff; }
+			.share-feats { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-4); }
+			.share-feats li { display: flex; align-items: center; gap: var(--sp-3); font-size: 16.5px; }
+			.ico-sm { width: 26px; height: 26px; color: var(--ink); flex: none; }
+
+			/* Privacy */
+			.privacy { display: grid; grid-template-columns: 1fr 0.8fr; gap: clamp(28px, 5vw, 72px); align-items: center; }
+			.pledge { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-4); }
+			.pledge li {
+				display: flex; gap: var(--sp-4); align-items: flex-start;
+				background: color-mix(in srgb, var(--surface) 80%, transparent);
+				border: 1px solid var(--line);
+				border-radius: var(--radius);
+				padding: var(--sp-4) var(--sp-5);
+			}
+			.pledge li div { display: flex; flex-direction: column; }
+			.pledge b { font-family: var(--font-display); font-size: 21px; text-transform: uppercase; }
+			.pledge span { color: var(--muted); font-size: 14.5px; }
+
+			/* Dev */
+			.dev { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: clamp(28px, 5vw, 64px); align-items: center; }
+			.tags { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-5); }
+			.tag { font-size: 12.5px; color: var(--muted); border: 1px solid var(--line-2); border-radius: 8px; padding: 5px 11px; }
+			.readouts { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3); }
+			.readout {
+				background: color-mix(in srgb, var(--surface) 84%, transparent);
+				border: 1px solid var(--line);
+				border-radius: var(--radius);
+				padding: var(--sp-5) var(--sp-3);
+				text-align: center;
+			}
+			.readout b { display: block; font-size: clamp(26px, 4vw, 40px); font-weight: 700; }
+			.readout span { font-size: 12px; color: var(--muted); }
+
+			/* Closer */
+			.closer { padding: clamp(64px, 11vw, 148px) 0; text-align: center; }
+			.closer-in { max-width: 40ch; margin-inline: auto; display: flex; flex-direction: column; align-items: center; }
+			.closer-glyph { margin-bottom: var(--sp-4); }
+			.closer h2 { font-size: clamp(40px, 7vw, 76px); text-transform: uppercase; }
+			.closer .lead { margin-inline: auto; }
+			.closer .hero-cta { margin-top: var(--sp-6); }
+			.dl-req { margin-top: var(--sp-5); }
+
+			/* Footer */
+			.foot { border-top: 1px solid var(--line); padding: var(--sp-7) 0; background: var(--bg-2); }
+			.foot-in { display: flex; align-items: center; gap: var(--sp-5); flex-wrap: wrap; }
+			.foot-brand { display: flex; align-items: center; gap: var(--sp-3); }
+			.foot-brand div { display: flex; flex-direction: column; }
+			.foot-brand b { font-family: var(--font-display); font-size: 18px; }
+			.foot-tag { font-size: 12.5px; color: var(--faint); }
+			.foot-links { display: flex; gap: var(--sp-5); margin-left: auto; font-size: 14px; color: var(--muted); flex-wrap: wrap; }
+			.foot-links a { transition: color 0.15s ease; }
+			.foot-links a:hover { color: var(--ink); }
+			.foot-made { flex-basis: 100%; }
+
+			/* ---------- Reveal (progressive: hidden only when JS is present) ---------- */
+			.js [data-reveal] { opacity: 0; transform: translateY(22px); transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1); }
+			.js [data-reveal].in { opacity: 1; transform: none; }
+			@media (prefers-reduced-motion: reduce) {
+				.js [data-reveal] { opacity: 1; transform: none; transition: none; }
+				.route-line { stroke-dashoffset: 0 !important; animation: none !important; }
+			}
+
+			/* ---------- Responsive ---------- */
+			@media (max-width: 900px) {
+				.hero-in, .analysis, .share-grid, .privacy, .dev { grid-template-columns: 1fr; }
+				.hero-instrument { order: -1; }
+				.analysis-copy, .dev-copy { order: -1; }
+				.nav-links { display: none; }
+			}
+			@media (max-width: 620px) {
+				.kinds { grid-template-columns: 1fr; }
+				.share-cards { gap: var(--sp-2); }
+				.scard { width: 168px; }
+				.hud-cell b { font-size: 18px; }
+				.readouts { grid-template-columns: 1fr; }
+			}
+		</style>
+	</body>
+</html>
