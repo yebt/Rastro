@@ -45,9 +45,9 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 				<a class="brand" href="#top" aria-label="Rastro">
 					<svg class="glyph" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
 						<rect width="32" height="32" rx="7" fill="#0a0c0d" stroke="#232a2d"></rect>
-						<path d="M8 23c4-2 3-7 7-8s6-3 9-6" fill="none" stroke="#4ce08c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
-						<circle cx="8" cy="23" r="2.6" fill="#eef1ee"></circle>
-						<circle cx="24" cy="9" r="2.6" fill="#4ce08c"></circle>
+						<path d="M10 27 L10 11 C10 6.5 21 6 21 12.5 C21 17 13.5 17 11 16.5 C15.5 17.5 18.5 23 22.5 27" fill="none" stroke="#4ce08c" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"></path>
+						<circle cx="10" cy="27" r="2.6" fill="#eef1ee"></circle>
+						<circle cx="22.5" cy="27" r="2.6" fill="none" stroke="#4ce08c" stroke-width="2"></circle>
 					</svg>
 					<span class="brand-name">Rastro</span>
 				</a>
@@ -117,27 +117,33 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 				</div>
 			</section>
 
-			<!-- WHAT IT RECORDS -->
-			<section id="records" class="band">
+			<!-- MODES -->
+			<section id="records" class="band band-tight">
 				<div class="wrap">
 					<header class="band-head" data-reveal>
 						<h2 data-i18n="rec.title">{t('rec.title')}</h2>
 						<p class="lead" data-i18n="rec.sub">{t('rec.sub')}</p>
 					</header>
-					<div class="kinds">
-						<article class="kind" data-reveal>
-							<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19c3-1.4 2.4-5.4 5-6s4.4-2.2 6.6-4.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="4" cy="19" r="2" fill="currentColor"></circle><circle cx="18.5" cy="6.5" r="2" fill="none" stroke="currentColor" stroke-width="1.8"></circle></svg>
-							<h3 data-i18n="rec.move.t">{t('rec.move.t')}</h3>
+					<div class="modes" data-reveal>
+						<article class="mode">
+							<div class="mode-head">
+								<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19c3-1.4 2.4-5.4 5-6s4.4-2.2 6.6-4.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="4" cy="19" r="2" fill="currentColor"></circle><circle cx="18.5" cy="6.5" r="2" fill="none" stroke="var(--accent)" stroke-width="1.8"></circle></svg>
+								<h3 data-i18n="rec.move.t">{t('rec.move.t')}</h3>
+							</div>
 							<p data-i18n="rec.move.d">{t('rec.move.d')}</p>
 						</article>
-						<article class="kind" data-reveal>
-							<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
-							<h3 data-i18n="rec.exercise.t">{t('rec.exercise.t')}</h3>
+						<article class="mode">
+							<div class="mode-head">
+								<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
+								<h3 data-i18n="rec.exercise.t">{t('rec.exercise.t')}</h3>
+							</div>
 							<p data-i18n="rec.exercise.d">{t('rec.exercise.d')}</p>
 						</article>
-						<article class="kind" data-reveal>
-							<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="M4 6l1 1 1.5-2M4 12l1 1 1.5-2M4 18l1 1 1.5-2" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-							<h3 data-i18n="rec.routine.t">{t('rec.routine.t')}</h3>
+						<article class="mode">
+							<div class="mode-head">
+								<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="M4 6l1 1 1.5-2M4 12l1 1 1.5-2M4 18l1 1 1.5-2" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+								<h3 data-i18n="rec.routine.t">{t('rec.routine.t')}</h3>
+							</div>
 							<p data-i18n="rec.routine.d">{t('rec.routine.d')}</p>
 						</article>
 					</div>
@@ -153,10 +159,13 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 							<em data-i18n="an.title2">{t('an.title2')}</em>
 						</h2>
 						<p class="lead" data-i18n="an.sub">{t('an.sub')}</p>
-						<div class="chips">
-							<span class="chip"><span data-i18n="an.records.cap">{t('an.records.cap')}</span></span>
-							<span class="chip" data-i18n="an.splits.cap">{t('an.splits.cap')}</span>
-							<span class="chip" data-i18n="an.cadence.cap">{t('an.cadence.cap')}</span>
+						<div class="statcluster">
+							<div class="stat"><b class="mono">128.4</b><i class="mono">km</i><span data-i18n="an.stat.total">{t('an.stat.total')}</span></div>
+							<div class="stat"><b class="mono">11:42</b><i class="mono">h</i><span data-i18n="an.stat.time">{t('an.stat.time')}</span></div>
+							<div class="stat"><b class="mono">4'52"</b><i class="mono">/km</i><span data-i18n="an.stat.best">{t('an.stat.best')}</span></div>
+							<div class="stat"><b class="mono">612</b><i class="mono">kcal</i><span data-i18n="an.stat.cal">{t('an.stat.cal')}</span></div>
+							<div class="stat"><b class="mono">+214</b><i class="mono">m</i><span data-i18n="an.stat.gain">{t('an.stat.gain')}</span></div>
+							<div class="stat"><b class="mono accent">7</b><i class="mono">×</i><span data-i18n="an.stat.seg">{t('an.stat.seg')}</span></div>
 						</div>
 					</div>
 
@@ -184,6 +193,15 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 						</div>
 
 						<div class="panel-block">
+							<div class="panel-cap"><span class="cap" data-i18n="an.elev.cap">{t('an.elev.cap')}</span><b class="mono">+214 / −188 m</b></div>
+							<svg class="curve" viewBox="0 0 320 68" preserveAspectRatio="none" role="img" aria-label="Perfil de altitud">
+								<path d="M0 58 L28 50 L60 54 L96 33 L128 39 L164 19 L200 27 L240 12 L280 30 L320 22" fill="none" stroke="#97a09a" stroke-width="2" stroke-linejoin="round"></path>
+								<path d="M0 58 L28 50 L60 54 L96 33 L128 39 L164 19 L200 27 L240 12 L280 30 L320 22 L320 68 L0 68 Z" fill="url(#elevf)"></path>
+								<defs><linearGradient id="elevf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#97a09a" stop-opacity="0.16"></stop><stop offset="1" stop-color="#97a09a" stop-opacity="0"></stop></linearGradient></defs>
+							</svg>
+						</div>
+
+						<div class="panel-block">
 							<div class="panel-cap"><span class="cap" data-i18n="an.cadence.cap">{t('an.cadence.cap')}</span><b class="mono accent">168 spm</b></div>
 							<svg class="curve" viewBox="0 0 320 90" preserveAspectRatio="none" role="img" aria-label="Curva de cadencia">
 								<path d="M0 78 C 60 70 90 30 160 24 C 210 20 250 40 320 64" fill="none" stroke="#4ce08c" stroke-width="2.4" stroke-linecap="round"></path>
@@ -193,6 +211,61 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 							</svg>
 							<p class="panel-note" data-i18n="an.cadence.note">{t('an.cadence.note')}</p>
 						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- EXERCISES -->
+			<section id="exercises" class="band band-quiet">
+				<div class="wrap exercise">
+					<div class="exercise-panel" data-reveal>
+						<div class="repcard">
+							<span class="cap" data-i18n="ex.reps.cap">{t('ex.reps.cap')}</span>
+							<div class="repcount">
+								<b class="mono">12</b>
+								<span class="repname" data-i18n="ex.name1">{t('ex.name1')}</span>
+							</div>
+							<div class="repdots" aria-hidden="true">
+								<span></span><span></span><span></span><span></span><span></span><span></span>
+								<span></span><span></span><span></span><span></span><span></span><span></span>
+							</div>
+							<p class="panel-note" data-i18n="ex.reps.note">{t('ex.reps.note')}</p>
+						</div>
+						<div class="routine">
+							<span class="cap" data-i18n="ex.routine.cap">{t('ex.routine.cap')}</span>
+							<ul class="steps">
+								<li class="step done">
+									<svg class="step-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4 10-11" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+									<span data-i18n="ex.name2">{t('ex.name2')}</span><i class="mono">20×</i>
+								</li>
+								<li class="step now">
+									<span class="step-node" aria-hidden="true"></span>
+									<span data-i18n="ex.name1">{t('ex.name1')}</span><i class="mono">12×</i>
+								</li>
+								<li class="step rest">
+									<svg class="step-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="7" fill="none" stroke="currentColor" stroke-width="1.8"></circle><path d="M12 13V9M9 3h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
+									<span data-i18n="ex.routine.rest">{t('ex.routine.rest')}</span><i class="mono">0:45</i>
+								</li>
+								<li class="step">
+									<span class="step-node dim" aria-hidden="true"></span>
+									<span data-i18n="ex.name3">{t('ex.name3')}</span><i class="mono">15×</i>
+								</li>
+							</ul>
+						</div>
+					</div>
+
+					<div class="exercise-copy" data-reveal>
+						<h2 class="split-title">
+							<span data-i18n="ex.title1">{t('ex.title1')}</span><br />
+							<em data-i18n="ex.title2">{t('ex.title2')}</em>
+						</h2>
+						<p class="lead" data-i18n="ex.sub">{t('ex.sub')}</p>
+						<ul class="share-feats">
+							<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h11M4 12h11M4 18h11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="M19 5l1.5 1.5L23 4" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg><span data-i18n="ex.f1">{t('ex.f1')}</span></li>
+							<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg><span data-i18n="ex.f2">{t('ex.f2')}</span></li>
+							<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8" fill="none" stroke="currentColor" stroke-width="1.8"></circle><path d="M12 13V8M9 2h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg><span data-i18n="ex.f3">{t('ex.f3')}</span></li>
+							<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="5" fill="none" stroke="currentColor" stroke-width="1.8"></circle><path d="M9 13l-2 8 5-3 5 3-2-8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path></svg><span data-i18n="ex.f4">{t('ex.f4')}</span></li>
+						</ul>
 					</div>
 				</div>
 			</section>
@@ -270,25 +343,43 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 				</div>
 			</section>
 
-			<!-- DEV -->
-			<section class="band">
-				<div class="wrap dev">
-					<div class="dev-copy" data-reveal>
-						<h2 data-i18n="dev.title">{t('dev.title')}</h2>
-						<p class="lead" data-i18n="dev.body">{t('dev.body')}</p>
-						<div class="tags">
-							<span class="tag mono">Astro</span>
-							<span class="tag mono">Vue</span>
-							<span class="tag mono">Capacitor</span>
-							<span class="tag mono">Hexagonal</span>
-							<span class="tag mono">IndexedDB</span>
-						</div>
-					</div>
-					<div class="readouts" data-reveal>
-						<div class="readout"><b class="mono">170</b><span data-i18n="dev.stat.tests">{t('dev.stat.tests')}</span></div>
-						<div class="readout"><b class="mono">0</b><span data-i18n="dev.stat.deps">{t('dev.stat.deps')}</span></div>
-						<div class="readout"><b class="mono accent">AGPL</b><span data-i18n="dev.stat.license">{t('dev.stat.license')}</span></div>
-					</div>
+			<!-- ROADMAP -->
+			<section id="roadmap" class="band">
+				<div class="wrap">
+					<header class="band-head" data-reveal>
+						<h2 data-i18n="road.title">{t('road.title')}</h2>
+						<p class="lead" data-i18n="road.sub">{t('road.sub')}</p>
+					</header>
+					<ol class="roadmap" data-reveal>
+						<li class="road-item">
+							<span class="road-node" aria-hidden="true"></span>
+							<div class="road-body">
+								<div class="road-top"><b data-i18n="road.i1.t">{t('road.i1.t')}</b><span class="road-tag cap" data-i18n="road.status">{t('road.status')}</span></div>
+								<p data-i18n="road.i1.d">{t('road.i1.d')}</p>
+							</div>
+						</li>
+						<li class="road-item">
+							<span class="road-node" aria-hidden="true"></span>
+							<div class="road-body">
+								<div class="road-top"><b data-i18n="road.i2.t">{t('road.i2.t')}</b><span class="road-tag cap" data-i18n="road.status">{t('road.status')}</span></div>
+								<p data-i18n="road.i2.d">{t('road.i2.d')}</p>
+							</div>
+						</li>
+						<li class="road-item">
+							<span class="road-node" aria-hidden="true"></span>
+							<div class="road-body">
+								<div class="road-top"><b data-i18n="road.i3.t">{t('road.i3.t')}</b><span class="road-tag cap" data-i18n="road.status">{t('road.status')}</span></div>
+								<p data-i18n="road.i3.d">{t('road.i3.d')}</p>
+							</div>
+						</li>
+						<li class="road-item">
+							<span class="road-node end" aria-hidden="true"></span>
+							<div class="road-body">
+								<div class="road-top"><b data-i18n="road.i4.t">{t('road.i4.t')}</b><span class="road-tag cap" data-i18n="road.status">{t('road.status')}</span></div>
+								<p data-i18n="road.i4.d">{t('road.i4.d')}</p>
+							</div>
+						</li>
+					</ol>
 				</div>
 			</section>
 
@@ -296,9 +387,9 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			<section class="closer">
 				<div class="wrap closer-in" data-reveal>
 					<svg class="closer-glyph" viewBox="0 0 32 32" width="52" height="52" aria-hidden="true">
-						<path d="M6 24c5-2.5 4-8.5 8.5-9.5S22 11 27 7" fill="none" stroke="#4ce08c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
-						<circle cx="6" cy="24" r="3" fill="#eef1ee"></circle>
-						<circle cx="27" cy="7" r="3" fill="none" stroke="#4ce08c" stroke-width="2.4"></circle>
+						<path d="M10 27 L10 11 C10 6.5 21 6 21 12.5 C21 17 13.5 17 11 16.5 C15.5 17.5 18.5 23 22.5 27" fill="none" stroke="#4ce08c" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"></path>
+						<circle cx="10" cy="27" r="3" fill="#eef1ee"></circle>
+						<circle cx="22.5" cy="27" r="3" fill="none" stroke="#4ce08c" stroke-width="2.4"></circle>
 					</svg>
 					<h2 data-i18n="dl.title">{t('dl.title')}</h2>
 					<p class="lead" data-i18n="dl.sub">{t('dl.sub')}</p>
@@ -321,9 +412,9 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 				<div class="foot-brand">
 					<svg class="glyph" viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
 						<rect width="32" height="32" rx="7" fill="#0a0c0d" stroke="#232a2d"></rect>
-						<path d="M8 23c4-2 3-7 7-8s6-3 9-6" fill="none" stroke="#4ce08c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
-						<circle cx="8" cy="23" r="2.6" fill="#eef1ee"></circle>
-						<circle cx="24" cy="9" r="2.6" fill="#4ce08c"></circle>
+						<path d="M10 27 L10 11 C10 6.5 21 6 21 12.5 C21 17 13.5 17 11 16.5 C15.5 17.5 18.5 23 22.5 27" fill="none" stroke="#4ce08c" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"></path>
+						<circle cx="10" cy="27" r="2.6" fill="#eef1ee"></circle>
+						<circle cx="22.5" cy="27" r="2.6" fill="none" stroke="#4ce08c" stroke-width="2"></circle>
 					</svg>
 					<div>
 						<b>Rastro</b>
@@ -331,7 +422,8 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 					</div>
 				</div>
 				<div class="foot-links">
-					<a href={GITHUB_URL} rel="noopener">GitHub</a>
+					<a href="/tecnologia" data-i18n="foot.tech">{t('foot.tech')}</a>
+						<a href={GITHUB_URL} rel="noopener">GitHub</a>
 					<a href={RELEASES_URL} rel="noopener" data-i18n="cta.download">{t('cta.download')}</a>
 					<span data-i18n="foot.license">{t('foot.license')}</span>
 				</div>
@@ -504,15 +596,15 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			.hero { padding: clamp(48px, 9vw, 104px) 0 var(--sp-9); }
 			.hero-in {
 				display: grid;
-				grid-template-columns: minmax(0, 1fr) clamp(300px, 34%, 420px);
-				gap: clamp(28px, 5vw, 72px);
+				grid-template-columns: minmax(0, 1fr) clamp(280px, 32%, 380px);
+				gap: clamp(28px, 4vw, 64px);
 				align-items: center;
 			}
 			.hero-copy { min-width: 0; }
 			.hero-title {
-				font-size: clamp(52px, 9.5vw, 116px);
-				line-height: 0.9;
-				letter-spacing: -0.02em;
+				font-size: clamp(42px, 6.6vw, 96px);
+				line-height: 0.92;
+				letter-spacing: -0.025em;
 				text-transform: uppercase;
 			}
 			.hero-title em { color: var(--accent); font-style: normal; }
@@ -542,10 +634,10 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			.tilt { transform: perspective(760px) rotateX(20deg) rotateZ(-11deg); transform-origin: 55% 60%; }
 			.route-line {
 				stroke-dasharray: 640;
-				stroke-dashoffset: 640;
 				filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 55%, transparent));
 			}
-			.hero-instrument.in .route-line { animation: draw 2.1s cubic-bezier(0.3, 0.9, 0.2, 1) 0.25s forwards; }
+			.js .route-line { stroke-dashoffset: 640; }
+			.js .hero-instrument.in .route-line { animation: draw 2.1s cubic-bezier(0.3, 0.9, 0.2, 1) 0.25s forwards; }
 			@keyframes draw { to { stroke-dashoffset: 0; } }
 			.km { fill: var(--bg); stroke: var(--accent); stroke-width: 2; }
 			.p-start { fill: var(--ink); }
@@ -573,29 +665,40 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			.split-title.big { font-size: clamp(40px, 7vw, 84px); }
 			.split-title em { color: var(--accent); font-style: normal; }
 
-			/* Kinds */
-			.kinds { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-4); }
-			.kind {
-				background: color-mix(in srgb, var(--surface) 86%, transparent);
+			.band-tight { padding-top: 0; }
+
+			/* Modes — one instrument panel, three cells split by rules */
+			.modes {
+				display: grid;
+				grid-template-columns: repeat(3, 1fr);
+				background: color-mix(in srgb, var(--surface) 60%, transparent);
 				border: 1px solid var(--line);
 				border-radius: var(--radius-lg);
-				padding: var(--sp-6) var(--sp-5) var(--sp-5);
+				overflow: hidden;
 			}
-			.ico { width: 40px; height: 40px; color: var(--ink); margin-bottom: var(--sp-4); }
-			.kind h3 { font-size: 27px; text-transform: uppercase; margin-bottom: var(--sp-2); }
-			.kind p { color: var(--muted); font-size: 15.5px; }
+			.mode { padding: var(--sp-6) var(--sp-5); }
+			.mode + .mode { border-left: 1px solid var(--line); }
+			.mode-head { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+			.ico { width: 30px; height: 30px; color: var(--ink); flex: none; }
+			.mode h3 { font-size: 24px; text-transform: uppercase; }
+			.mode p { color: var(--muted); font-size: 15px; }
 
 			/* Analysis */
-			.analysis { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: clamp(28px, 5vw, 68px); align-items: center; }
-			.chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-5); }
-			.chip {
-				font-family: var(--font-mono);
-				font-size: 12px;
-				color: var(--muted);
-				border: 1px solid var(--line-2);
-				border-radius: 999px;
-				padding: 5px 12px;
+			.analysis { display: grid; grid-template-columns: 0.92fr 1.08fr; gap: clamp(28px, 5vw, 68px); align-items: center; }
+			.statcluster {
+				display: grid;
+				grid-template-columns: repeat(3, 1fr);
+				gap: 1px;
+				margin-top: var(--sp-6);
+				background: var(--line);
+				border: 1px solid var(--line);
+				border-radius: var(--radius);
+				overflow: hidden;
 			}
+			.stat { background: color-mix(in srgb, var(--surface) 82%, var(--bg)); padding: var(--sp-4); display: flex; flex-direction: column; }
+			.stat b { font-size: clamp(19px, 2.8vw, 25px); font-weight: 700; line-height: 1.05; }
+			.stat i { font-size: 10.5px; color: var(--faint); font-style: normal; }
+			.stat span { font-size: 11px; color: var(--muted); margin-top: 6px; text-transform: capitalize; }
 			.panel {
 				background: linear-gradient(180deg, var(--surface) 0%, var(--bg-2) 100%);
 				border: 1px solid var(--line-2);
@@ -679,20 +782,46 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			.pledge b { font-family: var(--font-display); font-size: 21px; text-transform: uppercase; }
 			.pledge span { color: var(--muted); font-size: 14.5px; }
 
-			/* Dev */
-			.dev { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: clamp(28px, 5vw, 64px); align-items: center; }
-			.tags { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-5); }
-			.tag { font-size: 12.5px; color: var(--muted); border: 1px solid var(--line-2); border-radius: 8px; padding: 5px 11px; }
-			.readouts { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3); }
-			.readout {
-				background: color-mix(in srgb, var(--surface) 84%, transparent);
-				border: 1px solid var(--line);
-				border-radius: var(--radius);
-				padding: var(--sp-5) var(--sp-3);
-				text-align: center;
+			/* Exercises */
+			.exercise { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: clamp(28px, 5vw, 68px); align-items: center; }
+			.exercise-panel {
+				background: linear-gradient(180deg, var(--surface) 0%, var(--bg-2) 100%);
+				border: 1px solid var(--line-2);
+				border-radius: var(--radius-lg);
+				box-shadow: var(--shadow);
+				overflow: hidden;
 			}
-			.readout b { display: block; font-size: clamp(26px, 4vw, 40px); font-weight: 700; }
-			.readout span { font-size: 12px; color: var(--muted); }
+			.repcard { padding: var(--sp-5); border-bottom: 1px solid var(--line); }
+			.repcount { display: flex; align-items: baseline; gap: var(--sp-3); margin: var(--sp-3) 0; }
+			.repcount b { font-family: var(--font-mono); font-size: clamp(44px, 8vw, 62px); font-weight: 700; line-height: 1; letter-spacing: -0.04em; }
+			.repname { font-family: var(--font-display); font-size: 24px; text-transform: uppercase; }
+			.repdots { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; margin-bottom: var(--sp-3); }
+			.repdots span { height: 8px; border-radius: 999px; background: var(--accent); }
+			.routine { padding: var(--sp-5); }
+			.steps { list-style: none; margin: var(--sp-3) 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+			.step { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3); border-radius: var(--radius); font-size: 15.5px; }
+			.step i { margin-left: auto; font-size: 13px; color: var(--muted); font-style: normal; }
+			.step-ico { width: 20px; height: 20px; color: var(--muted); flex: none; }
+			.step-node { width: 12px; height: 12px; border-radius: 999px; border: 2px solid var(--accent); flex: none; margin: 0 4px; }
+			.step-node.dim { border-color: var(--line-2); }
+			.step.done { color: var(--muted); }
+			.step.done span { text-decoration: line-through; text-decoration-color: var(--line-2); }
+			.step.now { background: color-mix(in srgb, var(--accent) 12%, transparent); font-weight: 500; }
+			.step.now .step-node { background: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent); }
+			.step.rest { color: var(--muted); }
+			.step.rest i { color: var(--accent); }
+
+			/* Roadmap — a GPS track of what's next */
+			.roadmap { list-style: none; margin: 0; padding: 0; position: relative; max-width: 760px; }
+			.roadmap::before { content: ''; position: absolute; left: 7px; top: 14px; bottom: 14px; width: 2px; background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 18%, transparent)); }
+			.road-item { position: relative; display: flex; padding: var(--sp-5) 0 var(--sp-5) var(--sp-6); }
+			.road-item + .road-item { border-top: 1px solid var(--line); }
+			.road-node { position: absolute; left: 0; top: calc(var(--sp-5) + 4px); width: 16px; height: 16px; border-radius: 999px; background: var(--bg); border: 2px solid var(--accent); }
+			.road-node.end { background: var(--accent); }
+			.road-top { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+			.road-top b { font-family: var(--font-display); font-size: 22px; text-transform: uppercase; }
+			.road-tag { color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); border-radius: 999px; padding: 3px 9px; }
+			.road-body p { color: var(--muted); font-size: 15px; margin-top: 5px; max-width: 60ch; }
 
 			/* Closer */
 			.closer { padding: clamp(64px, 11vw, 148px) 0; text-align: center; }
@@ -724,18 +853,24 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			}
 
 			/* ---------- Responsive ---------- */
-			@media (max-width: 900px) {
-				.hero-in, .analysis, .share-grid, .privacy, .dev { grid-template-columns: 1fr; }
+			@media (max-width: 1040px) {
+				.hero-in { grid-template-columns: 1fr; }
 				.hero-instrument { order: -1; }
-				.analysis-copy, .dev-copy { order: -1; }
+			}
+			@media (max-width: 900px) {
+				.analysis, .share-grid, .privacy, .exercise { grid-template-columns: 1fr; }
+				.analysis-copy, .exercise-copy { order: -1; }
 				.nav-links { display: none; }
 			}
+			@media (max-width: 680px) {
+				.modes { grid-template-columns: 1fr; }
+				.mode + .mode { border-left: none; border-top: 1px solid var(--line); }
+			}
 			@media (max-width: 620px) {
-				.kinds { grid-template-columns: 1fr; }
+				.statcluster { grid-template-columns: repeat(2, 1fr); }
 				.share-cards { gap: var(--sp-2); }
 				.scard { width: 168px; }
 				.hud-cell b { font-size: 18px; }
-				.readouts { grid-template-columns: 1fr; }
 			}
 		</style>
 	</body>

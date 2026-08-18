@@ -29,7 +29,7 @@ Outdoors, mid-effort, phone in hand or pocket; then later, on the couch, reviewi
 ## Brand commitments (the established world — inherit, don't replace)
 - **Palette:** near-black ground `#0a0c0d`, surface `#14181a`, ink `#eef1ee`, muted `#838c86`, single accent green `#4ce08c` (light-theme accent `#0e7a45`).
 - **Type:** Barlow Condensed for display, a mono (Space Mono / Roboto Mono) for numerals & measurements, Roboto for text.
-- **Mark:** a route glyph — an accent-green path from a solid ink start dot to a hollow accent end ring, on a rounded near-black tile.
+- **Mark:** a route glyph that traces an abstract "R" — one accent-green path (stem, bowl, leg) from a solid ink start-dot at the stem foot to a hollow accent end-ring at the leg foot, on a rounded near-black tile.
 - **Character:** an instrument, not a hype app. Measurement-grade, quiet, monochrome + one signal color.
 
 ## This surface
