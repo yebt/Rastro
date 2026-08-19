@@ -35,6 +35,7 @@ const TILE_URL: Record<MapStyleId, string> = {
 const host = ref<HTMLDivElement | null>(null);
 const loading = ref(true);
 let map: import("maplibre-gl").Map | null = null;
+let coords: [number, number][] = [];
 
 function sizeBox(): void {
   const el = host.value;
@@ -60,7 +61,7 @@ function onResize(): void {
 onMounted(async () => {
   sizeBox();
   const ml = await import("maplibre-gl");
-  const coords = props.points.map((p) => [p.lng, p.lat] as [number, number]);
+  coords = props.points.map((p) => [p.lng, p.lat] as [number, number]);
   const isTopo = props.mapStyle === "topo";
   const tiles = [TILE_URL[props.mapStyle]];
   const attribution = isTopo ? "© OpenTopoMap (CC-BY-SA)" : "© OpenStreetMap · CARTO";
@@ -170,18 +171,73 @@ function resetView(): void {
 
 function done(): void {
   if (!map) return;
-  const c = map.getCenter();
+  const m = map;
+  const c = m.getCenter();
   const camera: MapCamera = {
     center: [c.lng, c.lat],
-    zoom: map.getZoom(),
-    bearing: map.getBearing(),
-    pitch: map.getPitch(),
+    zoom: m.getZoom(),
+    bearing: m.getBearing(),
+    pitch: m.getPitch(),
   };
-  // Force a synchronous repaint so the current frame (route included) is in the
-  // preserved drawing buffer before we read it — otherwise a mid-render capture
-  // could grab tiles without the route.
-  map.redraw?.();
-  const src = map.getCanvas().toDataURL("image/png");
+  m.redraw?.();
+  const gl = m.getCanvas();
+
+  // Composite the snapshot ourselves: tiles from the (preserved) WebGL buffer,
+  // then the route drawn in 2D using the map's own projection. This guarantees
+  // the track is baked into the image regardless of how the GL layers composite
+  // into the readback — the previous approach could yield tiles without a route.
+  const out = document.createElement("canvas");
+  out.width = gl.width;
+  out.height = gl.height;
+  const x = out.getContext("2d");
+  let src: string;
+  if (x && coords.length >= 2) {
+    x.drawImage(gl, 0, 0);
+    const dpr = gl.width / Math.max(1, host.value?.clientWidth ?? gl.width);
+    const at = (i: number): [number, number] => {
+      const p = m.project(coords[i]!);
+      return [p.x * dpr, p.y * dpr];
+    };
+    const lw = 5.5 * dpr;
+    x.lineJoin = "round";
+    x.lineCap = "round";
+    const trace = (color: string, width: number, alpha: number): void => {
+      x.save();
+      x.globalAlpha = alpha;
+      x.strokeStyle = color;
+      x.lineWidth = width;
+      x.beginPath();
+      props.points.forEach((p, i) => {
+        // Break the line at a pause (big time gap) so it doesn't bridge across.
+        const paused = i > 0 && p.t - props.points[i - 1]!.t > 10_000;
+        const [px, py] = at(i);
+        if (i === 0 || paused) x.moveTo(px, py);
+        else x.lineTo(px, py);
+      });
+      x.stroke();
+      x.restore();
+    };
+    trace("#000000", lw + 8 * dpr, 0.45); // dark halo — reads on light basemaps
+    trace("#ffffff", lw + 3.5 * dpr, 0.9); // white casing — reads on dark basemaps
+    trace(props.routeColor, lw, 1); // the route
+    const [sx, sy] = at(0);
+    x.beginPath();
+    x.arc(sx, sy, lw * 1.5, 0, Math.PI * 2);
+    x.fillStyle = props.startColor;
+    x.fill();
+    x.lineWidth = lw * 0.6;
+    x.strokeStyle = "#ffffff";
+    x.stroke();
+    const [ex, ey] = at(coords.length - 1);
+    x.beginPath();
+    x.arc(ex, ey, lw * 1.7, 0, Math.PI * 2);
+    x.lineWidth = lw * 0.9;
+    x.strokeStyle = props.routeColor;
+    x.stroke();
+    src = out.toDataURL("image/png");
+  } else {
+    src = gl.toDataURL("image/png");
+  }
   emit("done", { src, camera });
 }
 </script>
