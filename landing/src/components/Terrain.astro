@@ -1,0 +1,108 @@
+---
+// Survey ground — the connective tissue of the page. A fixed topographic sheet:
+// a faint coordinate grid, threading contour lines, two contour "hills" with
+// elevation labels, and sparse crosshair registration marks. All decorative.
+---
+
+<div class="terrain" aria-hidden="true">
+	<svg viewBox="0 0 1200 1600" preserveAspectRatio="xMidYMid slice">
+		<defs>
+			<pattern id="sgrid" width="120" height="120" patternUnits="userSpaceOnUse">
+				<path d="M120 0H0V120" fill="none" stroke="#151a1c" stroke-width="1"></path>
+			</pattern>
+		</defs>
+
+		<!-- coordinate grid -->
+		<rect width="1200" height="1600" fill="url(#sgrid)"></rect>
+
+		<!-- threading contours -->
+		<g class="tr-contours">
+			<path d="M-100 240 C 200 170 430 320 660 250 S 1080 150 1320 260"></path>
+			<path d="M-100 340 C 220 260 440 420 670 340 S 1090 240 1320 360"></path>
+			<path d="M-100 470 C 240 380 470 550 700 470 S 1100 370 1320 500"></path>
+			<path d="M-100 620 C 260 520 500 700 760 620 S 1120 520 1320 660"></path>
+			<path d="M-100 800 C 300 690 540 880 800 800 S 1140 700 1320 840"></path>
+			<path d="M-100 1000 C 320 880 560 1080 840 1000 S 1160 900 1320 1050"></path>
+			<path d="M-100 1220 C 340 1100 600 1300 880 1220 S 1180 1120 1320 1280"></path>
+			<path d="M-100 1440 C 360 1320 620 1520 900 1440 S 1200 1340 1320 1500"></path>
+		</g>
+
+		<!-- hill A — nested contour rings, upper right -->
+		<g class="tr-rings">
+			<path d="M770 350 C 770 260 850 200 950 205 C 1055 210 1120 285 1115 375 C 1110 465 1020 520 925 515 C 830 510 770 440 770 350 Z"></path>
+			<path d="M810 350 C 810 285 870 240 945 245 C 1025 250 1075 305 1070 372 C 1065 440 1000 480 930 476 C 860 472 810 415 810 350 Z"></path>
+			<path d="M850 352 C 850 308 892 278 942 282 C 996 286 1030 324 1026 370 C 1022 416 978 442 932 439 C 886 436 850 396 850 352 Z"></path>
+			<path d="M888 354 C 888 328 914 310 942 313 C 972 316 992 338 989 366 C 986 394 960 408 934 406 C 908 404 888 380 888 354 Z"></path>
+		</g>
+		<text class="tr-elev" x="1088" y="300">140</text>
+		<text class="tr-elev" x="1044" y="338">160</text>
+
+		<!-- hill B — nested contour rings, lower left -->
+		<g class="tr-rings">
+			<path d="M110 1120 C 110 1030 200 970 305 976 C 415 982 480 1060 474 1155 C 468 1250 370 1308 270 1302 C 172 1296 110 1215 110 1120 Z"></path>
+			<path d="M155 1122 C 155 1055 220 1010 298 1015 C 380 1020 428 1078 423 1150 C 418 1222 348 1264 275 1260 C 202 1256 155 1192 155 1122 Z"></path>
+			<path d="M200 1124 C 200 1078 245 1048 297 1052 C 353 1056 386 1096 382 1145 C 378 1194 330 1222 282 1219 C 234 1216 200 1172 200 1124 Z"></path>
+			<path d="M242 1126 C 242 1100 268 1082 297 1085 C 328 1088 348 1112 345 1140 C 342 1168 314 1184 288 1182 C 262 1180 242 1154 242 1126 Z"></path>
+		</g>
+		<text class="tr-elev" x="120" y="1070">80</text>
+		<text class="tr-elev" x="176" y="1104">100</text>
+
+		<!-- one contour picked out in signal green -->
+		<path class="tr-accent" d="M830 351 C 830 296 882 258 944 262 C 1010 266 1052 314 1048 371 C 1044 428 988 462 931 458 C 874 454 830 405 830 351 Z"></path>
+
+		<!-- crosshair registration marks -->
+		<g class="tr-cross">
+			<path d="M354 474 h12 M360 468 v12"></path>
+			<path d="M834 954 h12 M840 948 v12"></path>
+			<path d="M594 1314 h12 M600 1308 v12"></path>
+			<path d="M954 714 h12 M960 708 v12"></path>
+			<path d="M234 234 h12 M240 228 v12"></path>
+		</g>
+	</svg>
+</div>
+
+<style>
+	.terrain {
+		position: fixed;
+		inset: 0;
+		z-index: -1;
+		background:
+			radial-gradient(120% 80% at 78% -8%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 46%),
+			radial-gradient(90% 70% at 8% 108%, color-mix(in srgb, var(--accent) 5%, transparent), transparent 50%),
+			var(--bg);
+	}
+	.terrain svg {
+		width: 100%;
+		height: 100%;
+	}
+	.tr-contours path {
+		fill: none;
+		stroke: var(--line);
+		stroke-width: 1.2;
+		opacity: 0.5;
+	}
+	.tr-rings path {
+		fill: none;
+		stroke: var(--line);
+		stroke-width: 1.1;
+		opacity: 0.65;
+	}
+	.tr-accent {
+		fill: none;
+		stroke: var(--accent);
+		stroke-width: 1.1;
+		opacity: 0.16;
+	}
+	.tr-elev {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		letter-spacing: 0.08em;
+		fill: var(--faint);
+		opacity: 0.7;
+	}
+	.tr-cross path {
+		stroke: var(--faint);
+		stroke-width: 1;
+		opacity: 0.5;
+	}
+</style>

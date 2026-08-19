@@ -22,6 +22,8 @@ export const STRINGS: Record<string, Record<Lang, string>> = {
 
 	// Hero
 	'hero.kicker': { es: 'Registrador de recorridos · Android', en: 'Movement recorder · Android' },
+	'hero.survey': { es: 'Levantamiento de movimiento', en: 'Movement survey' },
+	'hero.sheet': { es: 'Hoja 01 · [2026]', en: 'Sheet 01 · [2026]' },
 	'hero.title1': { es: 'Tus recorridos,', en: 'Your movement,' },
 	'hero.title2': { es: 'medidos.', en: 'measured.' },
 	'hero.sub': {
@@ -33,6 +35,13 @@ export const STRINGS: Record<string, Record<Lang, string>> = {
 	'hero.stat.cad': { es: 'cadencia', en: 'cadence' },
 	'hero.stat.elev': { es: 'desnivel', en: 'elevation' },
 	'hero.note': { es: 'Sin cuenta · Offline · Código abierto', en: 'No account · Offline · Open source' },
+
+	// Trust strip (real facts only — no invented counts or logos)
+	'trust.t1': { es: 'Código abierto', en: 'Open source' },
+	'trust.t2': { es: 'Offline primero', en: 'Offline-first' },
+	'trust.t3': { es: 'Sin cuenta ni nube', en: 'No account, no cloud' },
+	'trust.t4': { es: '~170 tests de dominio', en: '~170 domain tests' },
+	'trust.t5': { es: 'Exportá a GPX', en: 'GPX export' },
 
 	// What it records
 	'rec.title': { es: 'Tres formas de moverte', en: 'Three ways to move' },
@@ -63,6 +72,7 @@ export const STRINGS: Record<string, Record<Lang, string>> = {
 		es: 'Parciales, ritmo y velocidad en el tiempo, perfil de altitud, zancada y cadencia. Y el motor que encuentra la cadencia donde de verdad fuiste más eficiente.',
 		en: 'Splits, pace and speed over time, elevation profile, stride and cadence. Plus the engine that finds the cadence where you were actually most efficient.',
 	},
+	'an.panel.cap': { es: 'Ficha de actividad', en: 'Activity record' },
 	'an.insights.cap': { es: 'Del recorrido', en: 'From the route' },
 	'an.insight1': { es: 'Tu km más rápido fue el 3.º.', en: 'Your fastest km was the 3rd.' },
 	'an.insight2': { es: 'Apretaste fuerte entre el K4 y el K5.', en: 'You surged hard between K4 and K5.' },
@@ -92,9 +102,10 @@ export const STRINGS: Record<string, Record<Lang, string>> = {
 	'share.card.route': { es: 'Sendero del río', en: 'Riverside trail' },
 	'share.card.dawn': { es: 'Amanecer largo', en: 'Long dawn' },
 	'share.card.mountain': { es: 'Ruta de montaña', en: 'Mountain route' },
-	'share.card.night': { es: 'Vuelta nocturna', en: 'Night loop' },
 	'share.card.duo': { es: 'Vuelta larga', en: 'Long loop' },
 	'share.card.longcap': { es: 'km · vuelta larga', en: 'km · long loop' },
+	'share.card.blueprint': { es: 'Plano del circuito', en: 'Circuit blueprint' },
+	'share.card.big': { es: 'La media del domingo', en: 'Sunday half' },
 	'share.card.cycle': { es: 'Diseños para compartir', en: 'Share designs' },
 
 	// Privacy
@@ -128,6 +139,7 @@ export const STRINGS: Record<string, Record<Lang, string>> = {
 		en: 'Download the APK from the repository releases. Android, no store in the way.',
 	},
 	'dl.req': { es: 'Android 8+ · instalación por APK', en: 'Android 8+ · APK sideload' },
+	'dl.stamp': { es: '[ Levantamiento 2026 · Hoja 01 / 01 ]', en: '[ Survey 2026 · Sheet 01 / 01 ]' },
 
 	// Analysis — enriched stat cluster
 	'an.stat.total': { es: 'distancia total', en: 'total distance' },
@@ -180,6 +192,7 @@ export const STRINGS: Record<string, Record<Lang, string>> = {
 
 	// Tech page (/tecnologia)
 	'tech.back': { es: 'Volver al inicio', en: 'Back home' },
+	'tech.sheet': { es: 'Hoja 02 · Técnica · [2026]', en: 'Sheet 02 · Technical · [2026]' },
 	'tech.title1': { es: 'Cómo funciona', en: 'How Rastro' },
 	'tech.title2': { es: 'Rastro', en: 'works' },
 	'tech.intro': {

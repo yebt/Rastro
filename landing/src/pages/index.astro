@@ -1,5 +1,6 @@
 ---
 import BaseHead from '../components/BaseHead.astro';
+import Terrain from '../components/Terrain.astro';
 import { SITE_TITLE, SITE_DESCRIPTION, GITHUB_URL, RELEASES_URL } from '../consts';
 import { STRINGS } from '../i18n';
 
@@ -17,29 +18,16 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 	<body>
 		<a class="skip" href="#top" data-i18n="a11y.skip">{t('a11y.skip')}</a>
 		<!--
-		DIRECTION CONTRACT — Rastro landing · seed a15b0ba6 · FORM: map-first immersion (7/7 of my grounded list)
-		THESIS: The landing is the instrument, not a brochure about it. Refuses the SaaS hero+3-card rut: the product's own map and readouts ARE the page.
-		OWN-WORLD: Inherited app skin — near-black #0a0c0d ground, one signal green #4ce08c, Barlow Condensed display, Space Mono numerals; a persistent faint topographic map behind instrument-surface panels; drawn route glyphs, no stock chrome.
-		STORY: Visitor sees a real recorded run, believes the measurement + privacy promise, downloads the APK or reads the source.
-		FIRST VIEWPORT: Full-bleed dark terrain; a large tilted route draws itself; headline left, HUD readout strip below, primary "Descargar APK" in accent.
-		FORM: map-first immersion; panels rise over a fixed map ground; seed key a15b0ba6.
+		DIRECTION CONTRACT — Rastro landing · redesign "dark survey instrument × running app" · direction pinned by brief (beats the roll)
+		THESIS: A survey of your movement. The page is a geological-survey sheet drawn from the runner's own data, carried with running-app conviction. Refuses the SaaS hero+cards rut AND the previous brochure-panel look.
+		OWN-WORLD: Near-black #0a0c0d survey sheet; one signal green #4ce08c; coordinate grid + contour hills with elevation labels as connective tissue; Barlow Condensed 700 display at viewport scale; Space Mono registration labels, coordinate readouts, grid refs, corner ticks, compass mark, [2026] stamp. No second accent, no gradient text.
+		STORY: The visitor reads the sheet, believes the measurement + privacy promise, downloads the APK from GitHub releases or reads the source.
+		FIRST VIEWPORT: Full-height sheet — mono registration line up top; house-high condensed headline running over a tilted route plate on the right; sub + CTAs left; a corner-ticked HUD legend bar with compass, readouts and grid ref anchors the fold.
+		FORM: survey sheet × athletic display; user-pinned (no seed roll); key: brief-2026-survey.
 		FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
 		-->
 
-		<!-- Persistent topographic map ground -->
-		<div class="terrain" aria-hidden="true">
-			<svg viewBox="0 0 1200 1600" preserveAspectRatio="xMidYMid slice">
-				<g class="contours">
-					<path d="M-100 300 C 200 220 420 380 640 300 S 1080 200 1320 320" />
-					<path d="M-100 420 C 220 340 440 500 660 420 S 1080 320 1320 440" />
-					<path d="M-100 560 C 240 470 470 640 700 560 S 1100 460 1320 590" />
-					<path d="M-100 720 C 260 620 500 800 760 720 S 1120 620 1320 760" />
-					<path d="M-100 900 C 300 790 540 980 800 900 S 1140 800 1320 940" />
-					<path d="M-100 1100 C 320 980 560 1180 840 1100 S 1160 1000 1320 1150" />
-					<path d="M-100 1320 C 340 1200 600 1400 880 1320 S 1180 1220 1320 1380" />
-				</g>
-			</svg>
-		</div>
+		<Terrain />
 
 		<header class="nav">
 			<div class="wrap nav-in">
@@ -51,6 +39,7 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 					</svg>
 					<span class="brand-name">Rastro</span>
 				</a>
+				<span class="nav-coord" aria-hidden="true">34.6037° S · 58.3816° W</span>
 				<nav class="nav-links" aria-label="Secciones">
 					<a href="#records" data-i18n="nav.records">{t('nav.records')}</a>
 					<a href="#analysis" data-i18n="nav.analysis">{t('nav.analysis')}</a>
@@ -66,14 +55,53 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 		</header>
 
 		<main id="top" tabindex="-1">
-			<!-- HERO -->
+			<!-- HERO — sheet 01 -->
 			<section class="hero">
 				<div class="wrap hero-in">
-					<div class="hero-copy" data-reveal>
+					<div class="survey-line" data-reveal>
+						<span class="cap" data-i18n="hero.survey">{t('hero.survey')}</span>
+						<span class="cap sl-coord" aria-hidden="true">34.6037° S · 58.3816° W · ELEV. 25 M</span>
+						<span class="cap" data-i18n="hero.sheet">{t('hero.sheet')}</span>
+					</div>
+
+					<div class="hero-stage" data-reveal>
 						<h1 class="hero-title">
-							<span data-i18n="hero.title1">{t('hero.title1')}</span><br />
-							<em data-i18n="hero.title2">{t('hero.title2')}</em>
+							<span class="ht-l" data-i18n="hero.title1">{t('hero.title1')}</span>
+							<em class="ht-l" data-i18n="hero.title2">{t('hero.title2')}</em>
 						</h1>
+
+						<div class="hero-scope">
+							<div class="scope reg">
+								<span class="scope-cap cap" data-i18n="hero.kicker">{t('hero.kicker')}</span>
+								<span class="scope-live" aria-hidden="true"></span>
+								<svg class="route" viewBox="0 0 420 300" role="img" aria-label="Recorrido de ejemplo">
+									<defs>
+										<pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+											<circle cx="1.5" cy="1.5" r="1.1" fill="#1b2124"></circle>
+										</pattern>
+									</defs>
+									<g class="tilt">
+										<rect x="-40" y="-20" width="500" height="360" fill="url(#dots)"></rect>
+										<g class="plate-cross" aria-hidden="true">
+											<path d="M96 60 h10 M101 55 v10"></path>
+											<path d="M320 220 h10 M325 215 v10"></path>
+										</g>
+										<path class="route-line" d="M60 250 C 110 230 96 150 150 140 C 210 128 210 210 270 190 C 330 172 300 90 370 60" fill="none" stroke="#4ce08c" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"></path>
+										<circle class="km" cx="150" cy="140" r="3.2"></circle>
+										<circle class="km" cx="270" cy="190" r="3.2"></circle>
+										<circle class="p-start" cx="60" cy="250" r="7"></circle>
+										<circle class="p-end" cx="370" cy="60" r="7.5"></circle>
+									</g>
+								</svg>
+								<div class="scope-foot" aria-hidden="true">
+									<span class="cap">7.42 KM · 36:12</span>
+									<span class="cap">ESC. 1:25 000</span>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="hero-under" data-reveal>
 						<p class="hero-sub" data-i18n="hero.sub">{t('hero.sub')}</p>
 						<div class="hero-cta">
 							<a class="btn btn-lg" href={RELEASES_URL} rel="noopener">
@@ -88,276 +116,324 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 						<p class="hero-note cap" data-i18n="hero.note">{t('hero.note')}</p>
 					</div>
 
-					<div class="hero-instrument" data-reveal>
-						<div class="scope">
-							<span class="scope-cap cap" data-i18n="hero.kicker">{t('hero.kicker')}</span>
-							<span class="scope-live" aria-hidden="true"></span>
-							<svg class="route" viewBox="0 0 420 300" role="img" aria-label="Recorrido de ejemplo">
-								<defs>
-									<pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
-										<circle cx="1.5" cy="1.5" r="1.1" fill="#1b2124"></circle>
-									</pattern>
-								</defs>
-								<g class="tilt">
-									<rect x="-40" y="-20" width="500" height="360" fill="url(#dots)"></rect>
-									<path class="route-line" d="M60 250 C 110 230 96 150 150 140 C 210 128 210 210 270 190 C 330 172 300 90 370 60" fill="none" stroke="#4ce08c" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"></path>
-									<circle class="km" cx="150" cy="140" r="3.2"></circle>
-									<circle class="km" cx="270" cy="190" r="3.2"></circle>
-									<circle class="p-start" cx="60" cy="250" r="7"></circle>
-									<circle class="p-end" cx="370" cy="60" r="7.5"></circle>
-								</g>
-							</svg>
-							<div class="hud">
-								<div class="hud-cell"><b class="mono">7.42</b><span data-i18n="hero.stat.dist">{t('hero.stat.dist')}</span><i class="mono">km</i></div>
-								<div class="hud-cell"><b class="mono">5'18"</b><span data-i18n="hero.stat.pace">{t('hero.stat.pace')}</span><i class="mono">/km</i></div>
-								<div class="hud-cell"><b class="mono">168</b><span data-i18n="hero.stat.cad">{t('hero.stat.cad')}</span><i class="mono">spm</i></div>
-								<div class="hud-cell"><b class="mono">+214</b><span data-i18n="hero.stat.elev">{t('hero.stat.elev')}</span><i class="mono">m</i></div>
-							</div>
-						</div>
+					<div class="hud reg" data-reveal>
+						<svg class="compass" viewBox="0 0 40 46" aria-hidden="true">
+							<text x="20" y="10" text-anchor="middle" class="compass-n">N</text>
+							<circle cx="20" cy="28" r="13" fill="none" stroke="currentColor" stroke-width="1.4"></circle>
+							<path d="M20 16 L23.5 28 L16.5 28 Z" fill="var(--accent)"></path>
+							<path d="M20 40 L23.5 28 L16.5 28 Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"></path>
+						</svg>
+						<div class="hud-cell"><b class="mono">7.42</b><span data-i18n="hero.stat.dist">{t('hero.stat.dist')}</span><i class="mono">km</i></div>
+						<div class="hud-cell"><b class="mono">5'18"</b><span data-i18n="hero.stat.pace">{t('hero.stat.pace')}</span><i class="mono">/km</i></div>
+						<div class="hud-cell"><b class="mono">168</b><span data-i18n="hero.stat.cad">{t('hero.stat.cad')}</span><i class="mono">spm</i></div>
+						<div class="hud-cell"><b class="mono">+214</b><span data-i18n="hero.stat.elev">{t('hero.stat.elev')}</span><i class="mono">m</i></div>
+						<span class="hud-meta cap" aria-hidden="true">GRID REF. 08 / X7 / 19</span>
 					</div>
 				</div>
 			</section>
 
-			<!-- MODES -->
-			<section id="records" class="band band-tight">
+			<!-- TRUST STRIP — real facts, no invented logos -->
+			<div class="trust">
+				<div class="wrap trust-in" data-reveal>
+					<span class="t cap" data-i18n="trust.t1">{t('trust.t1')}</span>
+					<span class="tsep" aria-hidden="true">/</span>
+					<span class="t cap" data-i18n="trust.t2">{t('trust.t2')}</span>
+					<span class="tsep" aria-hidden="true">/</span>
+					<span class="t cap" data-i18n="trust.t3">{t('trust.t3')}</span>
+					<span class="tsep" aria-hidden="true">/</span>
+					<span class="t cap">AGPL-3.0</span>
+					<span class="tsep" aria-hidden="true">/</span>
+					<span class="t cap" data-i18n="trust.t4">{t('trust.t4')}</span>
+					<span class="tsep" aria-hidden="true">/</span>
+					<span class="t cap" data-i18n="trust.t5">{t('trust.t5')}</span>
+				</div>
+			</div>
+
+			<!-- MODES — survey ledger -->
+			<section id="records" class="band">
 				<div class="wrap">
+					<div class="sec-rule" aria-hidden="true"><span>SEC. 01</span><span>GRID X7 · 19</span></div>
 					<header class="band-head" data-reveal>
 						<h2 data-i18n="rec.title">{t('rec.title')}</h2>
 						<p class="lead" data-i18n="rec.sub">{t('rec.sub')}</p>
 					</header>
-					<div class="modes" data-reveal>
-						<article class="mode">
-							<div class="mode-head">
+					<ol class="modes" data-reveal>
+						<li class="mode">
+							<span class="mode-code" aria-hidden="true">M–01</span>
+							<div class="mode-name">
 								<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19c3-1.4 2.4-5.4 5-6s4.4-2.2 6.6-4.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="4" cy="19" r="2" fill="currentColor"></circle><circle cx="18.5" cy="6.5" r="2" fill="none" stroke="var(--accent)" stroke-width="1.8"></circle></svg>
 								<h3 data-i18n="rec.move.t">{t('rec.move.t')}</h3>
 							</div>
 							<p data-i18n="rec.move.d">{t('rec.move.d')}</p>
-						</article>
-						<article class="mode">
-							<div class="mode-head">
+						</li>
+						<li class="mode">
+							<span class="mode-code" aria-hidden="true">M–02</span>
+							<div class="mode-name">
 								<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
 								<h3 data-i18n="rec.exercise.t">{t('rec.exercise.t')}</h3>
 							</div>
 							<p data-i18n="rec.exercise.d">{t('rec.exercise.d')}</p>
-						</article>
-						<article class="mode">
-							<div class="mode-head">
+						</li>
+						<li class="mode">
+							<span class="mode-code" aria-hidden="true">M–03</span>
+							<div class="mode-name">
 								<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="M4 6l1 1 1.5-2M4 12l1 1 1.5-2M4 18l1 1 1.5-2" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
 								<h3 data-i18n="rec.routine.t">{t('rec.routine.t')}</h3>
 							</div>
 							<p data-i18n="rec.routine.d">{t('rec.routine.d')}</p>
-						</article>
-					</div>
+						</li>
+					</ol>
 				</div>
 			</section>
 
 			<!-- ANALYSIS -->
-			<section id="analysis" class="band">
-				<div class="wrap analysis">
-					<div class="analysis-copy" data-reveal>
-						<h2 class="split-title">
-							<span data-i18n="an.title1">{t('an.title1')}</span><br />
-							<em data-i18n="an.title2">{t('an.title2')}</em>
-						</h2>
-						<p class="lead" data-i18n="an.sub">{t('an.sub')}</p>
-						<div class="statcluster">
-							<div class="stat"><b class="mono">128.4</b><i class="mono">km</i><span data-i18n="an.stat.total">{t('an.stat.total')}</span></div>
-							<div class="stat"><b class="mono">11:42</b><i class="mono">h</i><span data-i18n="an.stat.time">{t('an.stat.time')}</span></div>
-							<div class="stat"><b class="mono">4'52"</b><i class="mono">/km</i><span data-i18n="an.stat.best">{t('an.stat.best')}</span></div>
-							<div class="stat"><b class="mono">612</b><i class="mono">kcal</i><span data-i18n="an.stat.cal">{t('an.stat.cal')}</span></div>
-							<div class="stat"><b class="mono">+214</b><i class="mono">m</i><span data-i18n="an.stat.gain">{t('an.stat.gain')}</span></div>
-							<div class="stat"><b class="mono accent">7</b><i class="mono">×</i><span data-i18n="an.stat.seg">{t('an.stat.seg')}</span></div>
-						</div>
-					</div>
-
-					<div class="panel" data-reveal>
-						<div class="panel-block">
-							<div class="panel-cap"><span class="cap" data-i18n="an.insights.cap">{t('an.insights.cap')}</span><svg class="medal" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="5" fill="none" stroke="var(--accent)" stroke-width="1.8"></circle><path d="M9 13l-2 8 5-3 5 3-2-8" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round"></path></svg></div>
-							<ul class="insights">
-								<li data-i18n="an.insight1">{t('an.insight1')}</li>
-								<li data-i18n="an.insight2">{t('an.insight2')}</li>
-								<li data-i18n="an.insight3">{t('an.insight3')}</li>
-							</ul>
-						</div>
-
-						<div class="panel-block">
-							<span class="cap" data-i18n="an.splits.cap">{t('an.splits.cap')}</span>
-							<div class="splits" role="img" aria-label="Ritmo por kilómetro">
-								<span style="--h:56%"><i class="mono">1</i></span>
-								<span style="--h:72%"><i class="mono">2</i></span>
-								<span style="--h:92%" class="best"><i class="mono">3</i></span>
-								<span style="--h:64%"><i class="mono">4</i></span>
-								<span style="--h:80%"><i class="mono">5</i></span>
-								<span style="--h:70%"><i class="mono">6</i></span>
-								<span style="--h:48%"><i class="mono">7</i></span>
+			<section id="analysis" class="band band-quiet">
+				<div class="wrap">
+					<div class="sec-rule" aria-hidden="true"><span>SEC. 02</span><span>GRID X7 · 20</span></div>
+					<div class="analysis">
+						<div class="analysis-copy" data-reveal>
+							<h2 class="split-title">
+								<span data-i18n="an.title1">{t('an.title1')}</span><br />
+								<em data-i18n="an.title2">{t('an.title2')}</em>
+							</h2>
+							<p class="lead" data-i18n="an.sub">{t('an.sub')}</p>
+							<div class="statcluster">
+								<div class="stat"><b class="mono">128.4</b><i class="mono">km</i><span data-i18n="an.stat.total">{t('an.stat.total')}</span></div>
+								<div class="stat"><b class="mono">11:42</b><i class="mono">h</i><span data-i18n="an.stat.time">{t('an.stat.time')}</span></div>
+								<div class="stat"><b class="mono">4'52"</b><i class="mono">/km</i><span data-i18n="an.stat.best">{t('an.stat.best')}</span></div>
+								<div class="stat"><b class="mono">612</b><i class="mono">kcal</i><span data-i18n="an.stat.cal">{t('an.stat.cal')}</span></div>
+								<div class="stat"><b class="mono">+214</b><i class="mono">m</i><span data-i18n="an.stat.gain">{t('an.stat.gain')}</span></div>
+								<div class="stat"><b class="mono accent">7</b><i class="mono">×</i><span data-i18n="an.stat.seg">{t('an.stat.seg')}</span></div>
 							</div>
 						</div>
 
-						<div class="panel-block">
-							<div class="panel-cap"><span class="cap" data-i18n="an.elev.cap">{t('an.elev.cap')}</span><b class="mono">+214 / −188 m</b></div>
-							<svg class="curve" viewBox="0 0 320 68" preserveAspectRatio="none" role="img" aria-label="Perfil de altitud">
-								<path d="M0 58 L28 50 L60 54 L96 33 L128 39 L164 19 L200 27 L240 12 L280 30 L320 22" fill="none" stroke="#97a09a" stroke-width="2" stroke-linejoin="round"></path>
-								<path d="M0 58 L28 50 L60 54 L96 33 L128 39 L164 19 L200 27 L240 12 L280 30 L320 22 L320 68 L0 68 Z" fill="url(#elevf)"></path>
-								<defs><linearGradient id="elevf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#97a09a" stop-opacity="0.16"></stop><stop offset="1" stop-color="#97a09a" stop-opacity="0"></stop></linearGradient></defs>
-							</svg>
-						</div>
+						<div class="panel reg" data-reveal>
+							<div class="panel-head">
+								<span class="cap" data-i18n="an.panel.cap">{t('an.panel.cap')}</span>
+								<span class="cap" aria-hidden="true">N.º 0142 · MOV</span>
+							</div>
+							<div class="panel-block">
+								<div class="panel-cap">
+									<span class="capgroup"><span class="cap" data-i18n="an.insights.cap">{t('an.insights.cap')}</span><i class="figcode" aria-hidden="true">FIG. A</i></span>
+									<svg class="medal" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="5" fill="none" stroke="var(--accent)" stroke-width="1.8"></circle><path d="M9 13l-2 8 5-3 5 3-2-8" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round"></path></svg>
+								</div>
+								<ul class="insights">
+									<li data-i18n="an.insight1">{t('an.insight1')}</li>
+									<li data-i18n="an.insight2">{t('an.insight2')}</li>
+									<li data-i18n="an.insight3">{t('an.insight3')}</li>
+								</ul>
+							</div>
 
-						<div class="panel-block">
-							<div class="panel-cap"><span class="cap" data-i18n="an.cadence.cap">{t('an.cadence.cap')}</span><b class="mono accent">168 spm</b></div>
-							<svg class="curve" viewBox="0 0 320 90" preserveAspectRatio="none" role="img" aria-label="Curva de cadencia">
-								<path d="M0 78 C 60 70 90 30 160 24 C 210 20 250 40 320 64" fill="none" stroke="#4ce08c" stroke-width="2.4" stroke-linecap="round"></path>
-								<path d="M0 78 C 60 70 90 30 160 24 C 210 20 250 40 320 64 L 320 90 L 0 90 Z" fill="url(#cad)"></path>
-								<defs><linearGradient id="cad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4ce08c" stop-opacity="0.22"></stop><stop offset="1" stop-color="#4ce08c" stop-opacity="0"></stop></linearGradient></defs>
-								<circle cx="160" cy="24" r="3.5" fill="#eef1ee"></circle>
-							</svg>
-							<p class="panel-note" data-i18n="an.cadence.note">{t('an.cadence.note')}</p>
+							<div class="panel-block">
+								<div class="panel-cap">
+									<span class="capgroup"><span class="cap" data-i18n="an.splits.cap">{t('an.splits.cap')}</span><i class="figcode" aria-hidden="true">FIG. B</i></span>
+								</div>
+								<div class="splits" role="img" aria-label="Ritmo por kilómetro">
+									<span style="--h:56%"><i class="mono">1</i></span>
+									<span style="--h:72%"><i class="mono">2</i></span>
+									<span style="--h:92%" class="best"><i class="mono">3</i></span>
+									<span style="--h:64%"><i class="mono">4</i></span>
+									<span style="--h:80%"><i class="mono">5</i></span>
+									<span style="--h:70%"><i class="mono">6</i></span>
+									<span style="--h:48%"><i class="mono">7</i></span>
+								</div>
+							</div>
+
+							<div class="panel-block">
+								<div class="panel-cap">
+									<span class="capgroup"><span class="cap" data-i18n="an.elev.cap">{t('an.elev.cap')}</span><i class="figcode" aria-hidden="true">FIG. C</i></span>
+									<b class="mono">+214 / −188 m</b>
+								</div>
+								<svg class="curve" viewBox="0 0 320 68" preserveAspectRatio="none" role="img" aria-label="Perfil de altitud">
+									<path d="M0 58 L28 50 L60 54 L96 33 L128 39 L164 19 L200 27 L240 12 L280 30 L320 22" fill="none" stroke="#97a09a" stroke-width="2" stroke-linejoin="round"></path>
+									<path d="M0 58 L28 50 L60 54 L96 33 L128 39 L164 19 L200 27 L240 12 L280 30 L320 22 L320 68 L0 68 Z" fill="url(#elevf)"></path>
+									<defs><linearGradient id="elevf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#97a09a" stop-opacity="0.16"></stop><stop offset="1" stop-color="#97a09a" stop-opacity="0"></stop></linearGradient></defs>
+								</svg>
+							</div>
+
+							<div class="panel-block">
+								<div class="panel-cap">
+									<span class="capgroup"><span class="cap" data-i18n="an.cadence.cap">{t('an.cadence.cap')}</span><i class="figcode" aria-hidden="true">FIG. D</i></span>
+									<b class="mono accent">168 spm</b>
+								</div>
+								<svg class="curve" viewBox="0 0 320 90" preserveAspectRatio="none" role="img" aria-label="Curva de cadencia">
+									<path d="M0 78 C 60 70 90 30 160 24 C 210 20 250 40 320 64" fill="none" stroke="#4ce08c" stroke-width="2.4" stroke-linecap="round"></path>
+									<path d="M0 78 C 60 70 90 30 160 24 C 210 20 250 40 320 64 L 320 90 L 0 90 Z" fill="url(#cad)"></path>
+									<defs><linearGradient id="cad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4ce08c" stop-opacity="0.22"></stop><stop offset="1" stop-color="#4ce08c" stop-opacity="0"></stop></linearGradient></defs>
+									<circle cx="160" cy="24" r="3.5" fill="#eef1ee"></circle>
+								</svg>
+								<p class="panel-note" data-i18n="an.cadence.note">{t('an.cadence.note')}</p>
+							</div>
 						</div>
 					</div>
 				</div>
 			</section>
 
 			<!-- EXERCISES -->
-			<section id="exercises" class="band band-quiet">
-				<div class="wrap exercise">
-					<div class="exercise-panel" data-reveal>
-						<div class="repcard">
-							<span class="cap" data-i18n="ex.reps.cap">{t('ex.reps.cap')}</span>
-							<div class="repcount">
-								<b class="mono">12</b>
-								<span class="repname" data-i18n="ex.name1">{t('ex.name1')}</span>
+			<section id="exercises" class="band">
+				<div class="wrap">
+					<div class="sec-rule" aria-hidden="true"><span>SEC. 03</span><span>GRID X8 · 04</span></div>
+					<div class="exercise">
+						<div class="exercise-panel reg" data-reveal>
+							<div class="repcard">
+								<span class="cap" data-i18n="ex.reps.cap">{t('ex.reps.cap')}</span>
+								<div class="repcount">
+									<b class="mono">12</b>
+									<span class="repname" data-i18n="ex.name1">{t('ex.name1')}</span>
+								</div>
+								<div class="repdots" aria-hidden="true">
+									<span></span><span></span><span></span><span></span><span></span><span></span>
+									<span></span><span></span><span></span><span></span><span></span><span></span>
+								</div>
+								<p class="panel-note" data-i18n="ex.reps.note">{t('ex.reps.note')}</p>
 							</div>
-							<div class="repdots" aria-hidden="true">
-								<span></span><span></span><span></span><span></span><span></span><span></span>
-								<span></span><span></span><span></span><span></span><span></span><span></span>
+							<div class="routine">
+								<span class="cap" data-i18n="ex.routine.cap">{t('ex.routine.cap')}</span>
+								<ul class="steps">
+									<li class="step done">
+										<svg class="step-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4 10-11" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+										<span data-i18n="ex.name2">{t('ex.name2')}</span><i class="mono">20×</i>
+									</li>
+									<li class="step now">
+										<span class="step-node" aria-hidden="true"></span>
+										<span data-i18n="ex.name1">{t('ex.name1')}</span><i class="mono">12×</i>
+									</li>
+									<li class="step rest">
+										<svg class="step-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="7" fill="none" stroke="currentColor" stroke-width="1.8"></circle><path d="M12 13V9M9 3h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
+										<span data-i18n="ex.routine.rest">{t('ex.routine.rest')}</span><i class="mono">0:45</i>
+									</li>
+									<li class="step">
+										<span class="step-node dim" aria-hidden="true"></span>
+										<span data-i18n="ex.name3">{t('ex.name3')}</span><i class="mono">15×</i>
+									</li>
+								</ul>
 							</div>
-							<p class="panel-note" data-i18n="ex.reps.note">{t('ex.reps.note')}</p>
 						</div>
-						<div class="routine">
-							<span class="cap" data-i18n="ex.routine.cap">{t('ex.routine.cap')}</span>
-							<ul class="steps">
-								<li class="step done">
-									<svg class="step-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4 10-11" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-									<span data-i18n="ex.name2">{t('ex.name2')}</span><i class="mono">20×</i>
-								</li>
-								<li class="step now">
-									<span class="step-node" aria-hidden="true"></span>
-									<span data-i18n="ex.name1">{t('ex.name1')}</span><i class="mono">12×</i>
-								</li>
-								<li class="step rest">
-									<svg class="step-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="7" fill="none" stroke="currentColor" stroke-width="1.8"></circle><path d="M12 13V9M9 3h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
-									<span data-i18n="ex.routine.rest">{t('ex.routine.rest')}</span><i class="mono">0:45</i>
-								</li>
-								<li class="step">
-									<span class="step-node dim" aria-hidden="true"></span>
-									<span data-i18n="ex.name3">{t('ex.name3')}</span><i class="mono">15×</i>
-								</li>
+
+						<div class="exercise-copy" data-reveal>
+							<h2 class="split-title">
+								<span data-i18n="ex.title1">{t('ex.title1')}</span><br />
+								<em data-i18n="ex.title2">{t('ex.title2')}</em>
+							</h2>
+							<p class="lead" data-i18n="ex.sub">{t('ex.sub')}</p>
+							<ul class="featlist">
+								<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h11M4 12h11M4 18h11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="M19 5l1.5 1.5L23 4" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg><span data-i18n="ex.f1">{t('ex.f1')}</span></li>
+								<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg><span data-i18n="ex.f2">{t('ex.f2')}</span></li>
+								<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8" fill="none" stroke="currentColor" stroke-width="1.8"></circle><path d="M12 13V8M9 2h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg><span data-i18n="ex.f3">{t('ex.f3')}</span></li>
+								<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="5" fill="none" stroke="currentColor" stroke-width="1.8"></circle><path d="M9 13l-2 8 5-3 5 3-2-8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path></svg><span data-i18n="ex.f4">{t('ex.f4')}</span></li>
 							</ul>
 						</div>
-					</div>
-
-					<div class="exercise-copy" data-reveal>
-						<h2 class="split-title">
-							<span data-i18n="ex.title1">{t('ex.title1')}</span><br />
-							<em data-i18n="ex.title2">{t('ex.title2')}</em>
-						</h2>
-						<p class="lead" data-i18n="ex.sub">{t('ex.sub')}</p>
-						<ul class="share-feats">
-							<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h11M4 12h11M4 18h11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="M19 5l1.5 1.5L23 4" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg><span data-i18n="ex.f1">{t('ex.f1')}</span></li>
-							<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg><span data-i18n="ex.f2">{t('ex.f2')}</span></li>
-							<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8" fill="none" stroke="currentColor" stroke-width="1.8"></circle><path d="M12 13V8M9 2h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg><span data-i18n="ex.f3">{t('ex.f3')}</span></li>
-							<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="5" fill="none" stroke="currentColor" stroke-width="1.8"></circle><path d="M9 13l-2 8 5-3 5 3-2-8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path></svg><span data-i18n="ex.f4">{t('ex.f4')}</span></li>
-						</ul>
 					</div>
 				</div>
 			</section>
 
-			<!-- SHARE -->
-			<section id="share" class="band">
+			<!-- SHARE — rotating three-slot deck over a pool of six designs -->
+			<section id="share" class="band band-quiet">
 				<div class="wrap">
+					<div class="sec-rule" aria-hidden="true"><span>SEC. 04</span><span>GRID X8 · 11</span></div>
 					<header class="band-head" data-reveal>
 						<h2 data-i18n="share.title">{t('share.title')}</h2>
 						<p class="lead" data-i18n="share.sub">{t('share.sub')}</p>
 					</header>
-					<div class="share-grid">
-						<div class="share-cards" data-reveal>
-							<!-- left context card -->
-							<figure class="scard scard-side scard-left scard-map">
+
+					<div class="share-stage" data-reveal>
+						<div class="orbit" id="shareDeck" role="group" aria-label={t('share.card.cycle')} data-i18n-label="share.card.cycle">
+							<!-- 1 · tilted map -->
+							<figure class="dcard dc-map pos-c">
 								<div class="scard-map-bg">
 									<svg viewBox="0 0 240 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-										<g class="scard-contours"><path d="M-20 90 C 60 50 140 130 260 80"></path><path d="M-20 170 C 60 130 140 210 260 160"></path><path d="M-20 250 C 60 210 140 290 260 240"></path></g>
-										<path d="M44 276 C 74 246 64 176 112 164 C 158 152 150 104 196 78" fill="none" stroke="#4ce08c" stroke-width="4" stroke-linecap="round"></path>
-										<circle cx="44" cy="276" r="6" fill="#eef1ee"></circle>
+										<g class="scard-contours"><path d="M-20 80 C 60 40 140 120 260 70"></path><path d="M-20 150 C 60 110 140 190 260 140"></path><path d="M-20 230 C 60 190 140 270 260 220"></path></g>
+										<path d="M40 280 C 70 250 60 180 110 168 C 160 156 150 100 200 70" fill="none" stroke="#4ce08c" stroke-width="4.5" stroke-linecap="round"></path>
+										<circle cx="40" cy="280" r="6.5" fill="#eef1ee"></circle>
+										<circle cx="200" cy="70" r="6.5" fill="none" stroke="#4ce08c" stroke-width="3"></circle>
 									</svg>
 								</div>
-								<figcaption><span class="cap" data-i18n="share.card.night">{t('share.card.night')}</span><div class="scard-row"><b class="mono">5.9 km</b><b class="mono">6'02"/km</b></div></figcaption>
+								<figcaption><span class="cap" data-i18n="share.card.route">{t('share.card.route')}</span><div class="scard-row"><b class="mono">7.42 km</b><b class="mono">5'18"/km</b></div></figcaption>
 							</figure>
 
-							<!-- center: rotating deck (only this card cycles) -->
-							<div class="scard-hero">
-								<div class="deck" id="shareDeck" role="group" aria-label={t('share.card.cycle')} data-i18n-label="share.card.cycle">
-									<figure class="dcard is-active dc-map">
-										<div class="scard-map-bg">
-											<svg viewBox="0 0 240 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-												<g class="scard-contours"><path d="M-20 80 C 60 40 140 120 260 70"></path><path d="M-20 150 C 60 110 140 190 260 140"></path><path d="M-20 230 C 60 190 140 270 260 220"></path></g>
-												<path d="M40 280 C 70 250 60 180 110 168 C 160 156 150 100 200 70" fill="none" stroke="#4ce08c" stroke-width="4.5" stroke-linecap="round"></path>
-												<circle cx="40" cy="280" r="6.5" fill="#eef1ee"></circle>
-												<circle cx="200" cy="70" r="6.5" fill="none" stroke="#4ce08c" stroke-width="3"></circle>
-											</svg>
-										</div>
-										<figcaption><span class="cap" data-i18n="share.card.route">{t('share.card.route')}</span><div class="scard-row"><b class="mono">7.42 km</b><b class="mono">5'18"/km</b></div></figcaption>
-									</figure>
+							<!-- 2 · photo dawn -->
+							<figure class="dcard dc-photo pos-r" aria-hidden="true">
+								<div class="dc-photo-bg"></div>
+								<svg class="dc-ridge" viewBox="0 0 240 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M0 214 L52 176 L96 202 L150 150 L196 186 L240 158 L240 320 L0 320 Z" fill="#0a0c0d" fill-opacity="0.55"></path></svg>
+								<svg class="dc-route" viewBox="0 0 240 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M36 286 C 72 262 66 214 108 202 C 150 190 150 150 194 122" fill="none" stroke="#4ce08c" stroke-width="4" stroke-linecap="round"></path><circle cx="36" cy="286" r="6" fill="#eef1ee"></circle></svg>
+								<figcaption><span class="cap" data-i18n="share.card.dawn">{t('share.card.dawn')}</span><div class="scard-row"><b class="mono">8.1 km</b><b class="mono">42:18</b></div></figcaption>
+							</figure>
 
-									<figure class="dcard dc-photo">
-										<div class="dc-photo-bg"></div>
-										<svg class="dc-ridge" viewBox="0 0 240 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M0 214 L52 176 L96 202 L150 150 L196 186 L240 158 L240 320 L0 320 Z" fill="#0a0c0d" fill-opacity="0.55"></path></svg>
-										<svg class="dc-route" viewBox="0 0 240 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M36 286 C 72 262 66 214 108 202 C 150 190 150 150 194 122" fill="none" stroke="#4ce08c" stroke-width="4" stroke-linecap="round"></path><circle cx="36" cy="286" r="6" fill="#eef1ee"></circle></svg>
-										<figcaption><span class="cap" data-i18n="share.card.dawn">{t('share.card.dawn')}</span><div class="scard-row"><b class="mono">8.1 km</b><b class="mono">42:18</b></div></figcaption>
-									</figure>
+							<!-- 3 · duotone -->
+							<figure class="dcard dc-duo pos-back" aria-hidden="true">
+								<div class="dc-duo-bg"></div>
+								<svg class="dc-ridge" viewBox="0 0 240 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M0 232 L60 196 L110 224 L168 168 L240 206 L240 320 L0 320 Z" fill="#0a0c0d" fill-opacity="0.4"></path></svg>
+								<figcaption class="dc-big"><b class="mono">12.8</b><span class="cap" data-i18n="share.card.longcap">{t('share.card.longcap')}</span></figcaption>
+							</figure>
 
-									<figure class="dcard dc-duo">
-										<div class="dc-duo-bg"></div>
-										<svg class="dc-ridge" viewBox="0 0 240 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M0 232 L60 196 L110 224 L168 168 L240 206 L240 320 L0 320 Z" fill="#0a0c0d" fill-opacity="0.4"></path></svg>
-										<figcaption class="dc-big"><b class="mono">12.8</b><span class="cap" data-i18n="share.card.longcap">{t('share.card.longcap')}</span></figcaption>
-									</figure>
+							<!-- 4 · topographic -->
+							<figure class="dcard dc-topo pos-back" aria-hidden="true">
+								<svg class="dc-topo-bg" viewBox="0 0 240 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+									<g class="dc-topo-lines"><path d="M-20 120 C 70 70 150 150 260 90"></path><path d="M-20 150 C 70 105 150 180 260 120"></path><path d="M-20 185 C 70 140 150 210 260 150"></path><path d="M-20 225 C 70 180 150 250 260 190"></path><path d="M-20 270 C 70 225 150 295 260 235"></path></g>
+									<path d="M48 278 C 80 244 70 190 116 176 C 160 163 156 116 198 92" fill="none" stroke="#4ce08c" stroke-width="4.5" stroke-linecap="round"></path>
+									<circle cx="48" cy="278" r="6" fill="#eef1ee"></circle>
+								</svg>
+								<figcaption><span class="cap" data-i18n="share.card.mountain">{t('share.card.mountain')}</span><div class="scard-row"><b class="mono">+214 m</b><b class="mono">6.4 km</b></div></figcaption>
+							</figure>
 
-									<figure class="dcard dc-topo">
-										<svg class="dc-topo-bg" viewBox="0 0 240 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-											<g class="dc-topo-lines"><path d="M-20 120 C 70 70 150 150 260 90"></path><path d="M-20 150 C 70 105 150 180 260 120"></path><path d="M-20 185 C 70 140 150 210 260 150"></path><path d="M-20 225 C 70 180 150 250 260 190"></path><path d="M-20 270 C 70 225 150 295 260 235"></path></g>
-											<path d="M48 278 C 80 244 70 190 116 176 C 160 163 156 116 198 92" fill="none" stroke="#4ce08c" stroke-width="4.5" stroke-linecap="round"></path>
-											<circle cx="48" cy="278" r="6" fill="#eef1ee"></circle>
-										</svg>
-										<figcaption><span class="cap" data-i18n="share.card.mountain">{t('share.card.mountain')}</span><div class="scard-row"><b class="mono">+214 m</b><b class="mono">6.4 km</b></div></figcaption>
-									</figure>
+							<!-- 5 · blueprint / coordinates -->
+							<figure class="dcard dc-blue pos-back" aria-hidden="true">
+								<svg class="dc-blue-bg" viewBox="0 0 240 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+									<defs>
+										<pattern id="bgrid" width="24" height="24" patternUnits="userSpaceOnUse">
+											<path d="M24 0H0V24" fill="none" stroke="#1d3f3a" stroke-width="0.8"></path>
+										</pattern>
+									</defs>
+									<rect width="240" height="320" fill="#0c211e"></rect>
+									<rect width="240" height="320" fill="url(#bgrid)"></rect>
+									<g class="dc-blue-marks">
+										<path d="M52 96 h10 M57 91 v10"></path>
+										<path d="M182 236 h10 M187 231 v10"></path>
+									</g>
+									<text class="dc-blue-coord" x="16" y="30">34.60° S</text>
+									<text class="dc-blue-coord" x="16" y="46">58.38° W</text>
+									<path d="M44 276 C 78 248 66 192 112 178 C 158 164 152 112 198 84" fill="none" stroke="#4ce08c" stroke-width="4" stroke-linecap="round"></path>
+									<circle cx="44" cy="276" r="6" fill="#eef1ee"></circle>
+									<circle cx="198" cy="84" r="6" fill="none" stroke="#4ce08c" stroke-width="3"></circle>
+								</svg>
+								<figcaption><span class="cap" data-i18n="share.card.blueprint">{t('share.card.blueprint')}</span><div class="scard-row"><b class="mono">4.8 km</b><b class="mono">27:05</b></div></figcaption>
+							</figure>
+
+							<!-- 6 · big typographic -->
+							<figure class="dcard dc-type pos-l" aria-hidden="true">
+								<div class="dc-type-in" aria-hidden="true">
+									<b>21.1</b>
+									<span class="dc-type-km cap">KM</span>
+									<span class="dc-type-time mono">1:52:04</span>
 								</div>
-								<div class="deck-dots">
-									<button type="button" aria-current="true" aria-label={t('share.card.route')} data-i18n-label="share.card.route"></button>
-									<button type="button" aria-label={t('share.card.dawn')} data-i18n-label="share.card.dawn"></button>
-									<button type="button" aria-label={t('share.card.duo')} data-i18n-label="share.card.duo"></button>
-									<button type="button" aria-label={t('share.card.mountain')} data-i18n-label="share.card.mountain"></button>
-								</div>
-							</div>
-
-							<!-- right context card -->
-							<figure class="scard scard-side scard-right scard-photo">
-								<div class="scard-photo-bg"></div>
-								<svg class="dc-route" viewBox="0 0 240 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M40 282 C 74 258 68 212 110 200 C 152 188 152 150 196 126" fill="none" stroke="#4ce08c" stroke-width="3.5" stroke-linecap="round"></path><circle cx="40" cy="282" r="5" fill="#eef1ee"></circle></svg>
-								<figcaption class="scard-photo-cap"><b class="mono">42:18</b><span class="cap">MOV · 12 MAY</span></figcaption>
+								<svg class="dc-route dc-type-route" viewBox="0 0 240 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M20 292 C 70 280 90 300 130 288 C 175 274 195 288 226 278" fill="none" stroke="#4ce08c" stroke-width="3" stroke-linecap="round"></path><circle cx="20" cy="292" r="4.5" fill="#eef1ee"></circle></svg>
+								<figcaption><span class="cap" data-i18n="share.card.big">{t('share.card.big')}</span></figcaption>
 							</figure>
 						</div>
 
-						<ul class="share-feats" data-reveal>
-							<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"></rect><circle cx="8.5" cy="10" r="1.6" fill="currentColor"></circle><path d="M4 17l5-4 4 3 3-2 4 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path></svg><span data-i18n="share.f1">{t('share.f1')}</span></li>
-							<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l9-4 9 4-9 4-9-4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path><path d="M3 8v8l9 4 9-4V8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path></svg><span data-i18n="share.f2">{t('share.f2')}</span></li>
-							<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18c3-1 3-6 6-7s5-2 8-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="M4 13c3-1 3-6 6-7s5-2 8-6" fill="none" stroke="var(--accent)" stroke-width="1.4" stroke-linecap="round" opacity="0.6"></path></svg><span data-i18n="share.f3">{t('share.f3')}</span></li>
-							<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="7" height="7" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.8"></rect><rect x="14" y="4" width="7" height="16" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.8"></rect><rect x="3" y="15" width="7" height="5" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.8"></rect></svg><span data-i18n="share.f4">{t('share.f4')}</span></li>
-						</ul>
+						<div class="deck-dots">
+							<button type="button" aria-current="true" aria-label={t('share.card.route')} data-i18n-label="share.card.route"></button>
+							<button type="button" aria-label={t('share.card.dawn')} data-i18n-label="share.card.dawn"></button>
+							<button type="button" aria-label={t('share.card.duo')} data-i18n-label="share.card.duo"></button>
+							<button type="button" aria-label={t('share.card.mountain')} data-i18n-label="share.card.mountain"></button>
+							<button type="button" aria-label={t('share.card.blueprint')} data-i18n-label="share.card.blueprint"></button>
+							<button type="button" aria-label={t('share.card.big')} data-i18n-label="share.card.big"></button>
+						</div>
 					</div>
+
+					<ul class="feat-legend" data-reveal>
+						<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"></rect><circle cx="8.5" cy="10" r="1.6" fill="currentColor"></circle><path d="M4 17l5-4 4 3 3-2 4 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path></svg><span data-i18n="share.f1">{t('share.f1')}</span></li>
+						<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l9-4 9 4-9 4-9-4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path><path d="M3 8v8l9 4 9-4V8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path></svg><span data-i18n="share.f2">{t('share.f2')}</span></li>
+						<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18c3-1 3-6 6-7s5-2 8-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="M4 13c3-1 3-6 6-7s5-2 8-6" fill="none" stroke="var(--accent)" stroke-width="1.4" stroke-linecap="round" opacity="0.6"></path></svg><span data-i18n="share.f3">{t('share.f3')}</span></li>
+						<li><svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="7" height="7" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.8"></rect><rect x="14" y="4" width="7" height="16" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.8"></rect><rect x="3" y="15" width="7" height="5" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.8"></rect></svg><span data-i18n="share.f4">{t('share.f4')}</span></li>
+					</ul>
 				</div>
 			</section>
 
 			<!-- PRIVACY -->
-			<section id="privacy" class="band band-quiet">
-				<div class="wrap privacy">
+			<section id="privacy" class="band">
+				<div class="wrap">
+					<div class="sec-rule" aria-hidden="true"><span>SEC. 05</span><span>GRID X9 · 02</span></div>
 					<div class="privacy-copy" data-reveal>
 						<h2 class="split-title big">
 							<span data-i18n="priv.title1">{t('priv.title1')}</span><br />
@@ -365,7 +441,7 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 						</h2>
 						<p class="lead" data-i18n="priv.body">{t('priv.body')}</p>
 					</div>
-					<ul class="pledge" data-reveal>
+					<ul class="pledge reg" data-reveal>
 						<li>
 							<svg class="ico-sm" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="var(--accent)" stroke-width="1.8"></rect><path d="M8 11V8a4 4 0 018 0v3" fill="none" stroke="var(--accent)" stroke-width="1.8"></path></svg>
 							<div><b data-i18n="priv.p1">{t('priv.p1')}</b><span data-i18n="priv.p1d">{t('priv.p1d')}</span></div>
@@ -383,8 +459,9 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			</section>
 
 			<!-- ROADMAP -->
-			<section id="roadmap" class="band">
+			<section id="roadmap" class="band band-quiet">
 				<div class="wrap">
+					<div class="sec-rule" aria-hidden="true"><span>SEC. 06</span><span>GRID X9 · 07</span></div>
 					<header class="band-head" data-reveal>
 						<h2 data-i18n="road.title">{t('road.title')}</h2>
 						<p class="lead" data-i18n="road.sub">{t('road.sub')}</p>
@@ -393,28 +470,28 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 						<li class="road-item">
 							<span class="road-node" aria-hidden="true"></span>
 							<div class="road-body">
-								<div class="road-top"><b data-i18n="road.i1.t">{t('road.i1.t')}</b><span class="road-tag cap" data-i18n="road.status">{t('road.status')}</span></div>
+								<div class="road-top"><span class="road-code" aria-hidden="true">WPT 01</span><b data-i18n="road.i1.t">{t('road.i1.t')}</b><span class="road-tag cap" data-i18n="road.status">{t('road.status')}</span></div>
 								<p data-i18n="road.i1.d">{t('road.i1.d')}</p>
 							</div>
 						</li>
 						<li class="road-item">
 							<span class="road-node" aria-hidden="true"></span>
 							<div class="road-body">
-								<div class="road-top"><b data-i18n="road.i2.t">{t('road.i2.t')}</b><span class="road-tag cap" data-i18n="road.status">{t('road.status')}</span></div>
+								<div class="road-top"><span class="road-code" aria-hidden="true">WPT 02</span><b data-i18n="road.i2.t">{t('road.i2.t')}</b><span class="road-tag cap" data-i18n="road.status">{t('road.status')}</span></div>
 								<p data-i18n="road.i2.d">{t('road.i2.d')}</p>
 							</div>
 						</li>
 						<li class="road-item">
 							<span class="road-node" aria-hidden="true"></span>
 							<div class="road-body">
-								<div class="road-top"><b data-i18n="road.i3.t">{t('road.i3.t')}</b><span class="road-tag cap" data-i18n="road.status">{t('road.status')}</span></div>
+								<div class="road-top"><span class="road-code" aria-hidden="true">WPT 03</span><b data-i18n="road.i3.t">{t('road.i3.t')}</b><span class="road-tag cap" data-i18n="road.status">{t('road.status')}</span></div>
 								<p data-i18n="road.i3.d">{t('road.i3.d')}</p>
 							</div>
 						</li>
 						<li class="road-item">
 							<span class="road-node end" aria-hidden="true"></span>
 							<div class="road-body">
-								<div class="road-top"><b data-i18n="road.i4.t">{t('road.i4.t')}</b><span class="road-tag cap" data-i18n="road.status">{t('road.status')}</span></div>
+								<div class="road-top"><span class="road-code" aria-hidden="true">WPT 04</span><b data-i18n="road.i4.t">{t('road.i4.t')}</b><span class="road-tag cap" data-i18n="road.status">{t('road.status')}</span></div>
 								<p data-i18n="road.i4.d">{t('road.i4.d')}</p>
 							</div>
 						</li>
@@ -442,6 +519,7 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 						</a>
 					</div>
 					<p class="cap dl-req" data-i18n="dl.req">{t('dl.req')}</p>
+					<p class="cap dl-stamp" data-i18n="dl.stamp">{t('dl.stamp')}</p>
 				</div>
 			</section>
 		</main>
@@ -461,11 +539,14 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 				</div>
 				<div class="foot-links">
 					<a href="/tecnologia" data-i18n="foot.tech">{t('foot.tech')}</a>
-						<a href={GITHUB_URL} rel="noopener">GitHub</a>
+					<a href={GITHUB_URL} rel="noopener">GitHub</a>
 					<a href={RELEASES_URL} rel="noopener" data-i18n="cta.download">{t('cta.download')}</a>
 					<span data-i18n="foot.license">{t('foot.license')}</span>
 				</div>
-				<span class="foot-made cap" data-i18n="foot.made">{t('foot.made')}</span>
+				<div class="foot-row">
+					<span class="foot-made cap" data-i18n="foot.made">{t('foot.made')}</span>
+					<span class="foot-coord cap" aria-hidden="true">34.6037° S · 58.3816° W · GRID REF. 08 / X7 / 19</span>
+				</div>
 			</div>
 		</footer>
 
@@ -536,23 +617,36 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 					setTimeout(function () { reveals.forEach(reveal); }, 2200);
 				}
 
-				// Share deck — only the central card rotates through its designs.
-				// The dots are real buttons: manual navigation always works (including
-				// under reduced motion, where the deck never auto-advances).
+				// Share deck — three visible slots (left / center / right) ROTATE through a
+				// pool of six designs: every advance shifts all three (a new design enters
+				// at the right, the center slides to the left, the old left retires).
+				// The dots are real buttons: manual navigation always works, including under
+				// reduced motion, where the deck never auto-advances and swaps are instant.
 				const deck = document.getElementById('shareDeck');
 				if (deck) {
-					const holder = deck.closest('.scard-hero') || deck;
+					const holder = deck.closest('.share-stage') || deck;
 					const cards = Array.prototype.slice.call(deck.querySelectorAll('.dcard'));
 					const dots = Array.prototype.slice.call(document.querySelectorAll('.deck-dots button'));
+					const n = cards.length;
 					let idx = 0, timer = null;
-					function show(next) {
-						cards[idx].classList.remove('is-active');
-						if (dots[idx]) dots[idx].removeAttribute('aria-current');
-						idx = (next + cards.length) % cards.length;
-						cards[idx].classList.add('is-active');
-						if (dots[idx]) dots[idx].setAttribute('aria-current', 'true');
+					function layout() {
+						cards.forEach(function (c, i) {
+							const off = (i - idx + n) % n;
+							c.classList.remove('pos-c', 'pos-r', 'pos-l', 'pos-back');
+							if (off === 0) c.classList.add('pos-c');
+							else if (off === 1) c.classList.add('pos-r');
+							else if (off === n - 1) c.classList.add('pos-l');
+							else c.classList.add('pos-back');
+							if (off === 0) c.removeAttribute('aria-hidden');
+							else c.setAttribute('aria-hidden', 'true');
+						});
+						dots.forEach(function (d, i) {
+							if (i === idx) d.setAttribute('aria-current', 'true');
+							else d.removeAttribute('aria-current');
+						});
 					}
-					function start() { if (!reduce && !timer) timer = window.setInterval(function () { show(idx + 1); }, 3200); }
+					function show(next) { idx = (next + n) % n; layout(); }
+					function start() { if (!reduce && !timer) timer = window.setInterval(function () { show(idx + 1); }, 3800); }
 					function stop() { if (timer) { clearInterval(timer); timer = null; } }
 					dots.forEach(function (d, i) {
 						d.addEventListener('click', function () { stop(); show(i); start(); });
@@ -574,23 +668,52 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 		</script>
 
 		<style>
-			/* ---------- Terrain ground ---------- */
-			.terrain {
-				position: fixed;
-				inset: 0;
-				z-index: -1;
-				background:
-					radial-gradient(120% 80% at 78% -8%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 46%),
-					radial-gradient(90% 70% at 8% 108%, color-mix(in srgb, var(--accent) 5%, transparent), transparent 50%),
-					var(--bg);
+			/* ---------- Survey furniture ---------- */
+			/* Corner registration ticks framing a plate */
+			.reg { position: relative; }
+			.reg::before,
+			.reg::after {
+				content: '';
+				position: absolute;
+				width: 15px;
+				height: 15px;
+				pointer-events: none;
+				z-index: 4;
 			}
-			.terrain svg { width: 100%; height: 100%; }
-			.contours path {
-				fill: none;
-				stroke: var(--line);
-				stroke-width: 1.2;
-				opacity: 0.5;
+			.reg::before { top: -6px; left: -6px; border-top: 1.5px solid #8b938d; border-left: 1.5px solid #8b938d; }
+			.reg::after { bottom: -6px; right: -6px; border-bottom: 1.5px solid #8b938d; border-right: 1.5px solid #8b938d; }
+
+			/* Section registration rule — a hairline with survey codes */
+			.sec-rule {
+				display: flex;
+				justify-content: space-between;
+				gap: var(--sp-4);
+				position: relative;
+				border-top: 1px solid var(--line-2);
+				padding-top: 9px;
+				margin-bottom: var(--sp-6);
+				font-family: var(--font-mono);
+				font-size: 11px;
+				letter-spacing: 0.16em;
+				text-transform: uppercase;
+				color: #8b938d;
 			}
+			.sec-rule::before {
+				content: '';
+				position: absolute;
+				top: -1px;
+				left: 0;
+				width: 36px;
+				border-top: 2px solid var(--accent);
+			}
+			.figcode {
+				font-family: var(--font-mono);
+				font-size: 10px;
+				letter-spacing: 0.14em;
+				color: var(--faint);
+				font-style: normal;
+			}
+			.capgroup { display: inline-flex; align-items: baseline; gap: 10px; }
 
 			/* ---------- Nav ---------- */
 			.nav {
@@ -613,6 +736,13 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 				font-weight: 600;
 				font-size: 24px;
 				letter-spacing: 0.01em;
+			}
+			.nav-coord {
+				font-family: var(--font-mono);
+				font-size: 10.5px;
+				letter-spacing: 0.1em;
+				color: var(--faint);
+				white-space: nowrap;
 			}
 			.nav-links {
 				display: flex;
@@ -674,7 +804,7 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			.btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px -12px color-mix(in srgb, var(--accent) 60%, transparent); }
 			.btn:active { transform: translateY(0); }
 			.btn-sm { padding: 8px 14px; font-size: 14px; border-radius: 10px; }
-			.btn-lg { padding: 14px 24px; font-size: 18px; }
+			.btn-lg { padding: 14px 26px; font-size: 19px; }
 			.btn-ghost {
 				color: var(--ink);
 				background: color-mix(in srgb, var(--surface) 70%, transparent);
@@ -686,37 +816,56 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 				border-color: var(--faint);
 			}
 
-			/* ---------- Hero ---------- */
-			.hero { padding: clamp(48px, 9vw, 104px) 0 var(--sp-9); }
+			/* ---------- Hero — survey sheet 01 ---------- */
+			.hero { position: relative; }
 			.hero-in {
-				display: grid;
-				grid-template-columns: minmax(0, 1fr) clamp(280px, 32%, 380px);
-				gap: clamp(28px, 4vw, 64px);
-				align-items: center;
+				display: flex;
+				flex-direction: column;
+				min-height: clamp(620px, calc(100svh - 62px), 920px);
+				padding: var(--sp-5) var(--edge) var(--sp-6);
 			}
-			.hero-copy { min-width: 0; }
+			.survey-line {
+				display: flex;
+				justify-content: space-between;
+				gap: var(--sp-4);
+				border-bottom: 1px solid var(--line);
+				padding-bottom: 10px;
+			}
+			.sl-coord { color: var(--faint); }
+
+			.hero-stage { position: relative; margin-top: clamp(20px, 4vh, 52px); }
 			.hero-title {
-				font-size: clamp(42px, 6.6vw, 96px);
-				line-height: 0.92;
-				letter-spacing: -0.025em;
+				position: relative;
+				z-index: 2;
+				font-size: clamp(58px, 11.5vw, 158px);
+				font-weight: 700;
+				line-height: 0.86;
+				letter-spacing: -0.03em;
 				text-transform: uppercase;
 			}
+			.ht-l { display: block; }
 			.hero-title em { color: var(--accent); font-style: normal; }
-			.hero-sub {
-				margin-top: var(--sp-5);
-				max-width: 48ch;
-				font-size: clamp(16px, 2vw, 19px);
-				color: var(--muted);
+			/* the two headline lines land with a short athletic stagger */
+			.js .hero-stage[data-reveal] .ht-l {
+				opacity: 0;
+				transform: translateY(44px);
+				transition: opacity 0.6s ease, transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
 			}
-			.hero-cta { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
-			.hero-cta.center { justify-content: center; }
-			.hero-note { margin-top: var(--sp-5); }
+			.js .hero-stage[data-reveal].in .ht-l { opacity: 1; transform: none; }
+			.js .hero-stage[data-reveal].in .ht-l + .ht-l { transition-delay: 0.14s; }
 
-			/* Instrument scope */
-			.hero-instrument { display: flex; justify-content: center; }
+			/* the route plate sits under the headline — type runs over the instrument */
+			.hero-scope {
+				position: absolute;
+				top: -14px;
+				right: 0;
+				z-index: 1;
+				width: clamp(300px, 31vw, 400px);
+				transform: rotate(2deg);
+			}
 			.scope {
 				position: relative;
-				width: min(100%, 460px);
+				width: 100%;
 				background: linear-gradient(180deg, var(--surface) 0%, var(--bg-2) 100%);
 				border: 1px solid var(--line-2);
 				border-radius: var(--radius-lg);
@@ -751,12 +900,13 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			}
 			.route { width: 100%; height: auto; border-radius: var(--radius); overflow: hidden; }
 			.tilt { transform: perspective(760px) rotateX(20deg) rotateZ(-11deg); transform-origin: 55% 60%; }
+			.plate-cross path { stroke: var(--faint); stroke-width: 1.2; opacity: 0.6; }
 			.route-line {
 				stroke-dasharray: 640;
 				filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 55%, transparent));
 			}
 			.js .route-line { stroke-dashoffset: 640; }
-			.js .hero-instrument.in .route-line { animation: draw 2.1s cubic-bezier(0.3, 0.9, 0.2, 1) 0.25s forwards; }
+			.js .hero-stage.in .route-line { animation: draw 2.1s cubic-bezier(0.3, 0.9, 0.2, 1) 0.35s forwards; }
 			@keyframes draw { to { stroke-dashoffset: 0; } }
 			.km { fill: var(--bg); stroke: var(--accent); stroke-width: 2; }
 			.p-start { fill: var(--ink); }
@@ -764,55 +914,110 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			/* km marks and the finish ring pop in as the stroke reaches them */
 			.km, .p-end { transform-box: fill-box; transform-origin: center; }
 			.js .km, .js .p-end { opacity: 0; }
-			.js .hero-instrument.in .km,
-			.js .hero-instrument.in .p-end { animation: mark 0.45s ease-out forwards; }
-			.js .hero-instrument.in .km:first-of-type { animation-delay: 0.95s; }
-			.js .hero-instrument.in .km + .km { animation-delay: 1.6s; }
-			.js .hero-instrument.in .p-end { animation-delay: 2.25s; }
+			.js .hero-stage.in .km,
+			.js .hero-stage.in .p-end { animation: mark 0.45s ease-out forwards; }
+			.js .hero-stage.in .km:first-of-type { animation-delay: 1.05s; }
+			.js .hero-stage.in .km + .km { animation-delay: 1.7s; }
+			.js .hero-stage.in .p-end { animation-delay: 2.35s; }
 			@keyframes mark {
 				from { opacity: 0; transform: scale(0.4); }
 				to { opacity: 1; transform: none; }
 			}
-			.hud {
-				display: grid;
-				grid-template-columns: repeat(4, 1fr);
-				gap: var(--sp-2);
+			.scope-foot {
+				display: flex;
+				justify-content: space-between;
+				gap: var(--sp-3);
 				margin-top: var(--sp-4);
-				padding-top: var(--sp-4);
+				padding-top: var(--sp-3);
 				border-top: 1px solid var(--line);
 			}
+			.scope-foot .cap { color: var(--faint); }
+
+			.hero-under { margin-top: var(--sp-6); margin-bottom: var(--sp-7); max-width: 620px; }
+			.hero-sub {
+				max-width: 48ch;
+				font-size: clamp(16px, 2vw, 19px);
+				color: var(--muted);
+			}
+			.hero-cta { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-5); }
+			.hero-cta.center { justify-content: center; }
+			.hero-note { margin-top: var(--sp-4); }
+
+			/* HUD legend bar — anchors the fold */
+			.hud {
+				display: flex;
+				align-items: center;
+				flex-wrap: wrap;
+				gap: var(--sp-4) clamp(20px, 3.4vw, 52px);
+				margin-top: auto;
+				padding: var(--sp-4) var(--sp-5);
+				border: 1px solid var(--line-2);
+				background: color-mix(in srgb, var(--surface) 55%, transparent);
+			}
+			.compass { width: 34px; height: 40px; color: var(--muted); flex: none; }
+			.compass-n {
+				font-family: var(--font-mono);
+				font-size: 9px;
+				letter-spacing: 0.1em;
+				fill: currentColor;
+			}
 			.hud-cell { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
-			.hud-cell b { font-size: clamp(15px, 2.5vw, 19px); font-weight: 700; white-space: nowrap; }
+			.hud-cell b { font-size: clamp(17px, 2.2vw, 22px); font-weight: 700; white-space: nowrap; }
 			.hud-cell span { font-size: 10.5px; color: var(--muted); }
 			.hud-cell i { font-size: 10px; color: var(--muted); font-style: normal; }
+			.hud-meta { margin-left: auto; color: var(--faint); }
+
+			/* Trust strip — real facts as a survey legend */
+			.trust { border-block: 1px solid var(--line); background: color-mix(in srgb, var(--bg-2) 55%, transparent); }
+			.trust-in {
+				display: flex;
+				flex-wrap: wrap;
+				justify-content: center;
+				align-items: center;
+				gap: 10px 22px;
+				padding-block: var(--sp-4);
+			}
+			.trust .t { color: var(--muted); }
+			.trust .tsep { font-family: var(--font-mono); font-size: 11px; color: var(--faint); }
 
 			/* ---------- Bands ---------- */
 			.band { padding: clamp(56px, 9vw, 120px) 0; }
 			.band-quiet { background: color-mix(in srgb, var(--bg-2) 60%, transparent); }
-			.band-head { max-width: 60ch; margin-bottom: var(--sp-8); }
-			h2 { font-size: clamp(34px, 5.5vw, 60px); text-transform: uppercase; }
+			.band-head { max-width: 60ch; margin-bottom: var(--sp-7); }
+			h2 { font-size: clamp(38px, 6vw, 72px); text-transform: uppercase; font-weight: 700; letter-spacing: -0.02em; }
 			.lead { margin-top: var(--sp-4); font-size: clamp(16px, 2vw, 19px); color: var(--muted); max-width: 62ch; }
-			.split-title { font-size: clamp(38px, 6vw, 72px); text-transform: uppercase; line-height: 0.92; }
-			.split-title.big { font-size: clamp(40px, 7vw, 84px); }
+			.split-title { font-size: clamp(40px, 6.6vw, 84px); text-transform: uppercase; line-height: 0.9; font-weight: 700; letter-spacing: -0.025em; }
+			.split-title.big { font-size: clamp(46px, 8vw, 104px); }
 			.split-title em { color: var(--accent); font-style: normal; }
 
-			.band-tight { padding-top: 0; }
-
-			/* Modes — one instrument panel, three cells split by rules */
-			.modes {
+			/* Modes — a survey ledger, three registered rows */
+			.modes { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line-2); }
+			.mode {
 				display: grid;
-				grid-template-columns: repeat(3, 1fr);
-				background: color-mix(in srgb, var(--surface) 60%, transparent);
-				border: 1px solid var(--line);
-				border-radius: var(--radius-lg);
-				overflow: hidden;
+				grid-template-columns: 88px minmax(0, 0.9fr) minmax(0, 1.1fr);
+				gap: var(--sp-5);
+				align-items: start;
+				padding: var(--sp-6) var(--sp-3);
+				border-bottom: 1px solid var(--line);
+				transition: background 0.25s ease;
 			}
-			.mode { padding: var(--sp-6) var(--sp-5); }
-			.mode + .mode { border-left: 1px solid var(--line); }
-			.mode-head { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-3); }
-			.ico { width: 30px; height: 30px; color: var(--ink); flex: none; }
-			.mode h3 { font-size: 24px; text-transform: uppercase; }
-			.mode p { color: var(--muted); font-size: 15px; }
+			.mode:hover { background: color-mix(in srgb, var(--surface) 55%, transparent); }
+			.mode-code {
+				font-family: var(--font-mono);
+				font-size: 11px;
+				letter-spacing: 0.16em;
+				color: #8b938d;
+				padding-top: 16px;
+			}
+			.mode-name { display: flex; align-items: center; gap: var(--sp-4); }
+			.mode-name h3 {
+				font-size: clamp(34px, 4.6vw, 56px);
+				text-transform: uppercase;
+				font-weight: 700;
+				letter-spacing: -0.02em;
+			}
+			.ico { width: 34px; height: 34px; color: var(--ink); flex: none; }
+			.mode p { color: var(--muted); font-size: 16px; max-width: 52ch; padding-top: 12px; }
 
 			/* Analysis */
 			.analysis { display: grid; grid-template-columns: 0.92fr 1.08fr; gap: clamp(28px, 5vw, 68px); align-items: center; }
@@ -823,7 +1028,6 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 				margin-top: var(--sp-6);
 				background: var(--line);
 				border: 1px solid var(--line);
-				border-radius: var(--radius);
 				overflow: hidden;
 			}
 			.stat { background: color-mix(in srgb, var(--surface) 82%, var(--bg)); padding: var(--sp-4); display: flex; flex-direction: column; }
@@ -840,9 +1044,17 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 				flex-direction: column;
 				gap: var(--sp-5);
 			}
+			.panel-head {
+				display: flex;
+				justify-content: space-between;
+				gap: var(--sp-3);
+				padding-bottom: var(--sp-3);
+				border-bottom: 1px solid var(--line-2);
+			}
+			.panel-head .cap:last-child { color: var(--faint); }
 			.panel-block { display: flex; flex-direction: column; gap: var(--sp-3); }
 			.panel-block + .panel-block { padding-top: var(--sp-5); border-top: 1px solid var(--line); }
-			.panel-cap { display: flex; align-items: center; justify-content: space-between; }
+			.panel-cap { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
 			.medal { width: 22px; height: 22px; }
 			.accent { color: var(--accent); }
 			.insights { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
@@ -878,37 +1090,54 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			.curve { width: 100%; height: 90px; }
 			.panel-note { font-size: 13.5px; color: var(--muted); }
 
-			/* Share */
-			.share-grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: clamp(28px, 5vw, 64px); align-items: center; }
-			.share-cards { display: flex; align-items: center; justify-content: center; }
-			.scard {
-				margin: 0;
-				width: 200px;
+			/* Share — the rotating three-slot deck */
+			.share-stage {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				overflow: hidden;
+				padding-block: var(--sp-4);
+			}
+			.orbit {
+				position: relative;
+				width: min(100%, 720px);
+				height: 356px;
+			}
+			.dcard {
+				position: absolute;
+				left: 50%;
+				top: 50%;
+				width: 246px;
 				aspect-ratio: 3 / 4;
+				margin: 0;
 				border-radius: var(--radius-lg);
 				overflow: hidden;
 				border: 1px solid var(--line-2);
+				background: #0a0c0d;
 				box-shadow: var(--shadow-lg);
-				position: relative;
+				transition: transform 0.85s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.6s ease;
 			}
-			.scard-map { background: linear-gradient(180deg, #10201a 0%, #0a0c0d 100%); }
+			.pos-c { transform: translate(-50%, -50%); opacity: 1; z-index: 3; }
+			.pos-r { transform: translate(calc(-50% + 198px), -50%) scale(0.8) rotate(4deg); opacity: 0.72; z-index: 2; }
+			.pos-l { transform: translate(calc(-50% - 198px), -50%) scale(0.8) rotate(-4deg); opacity: 0.72; z-index: 2; }
+			.pos-back { transform: translate(-50%, -50%) scale(0.55); opacity: 0; z-index: 1; pointer-events: none; }
+
 			.scard-map-bg { position: absolute; inset: 0; }
 			.scard-map-bg svg { width: 100%; height: 100%; }
+			.dc-map { background: linear-gradient(180deg, #10201a 0%, #0a0c0d 100%); }
 			.scard-contours path { fill: none; stroke: color-mix(in srgb, var(--accent) 22%, transparent); stroke-width: 1; }
-			.scard figcaption, .dcard figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: var(--sp-4); background: linear-gradient(0deg, rgba(0, 0, 0, 0.62), transparent); z-index: 2; }
+			.dcard figcaption {
+				position: absolute;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				padding: var(--sp-4);
+				background: linear-gradient(0deg, rgba(0, 0, 0, 0.62), transparent);
+				z-index: 2;
+			}
 			.scard-row { display: flex; justify-content: space-between; margin-top: 6px; font-size: 13px; color: var(--ink); }
 
-			/* side context cards tuck behind the hero */
-			.scard-side { width: 166px; opacity: 0.9; z-index: 1; }
-			.scard-left { transform: rotate(-5deg) translateX(26px); }
-			.scard-right { transform: rotate(5deg) translateX(-26px); }
-
-			/* center hero — the only card that cycles */
-			.scard-hero { width: 218px; aspect-ratio: 3 / 4; position: relative; z-index: 3; }
-			.deck { position: relative; width: 100%; height: 100%; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--line-2); box-shadow: var(--shadow-lg); background: #0a0c0d; }
-			.dcard { position: absolute; inset: 0; margin: 0; border-radius: inherit; overflow: hidden; opacity: 0; transform: translateY(10px) scale(0.985); transition: opacity 0.8s ease, transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
-			.dcard.is-active { opacity: 1; transform: none; }
-			.deck-dots { display: flex; gap: 2px; justify-content: center; margin-top: 6px; }
+			.deck-dots { display: flex; gap: 2px; justify-content: center; margin-top: var(--sp-3); }
 			.deck-dots button {
 				width: 26px;
 				height: 26px;
@@ -931,20 +1160,18 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			.deck-dots button[aria-current='true']::before { background: var(--accent); transform: scale(1.3); }
 
 			/* photo scene — an authored sunrise, not an empty gradient */
-			.scard-photo, .dc-photo { background: #0a0c0d; }
-			.scard-photo-bg, .dc-photo-bg {
+			.dc-photo { background: #0a0c0d; }
+			.dc-photo-bg {
 				position: absolute; inset: 0;
 				background:
 					radial-gradient(85% 55% at 68% 12%, #ffd8a0 0%, #f0913f 16%, transparent 52%),
 					linear-gradient(180deg, #2b3b57 0%, #7a5138 46%, #2a1c12 78%, #0a0c0d 100%);
 			}
-			.scard-photo-bg::after, .dc-photo-bg::after {
+			.dc-photo-bg::after {
 				content: ''; position: absolute; inset: 0;
 				background: linear-gradient(0deg, rgba(0,0,0,0.6), rgba(0,0,0,0.05));
 			}
-			.scard-photo-cap { display: flex; flex-direction: column; gap: 2px; }
-			.scard-photo-cap b, .dc-big b { font-size: 26px; color: #fff; }
-			.dc-ridge, .dc-route, .dc-topo-bg { position: absolute; inset: 0; width: 100%; height: 100%; }
+			.dc-ridge, .dc-route, .dc-topo-bg, .dc-blue-bg { position: absolute; inset: 0; width: 100%; height: 100%; }
 			.dc-route path { filter: drop-shadow(0 0 3px color-mix(in srgb, var(--accent) 60%, transparent)); }
 
 			/* duotone effect card */
@@ -955,28 +1182,87 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 					linear-gradient(150deg, #3a1d6b 0%, #10203a 52%, #0a2a1c 100%);
 			}
 			.dc-big { display: flex; flex-direction: column; gap: 2px; }
-			.dc-big b { font-size: 46px; line-height: 1; }
+			.dc-big b { font-size: 46px; line-height: 1; font-family: var(--font-mono); color: #fff; }
 
 			/* topographic card */
 			.dc-topo { background: linear-gradient(180deg, #0d1512 0%, #0a0c0d 100%); }
 			.dc-topo-lines path { fill: none; stroke: color-mix(in srgb, var(--accent) 30%, transparent); stroke-width: 1.2; }
 
-			.share-feats { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-4); }
-			.share-feats li { display: flex; align-items: center; gap: var(--sp-3); font-size: 16.5px; }
+			/* blueprint / coordinate card */
+			.dc-blue-marks path { stroke: color-mix(in srgb, var(--accent) 45%, transparent); stroke-width: 1.2; }
+			.dc-blue-coord {
+				font-family: var(--font-mono);
+				font-size: 11px;
+				letter-spacing: 0.1em;
+				fill: color-mix(in srgb, var(--accent) 75%, #eef1ee);
+			}
+			.dc-blue-bg > path { filter: drop-shadow(0 0 3px color-mix(in srgb, var(--accent) 60%, transparent)); }
+
+			/* big typographic card */
+			.dc-type { background: linear-gradient(180deg, #0e1113 0%, #0a0c0d 100%); }
+			.dc-type-in {
+				position: absolute;
+				inset: 0;
+				display: flex;
+				flex-direction: column;
+				align-items: flex-start;
+				padding: var(--sp-5);
+			}
+			.dc-type-in b {
+				font-family: var(--font-display);
+				font-weight: 700;
+				font-size: 96px;
+				line-height: 0.9;
+				letter-spacing: -0.03em;
+				color: var(--ink);
+			}
+			.dc-type-km { color: var(--accent); margin-top: 6px; }
+			.dc-type-time { font-size: 15px; color: var(--muted); margin-top: 10px; }
+
+			/* share features — a four-cell legend row */
+			.feat-legend {
+				list-style: none;
+				margin: var(--sp-7) 0 0;
+				padding: 0;
+				display: grid;
+				grid-template-columns: repeat(4, 1fr);
+				border-top: 1px solid var(--line-2);
+				border-bottom: 1px solid var(--line);
+			}
+			.feat-legend li {
+				display: flex;
+				align-items: center;
+				gap: var(--sp-3);
+				padding: var(--sp-5) var(--sp-4);
+				font-size: 15.5px;
+			}
+			.feat-legend li + li { border-left: 1px solid var(--line); }
 			.ico-sm { width: 26px; height: 26px; color: var(--ink); flex: none; }
 
-			/* Privacy */
-			.privacy { display: grid; grid-template-columns: 1fr 0.8fr; gap: clamp(28px, 5vw, 72px); align-items: center; }
-			.pledge { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-4); }
-			.pledge li {
-				display: flex; gap: var(--sp-4); align-items: flex-start;
-				background: color-mix(in srgb, var(--surface) 80%, transparent);
-				border: 1px solid var(--line);
-				border-radius: var(--radius);
-				padding: var(--sp-4) var(--sp-5);
+			/* exercise features — vertical list */
+			.featlist { list-style: none; margin: var(--sp-5) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-4); }
+			.featlist li { display: flex; align-items: center; gap: var(--sp-3); font-size: 16.5px; }
+
+			/* Privacy — statement + registered legend */
+			.privacy-copy { max-width: 68ch; }
+			.pledge {
+				list-style: none;
+				margin: var(--sp-7) 0 0;
+				padding: 0;
+				display: grid;
+				grid-template-columns: repeat(3, 1fr);
+				border: 1px solid var(--line-2);
+				background: color-mix(in srgb, var(--surface) 55%, transparent);
 			}
+			.pledge li {
+				display: flex;
+				gap: var(--sp-4);
+				align-items: flex-start;
+				padding: var(--sp-6) var(--sp-5);
+			}
+			.pledge li + li { border-left: 1px solid var(--line); }
 			.pledge li div { display: flex; flex-direction: column; }
-			.pledge b { font-family: var(--font-display); font-size: 21px; text-transform: uppercase; }
+			.pledge b { font-family: var(--font-display); font-size: 24px; font-weight: 700; text-transform: uppercase; }
 			.pledge span { color: var(--muted); font-size: 14.5px; }
 
 			/* Exercises */
@@ -988,6 +1274,9 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 				box-shadow: var(--shadow);
 				overflow: hidden;
 			}
+			.exercise-panel.reg { overflow: visible; }
+			.exercise-panel.reg > .repcard,
+			.exercise-panel.reg > .routine { border-radius: inherit; }
 			.repcard { padding: var(--sp-5); border-bottom: 1px solid var(--line); }
 			.repcount { display: flex; align-items: baseline; gap: var(--sp-3); margin: var(--sp-3) 0; }
 			.repcount b { font-family: var(--font-mono); font-size: clamp(44px, 8vw, 62px); font-weight: 700; line-height: 1; letter-spacing: -0.04em; }
@@ -1019,21 +1308,23 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			.road-node { position: absolute; left: 0; top: calc(var(--sp-5) + 4px); width: 16px; height: 16px; border-radius: 999px; background: var(--bg); border: 2px solid var(--accent); }
 			.road-node.end { background: var(--accent); }
 			.road-top { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
-			.road-top b { font-family: var(--font-display); font-size: 22px; text-transform: uppercase; }
+			.road-code { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.16em; color: var(--faint); }
+			.road-top b { font-family: var(--font-display); font-size: 24px; font-weight: 700; text-transform: uppercase; }
 			.road-tag { color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); border-radius: 999px; padding: 3px 9px; }
 			.road-body p { color: var(--muted); font-size: 15px; margin-top: 5px; max-width: 60ch; }
 
 			/* Closer */
 			.closer { padding: clamp(64px, 11vw, 148px) 0; text-align: center; }
-			.closer-in { max-width: 40ch; margin-inline: auto; display: flex; flex-direction: column; align-items: center; }
+			.closer-in { max-width: 44ch; margin-inline: auto; display: flex; flex-direction: column; align-items: center; }
 			.closer-glyph { margin-bottom: var(--sp-4); }
 			/* the R traces itself once more at the exit — a bookend to the hero */
 			.js .closer-glyph path { stroke-dasharray: 96; stroke-dashoffset: 96; }
 			.js .closer-in.in .closer-glyph path { animation: draw 1.6s cubic-bezier(0.3, 0.9, 0.2, 1) 0.2s forwards; }
-			.closer h2 { font-size: clamp(40px, 7vw, 76px); text-transform: uppercase; }
+			.closer h2 { font-size: clamp(44px, 8vw, 92px); text-transform: uppercase; }
 			.closer .lead { margin-inline: auto; }
 			.closer .hero-cta { margin-top: var(--sp-6); }
 			.dl-req { margin-top: var(--sp-5); }
+			.dl-stamp { margin-top: var(--sp-3); color: var(--faint); }
 
 			/* Footer */
 			.foot { border-top: 1px solid var(--line); padding: var(--sp-7) 0; background: var(--bg-2); }
@@ -1045,13 +1336,23 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			.foot-links { display: flex; gap: var(--sp-5); margin-left: auto; font-size: 14px; color: var(--muted); flex-wrap: wrap; }
 			.foot-links a { transition: color 0.15s ease; }
 			.foot-links a:hover { color: var(--ink); }
-			.foot-made { flex-basis: 100%; }
+			.foot-row {
+				flex-basis: 100%;
+				display: flex;
+				justify-content: space-between;
+				gap: var(--sp-4);
+				flex-wrap: wrap;
+				border-top: 1px solid var(--line);
+				padding-top: var(--sp-4);
+			}
+			.foot-coord { color: var(--faint); }
 
 			/* ---------- Reveal (progressive: hidden only when JS is present) ---------- */
 			.js [data-reveal] { opacity: 0; transform: translateY(22px); transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1); }
 			.js [data-reveal].in { opacity: 1; transform: none; }
 			@media (prefers-reduced-motion: reduce) {
 				.js [data-reveal] { opacity: 1; transform: none; transition: none; }
+				.js .hero-stage[data-reveal] .ht-l { opacity: 1; transform: none; transition: none; }
 				.route-line { stroke-dashoffset: 0 !important; animation: none !important; }
 				.dcard { transition: none; }
 				.js .km, .js .p-end { opacity: 1; animation: none !important; }
@@ -1061,27 +1362,50 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 				.js .closer-glyph path { stroke-dashoffset: 0; animation: none !important; }
 				.nav-links a::after { transition: none; }
 				.deck-dots button::before { transition: none; }
+				.mode { transition: none; }
 			}
 
 			/* ---------- Responsive ---------- */
+			@media (max-width: 1180px) {
+				.nav-coord { display: none; }
+			}
 			@media (max-width: 1040px) {
-				.hero-in { grid-template-columns: 1fr; }
-				.hero-instrument { order: -1; }
+				.hero-stage { display: flex; flex-direction: column; gap: var(--sp-6); }
+				.hero-scope {
+					position: static;
+					width: min(100%, 440px);
+					transform: none;
+					order: 2;
+				}
+				.hero-under { max-width: none; }
+				.hud-meta { flex-basis: 100%; margin-left: 0; }
 			}
 			@media (max-width: 900px) {
-				.analysis, .share-grid, .privacy, .exercise { grid-template-columns: 1fr; }
+				.analysis, .exercise { grid-template-columns: 1fr; }
 				.analysis-copy, .exercise-copy { order: -1; }
 				.nav-links { display: none; }
-			}
-			@media (max-width: 680px) {
-				.modes { grid-template-columns: 1fr; }
-				.mode + .mode { border-left: none; border-top: 1px solid var(--line); }
+				.mode { grid-template-columns: 56px 1fr; }
+				.mode p { grid-column: 2; padding-top: 0; }
+				.mode-code { padding-top: 10px; }
+				.feat-legend { grid-template-columns: 1fr 1fr; }
+				.feat-legend li + li { border-left: none; }
+				.feat-legend li:nth-child(even) { border-left: 1px solid var(--line); }
+				.feat-legend li:nth-child(n + 3) { border-top: 1px solid var(--line); }
+				.pledge { grid-template-columns: 1fr; }
+				.pledge li + li { border-left: none; border-top: 1px solid var(--line); }
 			}
 			@media (max-width: 620px) {
 				.statcluster { grid-template-columns: repeat(2, 1fr); }
-				.scard-side { display: none; }
-				.scard-hero { width: min(74vw, 240px); }
-				.hud-cell b { font-size: 18px; }
+				.sl-coord { display: none; }
+				.orbit { height: 300px; }
+				.dcard { width: 200px; }
+				.pos-r { transform: translate(calc(-50% + 128px), -50%) scale(0.74) rotate(4deg); opacity: 0.55; }
+				.pos-l { transform: translate(calc(-50% - 128px), -50%) scale(0.74) rotate(-4deg); opacity: 0.55; }
+				.dc-type-in b { font-size: 76px; }
+				.hud-cell b { font-size: 17px; }
+				.feat-legend { grid-template-columns: 1fr; }
+				.feat-legend li:nth-child(even) { border-left: none; }
+				.feat-legend li + li { border-top: 1px solid var(--line); }
 			}
 		</style>
 	</body>
