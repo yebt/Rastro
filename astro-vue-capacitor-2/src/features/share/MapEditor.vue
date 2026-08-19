@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import "maplibre-gl/dist/maplibre-gl.css";
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { AppButton, Spinner } from "../../shared/ui";
 import type { TrackPoint } from "../tracking";
 import type { MapCamera, MapStyleId } from "./themes";
@@ -21,6 +21,8 @@ const props = defineProps<{
   startColor: string;
   endColor: string;
   camera?: MapCamera | null;
+  /** Bumps each time the parent (re)opens the kept-alive editor. */
+  openId?: number;
 }>();
 const emit = defineEmits<{ done: [payload: { view: MapCamera }]; cancel: [] }>();
 
@@ -34,8 +36,96 @@ const TILE_URL: Record<MapStyleId, string> = {
 
 const host = ref<HTMLDivElement | null>(null);
 const loading = ref(true);
+let ml: typeof import("maplibre-gl") | null = null;
 let map: import("maplibre-gl").Map | null = null;
 let coords: [number, number][] = [];
+
+function buildStyle(styleId: MapStyleId): import("maplibre-gl").StyleSpecification {
+  const isTopo = styleId === "topo";
+  return {
+    version: 8,
+    sources: {
+      carto: {
+        type: "raster",
+        tiles: [TILE_URL[styleId]],
+        tileSize: 256,
+        maxzoom: isTopo ? 17 : 20,
+        attribution: isTopo ? "© OpenTopoMap (CC-BY-SA)" : "© OpenStreetMap · CARTO",
+      },
+    },
+    layers: [{ id: "carto", type: "raster", source: "carto" }],
+  };
+}
+
+/** (Re)add the route + markers on top of the current basemap. setStyle wipes
+ *  layers, so this runs on first load and after every style swap. */
+function addRouteLayers(m: import("maplibre-gl").Map): void {
+  if (m.getSource("route")) return;
+  m.addSource("route", {
+    type: "geojson",
+    data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords } },
+  });
+  m.addLayer({
+    id: "route-halo",
+    type: "line",
+    source: "route",
+    layout: { "line-join": "round", "line-cap": "round" },
+    paint: { "line-color": "#000000", "line-width": 13, "line-opacity": 0.45, "line-blur": 3 },
+  });
+  m.addLayer({
+    id: "route-casing",
+    type: "line",
+    source: "route",
+    layout: { "line-join": "round", "line-cap": "round" },
+    paint: { "line-color": "#ffffff", "line-width": 9, "line-opacity": 0.9 },
+  });
+  m.addLayer({
+    id: "route-line",
+    type: "line",
+    source: "route",
+    layout: { "line-join": "round", "line-cap": "round" },
+    paint: { "line-color": props.routeColor, "line-width": 5.5 },
+  });
+  m.addSource("ends", {
+    type: "geojson",
+    data: {
+      type: "FeatureCollection",
+      features: [
+        { type: "Feature", properties: { r: "s" }, geometry: { type: "Point", coordinates: coords[0]! } },
+        { type: "Feature", properties: { r: "e" }, geometry: { type: "Point", coordinates: coords[coords.length - 1]! } },
+      ],
+    },
+  });
+  m.addLayer({
+    id: "ends",
+    type: "circle",
+    source: "ends",
+    paint: {
+      "circle-radius": ["match", ["get", "r"], "s", 6, 9],
+      "circle-color": props.startColor,
+      "circle-opacity": ["match", ["get", "r"], "s", 1, 0],
+      "circle-stroke-width": ["match", ["get", "r"], "s", 2, 3],
+      "circle-stroke-color": ["match", ["get", "r"], "s", "#ffffff", props.routeColor],
+    },
+  });
+}
+
+/** Jump to the stored framing (converted from card zoom), or fit the route. */
+function applyFraming(): void {
+  if (!map || !ml) return;
+  if (props.camera) {
+    map.jumpTo({
+      center: props.camera.center,
+      zoom: props.camera.zoom - zoomOffset(),
+      bearing: props.camera.bearing,
+      pitch: props.camera.pitch,
+    });
+  } else if (coords.length >= 2) {
+    const b = new ml.LngLatBounds(coords[0]!, coords[0]!);
+    for (const c of coords) b.extend(c);
+    map.fitBounds(b, { padding: 36, duration: 0 });
+  }
+}
 
 function sizeBox(): void {
   const el = host.value;
@@ -60,25 +150,16 @@ function onResize(): void {
 
 onMounted(async () => {
   sizeBox();
-  const ml = await import("maplibre-gl");
+  ml = await import("maplibre-gl");
   coords = props.points.map((p) => [p.lng, p.lat] as [number, number]);
-  const isTopo = props.mapStyle === "topo";
-  const tiles = [TILE_URL[props.mapStyle]];
-  const attribution = isTopo ? "© OpenTopoMap (CC-BY-SA)" : "© OpenStreetMap · CARTO";
 
   map = new ml.Map({
     container: host.value!,
-    canvasContextAttributes: { preserveDrawingBuffer: true }, // for toDataURL()
+    canvasContextAttributes: { preserveDrawingBuffer: true },
     attributionControl: false,
     dragRotate: true,
     pitchWithRotate: true,
-    style: {
-      version: 8,
-      sources: {
-        carto: { type: "raster", tiles, tileSize: 256, maxzoom: isTopo ? 17 : 20, attribution },
-      },
-      layers: [{ id: "carto", type: "raster", source: "carto" }],
-    },
+    style: buildStyle(props.mapStyle),
   });
   const m = map;
   m.touchZoomRotate.enableRotation();
@@ -158,6 +239,39 @@ onMounted(async () => {
   setTimeout(settle, 5000);
   window.addEventListener("resize", onResize);
 });
+
+// Keep-alive: the parent keeps this mounted (v-show) so MapLibre isn't recreated
+// on every open. Re-measure + re-frame when it reopens; swap the basemap on a
+// style change without rebuilding the whole map.
+watch(
+  () => props.openId,
+  () => {
+    if (!map) return;
+    loading.value = false;
+    map.resize();
+    applyFraming();
+  },
+);
+watch(
+  () => props.mapStyle,
+  (style) => {
+    if (!map) return;
+    loading.value = true;
+    map.setStyle(buildStyle(style));
+    const onStyle = (): void => {
+      if (!map || !map.isStyleLoaded()) return;
+      map.off("styledata", onStyle);
+      addRouteLayers(map);
+      applyFraming();
+      const clearLoading = (): void => {
+        loading.value = false;
+      };
+      map.once("idle", clearLoading);
+      setTimeout(clearLoading, 5000);
+    };
+    map.on("styledata", onStyle);
+  },
+);
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", onResize);

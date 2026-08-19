@@ -183,6 +183,8 @@ function pickGradient(g: ShareGradient): void {
 
 // ---- Map editor ----
 const editingMap = ref(false);
+const mapEverOpened = ref(false);
+const editorOpenId = ref(0);
 const editingStyle = ref<MapStyleId>("voyager");
 const isMap = computed(() => theme.value.background?.kind === "map");
 function currentMapStyle(): MapStyleId | null {
@@ -205,7 +207,9 @@ function setMapStyle(style: MapStyleId): void {
 }
 function openMapEditor(style: MapStyleId): void {
   editingStyle.value = style;
+  mapEverOpened.value = true; // mount once, then keep alive so it never reloads
   editingMap.value = true;
+  editorOpenId.value += 1;
 }
 function onMapDone(payload: { view: MapCamera }): void {
   theme.value = {
@@ -496,7 +500,9 @@ async function onSave(): Promise<void> {
   </div>
 
   <MapEditor
-    v-if="editingMap"
+    v-if="mapEverOpened"
+    v-show="editingMap"
+    :open-id="editorOpenId"
     :points="editorPoints"
     :map-style="editingStyle"
     :aspect-w="layout.w"
