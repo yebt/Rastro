@@ -1,11 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="2732" height="2732" viewBox="0 0 2732 2732">
   <!-- Rastro splash: the full brand mark centered on brand dark. -->
   <rect width="2732" height="2732" fill="#0a0c0d"/>
-  <g transform="translate(1366 1366) scale(28.2) translate(-16 -16)">
-    <rect width="32" height="32" rx="7" fill="#4ce08c"/>
-    <g fill="none" stroke="#0a0c0d" stroke-width="4.7" stroke-linecap="round" stroke-linejoin="miter" transform="skewX(-8) translate(2.2 0)">
-      <path d="M11 25.2 L11 6.8 L19.2 6.8 L23.4 11 L23.4 12.8 L19.2 17 L11 17"/>
-      <path d="M15 17 L23.4 25.2"/>
-    </g>
+  <g transform="translate(1366 1366) scale(18.8) translate(-24 -24)">
+    <rect width="48" height="48" rx="11" fill="#0a0c0d"/>
+    <path d="M 16.5 40 L 16.5 15.5 Q 16.5 10.5 21.5 10.5 L 25 10.5 A 7.5 7.5 0 0 1 25 25.5 L 19 25.5 C 24.5 28 29.5 33.5 32 40" fill="none" stroke="#4ce08c" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="16.5" cy="40" r="3.4" fill="#eef1ee"/>
   </g>
 </svg>

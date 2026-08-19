@@ -1,11 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <!-- Adaptive icon foreground: the dark R glyph only, centered inside the
-       safe zone (~56% of the canvas) so no launcher mask clips it. The
-       accent-green sits on the adaptive background layer. -->
-  <g transform="translate(512 512) scale(25) translate(-16.91 -16)">
-    <g fill="none" stroke="#0a0c0d" stroke-width="4.7" stroke-linecap="round" stroke-linejoin="miter" transform="skewX(-8) translate(2.2 0)">
-      <path d="M11 25.2 L11 6.8 L19.2 6.8 L23.4 11 L23.4 12.8 L19.2 17 L11 17"/>
-      <path d="M15 17 L23.4 25.2"/>
-    </g>
+  <!-- Adaptive icon foreground: the green route-R glyph only (stroke + start
+       dot) on transparent, centered inside the safe zone (~56% of the canvas)
+       so no launcher mask clips it. The dark tile sits on the background layer. -->
+  <g transform="translate(512 512) scale(16) translate(-24 -25.25)">
+    <path d="M 16.5 40 L 16.5 15.5 Q 16.5 10.5 21.5 10.5 L 25 10.5 A 7.5 7.5 0 0 1 25 25.5 L 19 25.5 C 24.5 28 29.5 33.5 32 40" fill="none" stroke="#4ce08c" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="16.5" cy="40" r="3.4" fill="#eef1ee"/>
   </g>
 </svg>
