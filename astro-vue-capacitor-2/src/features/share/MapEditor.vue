@@ -87,19 +87,28 @@ onMounted(async () => {
     type: "geojson",
     data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: coords } },
   });
+  // Three stacked strokes so the route reads over ANY basemap (dark, light,
+  // voyager, topo): a soft dark halo, a white casing, then the colored line.
+  m.addLayer({
+    id: "route-halo",
+    type: "line",
+    source: "route",
+    layout: { "line-join": "round", "line-cap": "round" },
+    paint: { "line-color": "#000000", "line-width": 13, "line-opacity": 0.45, "line-blur": 3 },
+  });
   m.addLayer({
     id: "route-casing",
     type: "line",
     source: "route",
     layout: { "line-join": "round", "line-cap": "round" },
-    paint: { "line-color": "#ffffff", "line-width": 9, "line-opacity": 0.85 },
+    paint: { "line-color": "#ffffff", "line-width": 9, "line-opacity": 0.9 },
   });
   m.addLayer({
     id: "route-line",
     type: "line",
     source: "route",
     layout: { "line-join": "round", "line-cap": "round" },
-    paint: { "line-color": props.routeColor, "line-width": 5 },
+    paint: { "line-color": props.routeColor, "line-width": 5.5 },
   });
   m.addSource("ends", {
     type: "geojson",
@@ -168,6 +177,10 @@ function done(): void {
     bearing: map.getBearing(),
     pitch: map.getPitch(),
   };
+  // Force a synchronous repaint so the current frame (route included) is in the
+  // preserved drawing buffer before we read it — otherwise a mid-render capture
+  // could grab tiles without the route.
+  map.redraw?.();
   const src = map.getCanvas().toDataURL("image/png");
   emit("done", { src, camera });
 }
