@@ -125,7 +125,47 @@ export async function renderRouteMap(
         out.height = h;
         const ctx = out.getContext("2d");
         if (!ctx) return finish(null);
+        // Tiles from the WebGL buffer, scaled to the card size.
         ctx.drawImage(map.getCanvas(), 0, 0, w, h);
+        // The route is drawn in 2D via the map's own projection — WebGL line
+        // layers do NOT survive the canvas readback in the WebView, so we never
+        // rely on them; this is what guarantees the track always shows.
+        ctx.lineJoin = "round";
+        ctx.lineCap = "round";
+        const lw = Math.max(4, w * 0.0085);
+        const trace = (color: string, width: number, alpha: number): void => {
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.strokeStyle = color;
+          ctx.lineWidth = width;
+          for (const seg of segs) {
+            ctx.beginPath();
+            seg.forEach((c, i) => {
+              const p = map.project(c);
+              if (i === 0) ctx.moveTo(p.x, p.y);
+              else ctx.lineTo(p.x, p.y);
+            });
+            ctx.stroke();
+          }
+          ctx.restore();
+        };
+        trace("#000000", lw * 2.3, 0.45); // dark halo (reads on light basemaps)
+        trace("#ffffff", lw * 1.6, 0.9); // white casing (reads on dark basemaps)
+        trace(routeColor, lw, 1); // the route
+        const s = map.project(all[0]!);
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, lw * 1.35, 0, Math.PI * 2);
+        ctx.fillStyle = startColor;
+        ctx.fill();
+        ctx.lineWidth = lw * 0.5;
+        ctx.strokeStyle = "#ffffff";
+        ctx.stroke();
+        const e = map.project(all[all.length - 1]!);
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, lw * 1.55, 0, Math.PI * 2);
+        ctx.lineWidth = lw * 0.6;
+        ctx.strokeStyle = routeColor;
+        ctx.stroke();
         if (mapCache.size >= CACHE_MAX) {
           const oldest = mapCache.keys().next().value;
           if (oldest) mapCache.delete(oldest);
@@ -142,62 +182,7 @@ export async function renderRouteMap(
 
     map.on("load", () => {
       try {
-        map.addSource("route", {
-          type: "geojson",
-          data: {
-            type: "Feature",
-            properties: {},
-            geometry: { type: "MultiLineString", coordinates: segs },
-          },
-        });
-        // Halo + casing + line so the route reads over ANY basemap.
-        map.addLayer({
-          id: "route-halo",
-          type: "line",
-          source: "route",
-          layout: { "line-cap": "round", "line-join": "round" },
-          paint: { "line-color": "#000000", "line-width": 13, "line-opacity": 0.45, "line-blur": 3 },
-        });
-        map.addLayer({
-          id: "route-casing",
-          type: "line",
-          source: "route",
-          layout: { "line-cap": "round", "line-join": "round" },
-          paint: { "line-color": "#ffffff", "line-width": 9, "line-opacity": 0.9 },
-        });
-        map.addLayer({
-          id: "route-line",
-          type: "line",
-          source: "route",
-          layout: { "line-cap": "round", "line-join": "round" },
-          paint: { "line-color": routeColor, "line-width": 5.5 },
-        });
-        const start = all[0]!;
-        const end = all[all.length - 1]!;
-        map.addSource("ends", {
-          type: "geojson",
-          data: {
-            type: "FeatureCollection",
-            features: [
-              { type: "Feature", properties: { r: "s" }, geometry: { type: "Point", coordinates: start } },
-              { type: "Feature", properties: { r: "e" }, geometry: { type: "Point", coordinates: end } },
-            ],
-          },
-        });
-        map.addLayer({
-          id: "ends",
-          type: "circle",
-          source: "ends",
-          paint: {
-            // Start = solid dot, end = hollow ring, so they stay distinct on a loop.
-            "circle-radius": ["match", ["get", "r"], "s", 6, 8],
-            "circle-color": startColor,
-            "circle-opacity": ["match", ["get", "r"], "s", 1, 0],
-            "circle-stroke-width": 3,
-            "circle-stroke-color": ["match", ["get", "r"], "s", "#ffffff", routeColor],
-          },
-        });
-
+        // Only frame the basemap here; the route is drawn in 2D at capture time.
         if (view) {
           map.jumpTo({ center: view.center, zoom: view.zoom, bearing: view.bearing, pitch: view.pitch });
         } else {
