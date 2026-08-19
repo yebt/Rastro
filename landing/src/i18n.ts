@@ -17,6 +17,9 @@ export const STRINGS: Record<string, Record<Lang, string>> = {
 	'cta.source': { es: 'Ver el código', en: 'View the source' },
 	'cta.lang': { es: 'EN', en: 'ES' },
 
+	// A11y
+	'a11y.skip': { es: 'Saltar al contenido', en: 'Skip to content' },
+
 	// Hero
 	'hero.kicker': { es: 'Registrador de recorridos · Android', en: 'Movement recorder · Android' },
 	'hero.title1': { es: 'Tus recorridos,', en: 'Your movement,' },
@@ -35,7 +38,7 @@ export const STRINGS: Record<string, Record<Lang, string>> = {
 	'rec.title': { es: 'Tres formas de moverte', en: 'Three ways to move' },
 	'rec.sub': {
 		es: 'Una misma app para la ruta y para la fuerza. Cada actividad se guarda local y se analiza igual de fino.',
-		en: 'One app for the route and for the strength. Every activity is stored locally and analyzed just as deeply.',
+		en: 'One app for the route and for strength work. Every activity is stored locally and analyzed just as deeply.',
 	},
 	'rec.move.t': { es: 'Movimiento', en: 'Move' },
 	'rec.move.d': {
@@ -90,6 +93,8 @@ export const STRINGS: Record<string, Record<Lang, string>> = {
 	'share.card.dawn': { es: 'Amanecer largo', en: 'Long dawn' },
 	'share.card.mountain': { es: 'Ruta de montaña', en: 'Mountain route' },
 	'share.card.night': { es: 'Vuelta nocturna', en: 'Night loop' },
+	'share.card.duo': { es: 'Vuelta larga', en: 'Long loop' },
+	'share.card.longcap': { es: 'km · vuelta larga', en: 'km · long loop' },
 	'share.card.cycle': { es: 'Diseños para compartir', en: 'Share designs' },
 
 	// Privacy
@@ -122,7 +127,7 @@ export const STRINGS: Record<string, Record<Lang, string>> = {
 		es: 'Descargá el APK desde las releases del repositorio. Android, sin tienda de por medio.',
 		en: 'Download the APK from the repository releases. Android, no store in the way.',
 	},
-	'dl.req': { es: 'Android 8+ · ~ instalación por APK', en: 'Android 8+ · APK sideload' },
+	'dl.req': { es: 'Android 8+ · instalación por APK', en: 'Android 8+ · APK sideload' },
 
 	// Analysis — enriched stat cluster
 	'an.stat.total': { es: 'distancia total', en: 'total distance' },

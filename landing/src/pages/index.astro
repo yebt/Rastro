@@ -15,6 +15,7 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 		<script is:inline>document.documentElement.classList.add('js');</script>
 	</head>
 	<body>
+		<a class="skip" href="#top" data-i18n="a11y.skip">{t('a11y.skip')}</a>
 		<!--
 		DIRECTION CONTRACT — Rastro landing · seed a15b0ba6 · FORM: map-first immersion (7/7 of my grounded list)
 		THESIS: The landing is the instrument, not a brochure about it. Refuses the SaaS hero+3-card rut: the product's own map and readouts ARE the page.
@@ -64,7 +65,7 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			</div>
 		</header>
 
-		<main id="top">
+		<main id="top" tabindex="-1">
 			<!-- HERO -->
 			<section class="hero">
 				<div class="wrap hero-in">
@@ -90,6 +91,7 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 					<div class="hero-instrument" data-reveal>
 						<div class="scope">
 							<span class="scope-cap cap" data-i18n="hero.kicker">{t('hero.kicker')}</span>
+							<span class="scope-live" aria-hidden="true"></span>
 							<svg class="route" viewBox="0 0 420 300" role="img" aria-label="Recorrido de ejemplo">
 								<defs>
 									<pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
@@ -315,7 +317,7 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 									<figure class="dcard dc-duo">
 										<div class="dc-duo-bg"></div>
 										<svg class="dc-ridge" viewBox="0 0 240 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M0 232 L60 196 L110 224 L168 168 L240 206 L240 320 L0 320 Z" fill="#0a0c0d" fill-opacity="0.4"></path></svg>
-										<figcaption class="dc-big"><b class="mono">12.8</b><span class="cap">km · vuelta larga</span></figcaption>
+										<figcaption class="dc-big"><b class="mono">12.8</b><span class="cap" data-i18n="share.card.longcap">{t('share.card.longcap')}</span></figcaption>
 									</figure>
 
 									<figure class="dcard dc-topo">
@@ -327,7 +329,12 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 										<figcaption><span class="cap" data-i18n="share.card.mountain">{t('share.card.mountain')}</span><div class="scard-row"><b class="mono">+214 m</b><b class="mono">6.4 km</b></div></figcaption>
 									</figure>
 								</div>
-								<div class="deck-dots" aria-hidden="true"><span class="on"></span><span></span><span></span><span></span></div>
+								<div class="deck-dots">
+									<button type="button" aria-current="true" aria-label={t('share.card.route')} data-i18n-label="share.card.route"></button>
+									<button type="button" aria-label={t('share.card.dawn')} data-i18n-label="share.card.dawn"></button>
+									<button type="button" aria-label={t('share.card.duo')} data-i18n-label="share.card.duo"></button>
+									<button type="button" aria-label={t('share.card.mountain')} data-i18n-label="share.card.mountain"></button>
+								</div>
 							</div>
 
 							<!-- right context card -->
@@ -466,6 +473,7 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			(function () {
 				const KEY = 'rastro.lang';
 				const nodes = document.querySelectorAll('[data-i18n]');
+				const labelNodes = document.querySelectorAll('[data-i18n-label]');
 				function detect() {
 					try {
 						const s = localStorage.getItem(KEY);
@@ -479,6 +487,11 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 						const k = n.getAttribute('data-i18n');
 						const entry = strings[k];
 						if (entry && entry[lang]) n.textContent = entry[lang];
+					});
+					labelNodes.forEach(function (n) {
+						const k = n.getAttribute('data-i18n-label');
+						const entry = strings[k];
+						if (entry && entry[lang]) n.setAttribute('aria-label', entry[lang]);
 					});
 					const btn = document.getElementById('lang');
 					if (btn) btn.setAttribute('aria-pressed', String(lang === 'en'));
@@ -524,24 +537,38 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 				}
 
 				// Share deck — only the central card rotates through its designs.
+				// The dots are real buttons: manual navigation always works (including
+				// under reduced motion, where the deck never auto-advances).
 				const deck = document.getElementById('shareDeck');
-				if (deck && !reduce) {
+				if (deck) {
+					const holder = deck.closest('.scard-hero') || deck;
 					const cards = Array.prototype.slice.call(deck.querySelectorAll('.dcard'));
-					const dots = Array.prototype.slice.call(document.querySelectorAll('.deck-dots span'));
+					const dots = Array.prototype.slice.call(document.querySelectorAll('.deck-dots button'));
 					let idx = 0, timer = null;
 					function show(next) {
 						cards[idx].classList.remove('is-active');
-						if (dots[idx]) dots[idx].classList.remove('on');
+						if (dots[idx]) dots[idx].removeAttribute('aria-current');
 						idx = (next + cards.length) % cards.length;
 						cards[idx].classList.add('is-active');
-						if (dots[idx]) dots[idx].classList.add('on');
+						if (dots[idx]) dots[idx].setAttribute('aria-current', 'true');
 					}
-					function start() { timer = window.setInterval(function () { show(idx + 1); }, 3200); }
+					function start() { if (!reduce && !timer) timer = window.setInterval(function () { show(idx + 1); }, 3200); }
 					function stop() { if (timer) { clearInterval(timer); timer = null; } }
+					dots.forEach(function (d, i) {
+						d.addEventListener('click', function () { stop(); show(i); start(); });
+					});
 					start();
-					// Pause while hovered so a reader can dwell on one design.
-					deck.addEventListener('mouseenter', stop);
-					deck.addEventListener('mouseleave', start);
+					// Pause while hovered or focused so a reader can dwell on one design,
+					// and while the tab is hidden so it doesn't cycle unseen.
+					holder.addEventListener('mouseenter', stop);
+					holder.addEventListener('mouseleave', start);
+					holder.addEventListener('focusin', stop);
+					holder.addEventListener('focusout', function (e) {
+						if (!holder.contains(e.relatedTarget)) start();
+					});
+					document.addEventListener('visibilitychange', function () {
+						if (document.hidden) stop(); else start();
+					});
 				}
 			})();
 		</script>
@@ -594,8 +621,23 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 				font-size: 14px;
 				color: var(--muted);
 			}
-			.nav-links a { transition: color 0.15s ease; }
+			.nav-links a { position: relative; transition: color 0.15s ease; }
 			.nav-links a:hover { color: var(--ink); }
+			/* hover: a hairline route traces itself under the label */
+			.nav-links a::after {
+				content: '';
+				position: absolute;
+				left: 0;
+				right: 0;
+				bottom: -6px;
+				height: 1px;
+				background: var(--accent);
+				transform: scaleX(0);
+				transform-origin: left;
+				transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+			}
+			.nav-links a:hover::after,
+			.nav-links a:focus-visible::after { transform: none; }
 			.nav-right { display: flex; align-items: center; gap: var(--sp-3); }
 			.lang {
 				font-family: var(--font-mono);
@@ -682,6 +724,31 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 				box-shadow: var(--shadow-lg);
 			}
 			.scope-cap { position: absolute; top: 14px; left: 18px; z-index: 2; }
+			/* instrument LED: quiet GPS pulse in the scope corner */
+			.scope-live {
+				position: absolute;
+				top: 17px;
+				right: 18px;
+				z-index: 2;
+				width: 7px;
+				height: 7px;
+				border-radius: 999px;
+				background: var(--accent);
+			}
+			.scope-live::after {
+				content: '';
+				position: absolute;
+				inset: -5px;
+				border-radius: 999px;
+				border: 1px solid var(--accent);
+				opacity: 0;
+				animation: ping 2.6s ease-out infinite;
+			}
+			@keyframes ping {
+				0% { transform: scale(0.35); opacity: 0.8; }
+				70% { transform: scale(1); opacity: 0; }
+				100% { transform: scale(1); opacity: 0; }
+			}
 			.route { width: 100%; height: auto; border-radius: var(--radius); overflow: hidden; }
 			.tilt { transform: perspective(760px) rotateX(20deg) rotateZ(-11deg); transform-origin: 55% 60%; }
 			.route-line {
@@ -694,6 +761,18 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			.km { fill: var(--bg); stroke: var(--accent); stroke-width: 2; }
 			.p-start { fill: var(--ink); }
 			.p-end { fill: var(--bg); stroke: var(--accent); stroke-width: 3; }
+			/* km marks and the finish ring pop in as the stroke reaches them */
+			.km, .p-end { transform-box: fill-box; transform-origin: center; }
+			.js .km, .js .p-end { opacity: 0; }
+			.js .hero-instrument.in .km,
+			.js .hero-instrument.in .p-end { animation: mark 0.45s ease-out forwards; }
+			.js .hero-instrument.in .km:first-of-type { animation-delay: 0.95s; }
+			.js .hero-instrument.in .km + .km { animation-delay: 1.6s; }
+			.js .hero-instrument.in .p-end { animation-delay: 2.25s; }
+			@keyframes mark {
+				from { opacity: 0; transform: scale(0.4); }
+				to { opacity: 1; transform: none; }
+			}
 			.hud {
 				display: grid;
 				grid-template-columns: repeat(4, 1fr);
@@ -704,8 +783,8 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			}
 			.hud-cell { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
 			.hud-cell b { font-size: clamp(15px, 2.5vw, 19px); font-weight: 700; white-space: nowrap; }
-			.hud-cell span { font-size: 10px; color: var(--muted); text-transform: capitalize; }
-			.hud-cell i { font-size: 9.5px; color: var(--faint); font-style: normal; }
+			.hud-cell span { font-size: 10.5px; color: var(--muted); }
+			.hud-cell i { font-size: 10px; color: var(--muted); font-style: normal; }
 
 			/* ---------- Bands ---------- */
 			.band { padding: clamp(56px, 9vw, 120px) 0; }
@@ -749,8 +828,8 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			}
 			.stat { background: color-mix(in srgb, var(--surface) 82%, var(--bg)); padding: var(--sp-4); display: flex; flex-direction: column; }
 			.stat b { font-size: clamp(19px, 2.8vw, 25px); font-weight: 700; line-height: 1.05; }
-			.stat i { font-size: 10.5px; color: var(--faint); font-style: normal; }
-			.stat span { font-size: 11px; color: var(--muted); margin-top: 6px; text-transform: capitalize; }
+			.stat i { font-size: 10.5px; color: var(--muted); font-style: normal; }
+			.stat span { font-size: 11px; color: var(--muted); margin-top: 6px; }
 			.panel {
 				background: linear-gradient(180deg, var(--surface) 0%, var(--bg-2) 100%);
 				border: 1px solid var(--line-2);
@@ -769,18 +848,33 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			.insights { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 			.insights li { position: relative; padding-left: 18px; font-size: 15px; color: var(--ink); }
 			.insights li::before { content: ''; position: absolute; left: 2px; top: 8px; width: 6px; height: 6px; border-radius: 999px; background: var(--accent); }
-			.splits { display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px; align-items: end; height: 116px; }
+			.splits { display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px; align-items: end; height: 116px; margin-bottom: 14px; }
 			.splits span {
 				position: relative;
 				height: var(--h);
-				background: color-mix(in srgb, var(--muted) 30%, transparent);
-				border-radius: 5px 5px 2px 2px;
 				display: flex;
 				align-items: flex-end;
 				justify-content: center;
 			}
-			.splits span.best { background: color-mix(in srgb, var(--accent) 70%, transparent); }
-			.splits i { position: absolute; bottom: -18px; font-size: 10px; color: var(--faint); font-style: normal; }
+			.splits span::before {
+				content: '';
+				position: absolute;
+				inset: 0;
+				border-radius: 5px 5px 2px 2px;
+				background: color-mix(in srgb, var(--muted) 30%, transparent);
+				transform-origin: bottom;
+			}
+			.splits span.best::before { background: color-mix(in srgb, var(--accent) 70%, transparent); }
+			.splits i { position: absolute; bottom: -18px; font-size: 10px; color: var(--muted); font-style: normal; }
+			/* the bars fill to their pace as the panel enters — instrument warming up */
+			.js .splits span::before { transform: scaleY(0.08); transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
+			.js .splits span:nth-child(2)::before { transition-delay: 0.06s; }
+			.js .splits span:nth-child(3)::before { transition-delay: 0.12s; }
+			.js .splits span:nth-child(4)::before { transition-delay: 0.18s; }
+			.js .splits span:nth-child(5)::before { transition-delay: 0.24s; }
+			.js .splits span:nth-child(6)::before { transition-delay: 0.3s; }
+			.js .splits span:nth-child(7)::before { transition-delay: 0.36s; }
+			.js .panel.in .splits span::before { transform: none; }
 			.curve { width: 100%; height: 90px; }
 			.panel-note { font-size: 13.5px; color: var(--muted); }
 
@@ -814,9 +908,27 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			.deck { position: relative; width: 100%; height: 100%; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--line-2); box-shadow: var(--shadow-lg); background: #0a0c0d; }
 			.dcard { position: absolute; inset: 0; margin: 0; border-radius: inherit; overflow: hidden; opacity: 0; transform: translateY(10px) scale(0.985); transition: opacity 0.8s ease, transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
 			.dcard.is-active { opacity: 1; transform: none; }
-			.deck-dots { display: flex; gap: 6px; justify-content: center; margin-top: 14px; }
-			.deck-dots span { width: 7px; height: 7px; border-radius: 999px; background: var(--line-2); transition: background 0.4s ease, transform 0.4s ease; }
-			.deck-dots span.on { background: var(--accent); transform: scale(1.3); }
+			.deck-dots { display: flex; gap: 2px; justify-content: center; margin-top: 6px; }
+			.deck-dots button {
+				width: 26px;
+				height: 26px;
+				display: grid;
+				place-items: center;
+				background: transparent;
+				border: 0;
+				padding: 0;
+				cursor: pointer;
+			}
+			.deck-dots button::before {
+				content: '';
+				width: 7px;
+				height: 7px;
+				border-radius: 999px;
+				background: var(--line-2);
+				transition: background 0.4s ease, transform 0.4s ease;
+			}
+			.deck-dots button:hover::before { background: var(--faint); }
+			.deck-dots button[aria-current='true']::before { background: var(--accent); transform: scale(1.3); }
 
 			/* photo scene — an authored sunrise, not an empty gradient */
 			.scard-photo, .dc-photo { background: #0a0c0d; }
@@ -899,6 +1011,9 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			/* Roadmap — a GPS track of what's next */
 			.roadmap { list-style: none; margin: 0; padding: 0; position: relative; max-width: 760px; }
 			.roadmap::before { content: ''; position: absolute; left: 7px; top: 14px; bottom: 14px; width: 2px; background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 18%, transparent)); }
+			/* the track draws downward as the list enters — same language as the hero route */
+			.js .roadmap::before { transform: scaleY(0); transform-origin: top; transition: transform 1.2s cubic-bezier(0.3, 0.9, 0.2, 1) 0.2s; }
+			.js .roadmap.in::before { transform: none; }
 			.road-item { position: relative; display: flex; padding: var(--sp-5) 0 var(--sp-5) var(--sp-6); }
 			.road-item + .road-item { border-top: 1px solid var(--line); }
 			.road-node { position: absolute; left: 0; top: calc(var(--sp-5) + 4px); width: 16px; height: 16px; border-radius: 999px; background: var(--bg); border: 2px solid var(--accent); }
@@ -912,6 +1027,9 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			.closer { padding: clamp(64px, 11vw, 148px) 0; text-align: center; }
 			.closer-in { max-width: 40ch; margin-inline: auto; display: flex; flex-direction: column; align-items: center; }
 			.closer-glyph { margin-bottom: var(--sp-4); }
+			/* the R traces itself once more at the exit — a bookend to the hero */
+			.js .closer-glyph path { stroke-dasharray: 96; stroke-dashoffset: 96; }
+			.js .closer-in.in .closer-glyph path { animation: draw 1.6s cubic-bezier(0.3, 0.9, 0.2, 1) 0.2s forwards; }
 			.closer h2 { font-size: clamp(40px, 7vw, 76px); text-transform: uppercase; }
 			.closer .lead { margin-inline: auto; }
 			.closer .hero-cta { margin-top: var(--sp-6); }
@@ -923,7 +1041,7 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			.foot-brand { display: flex; align-items: center; gap: var(--sp-3); }
 			.foot-brand div { display: flex; flex-direction: column; }
 			.foot-brand b { font-family: var(--font-display); font-size: 18px; }
-			.foot-tag { font-size: 12.5px; color: var(--faint); }
+			.foot-tag { font-size: 12.5px; color: var(--muted); }
 			.foot-links { display: flex; gap: var(--sp-5); margin-left: auto; font-size: 14px; color: var(--muted); flex-wrap: wrap; }
 			.foot-links a { transition: color 0.15s ease; }
 			.foot-links a:hover { color: var(--ink); }
@@ -936,6 +1054,13 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 				.js [data-reveal] { opacity: 1; transform: none; transition: none; }
 				.route-line { stroke-dashoffset: 0 !important; animation: none !important; }
 				.dcard { transition: none; }
+				.js .km, .js .p-end { opacity: 1; animation: none !important; }
+				.scope-live::after { animation: none; }
+				.js .splits span::before { transform: none; transition: none; }
+				.js .roadmap::before { transform: none; transition: none; }
+				.js .closer-glyph path { stroke-dashoffset: 0; animation: none !important; }
+				.nav-links a::after { transition: none; }
+				.deck-dots button::before { transition: none; }
 			}
 
 			/* ---------- Responsive ---------- */
