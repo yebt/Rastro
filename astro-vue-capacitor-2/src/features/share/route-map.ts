@@ -82,6 +82,10 @@ export async function renderRouteMap(
     attributionControl: false,
     canvasContextAttributes: { preserveDrawingBuffer: true },
     fadeDuration: 0,
+    // Render at 1× (not the device's 2–3× dpr): the card is ~1080px wide, so 1×
+    // is already crisp, and it renders/captures ~7× fewer pixels — this is why
+    // the v1 map felt faster (it also pinned pixelRatio: 1).
+    pixelRatio: 1,
     style: {
       version: 8,
       sources: {
