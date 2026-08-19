@@ -136,9 +136,11 @@ onMounted(async () => {
   });
 
   if (props.camera) {
+    // The stored zoom is for the CARD viewport; the editor viewport is smaller,
+    // so subtract the size ratio (log2) to show the same framing here.
     m.jumpTo({
       center: props.camera.center,
-      zoom: props.camera.zoom,
+      zoom: props.camera.zoom - zoomOffset(),
       bearing: props.camera.bearing,
       pitch: props.camera.pitch,
     });
@@ -191,14 +193,23 @@ function centerRoute(): void {
   );
 }
 
+/** log2 of card-width / editor-width. MapLibre zoom is viewport-pixel-relative,
+ *  so the small editor and the large card show different areas at the same zoom;
+ *  this offset converts between the two so what you frame is what you get. */
+function zoomOffset(): number {
+  const hostW = host.value?.clientWidth ?? props.aspectW;
+  if (!hostW) return 0;
+  return Math.log2(props.aspectW / hostW);
+}
+
 function done(): void {
   if (!map) return;
   const c = map.getCenter();
-  // The card renders the map on demand from this framing, so we only need the
-  // camera — no snapshot. Absent framing means auto-fit (centered) by default.
+  // Store the zoom for the CARD viewport (editor zoom + the size offset), so the
+  // rendered card matches exactly what was framed here.
   const view: MapCamera = {
     center: [c.lng, c.lat],
-    zoom: map.getZoom(),
+    zoom: map.getZoom() + zoomOffset(),
     bearing: map.getBearing(),
     pitch: map.getPitch(),
   };
