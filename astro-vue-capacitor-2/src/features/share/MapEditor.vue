@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import "maplibre-gl/dist/maplibre-gl.css";
-import { onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { AppButton, Spinner } from "../../shared/ui";
 import type { TrackPoint } from "../tracking";
 import type { MapCamera, MapStyleId } from "./themes";
+import { ATTRIB, MAXZOOM, TILE_URL } from "./route-map";
 
 /**
  * Interactive map framing for a share card. A real, on-screen MapLibre map (so
@@ -23,16 +24,11 @@ const props = defineProps<{
   camera?: MapCamera | null;
   /** Bumps each time the parent (re)opens the kept-alive editor. */
   openId?: number;
+  /** The card's main stat, shown as a faint guide so you can frame the map
+   *  knowing where the layout's text will sit. */
+  caption?: string;
 }>();
 const emit = defineEmits<{ done: [payload: { view: MapCamera }]; cancel: [] }>();
-
-const TILE_URL: Record<MapStyleId, string> = {
-  dark: "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-  light: "https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-  voyager: "https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
-  // Real cartographic map with contour lines (free, no key; max zoom 17).
-  topo: "https://tile.opentopomap.org/{z}/{x}/{y}.png",
-};
 
 const host = ref<HTMLDivElement | null>(null);
 const loading = ref(true);
@@ -41,7 +37,6 @@ let map: import("maplibre-gl").Map | null = null;
 let coords: [number, number][] = [];
 
 function buildStyle(styleId: MapStyleId): import("maplibre-gl").StyleSpecification {
-  const isTopo = styleId === "topo";
   return {
     version: 8,
     sources: {
@@ -49,8 +44,8 @@ function buildStyle(styleId: MapStyleId): import("maplibre-gl").StyleSpecificati
         type: "raster",
         tiles: [TILE_URL[styleId]],
         tileSize: 256,
-        maxzoom: isTopo ? 17 : 20,
-        attribution: isTopo ? "© OpenTopoMap (CC-BY-SA)" : "© OpenStreetMap · CARTO",
+        maxzoom: MAXZOOM[styleId],
+        attribution: ATTRIB[styleId],
       },
     },
     layers: [{ id: "carto", type: "raster", source: "carto" }],
@@ -245,9 +240,13 @@ onMounted(async () => {
 // style change without rebuilding the whole map.
 watch(
   () => props.openId,
-  () => {
+  async () => {
     if (!map) return;
     loading.value = false;
+    // Wait for v-show to apply display:block, otherwise the box measures 0 and
+    // zoomOffset() collapses — which made a reopened 3D framing jump way in.
+    await nextTick();
+    sizeBox();
     map.resize();
     applyFraming();
   },
@@ -335,6 +334,10 @@ function done(): void {
   <div class="editor">
     <div class="frame">
       <div ref="host" class="map"></div>
+      <div class="card-guide" aria-hidden="true">
+        <span v-if="caption" class="cg-cap mono">{{ caption }}</span>
+        <span class="cg-mark">RASTRO</span>
+      </div>
       <div v-if="loading" class="loading"><Spinner size="28px" /></div>
     </div>
     <div class="mapctl">
@@ -384,6 +387,29 @@ function done(): void {
   display: grid;
   place-items: center;
   background: var(--bg);
+}
+.card-guide {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.4), transparent 32%);
+}
+.cg-cap {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.cg-mark {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
 }
 .mapctl {
   display: flex;

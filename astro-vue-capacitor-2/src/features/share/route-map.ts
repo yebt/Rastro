@@ -12,11 +12,22 @@
 import type { TrackPoint } from "../tracking";
 import type { MapCamera, MapStyleId } from "./themes";
 
-const TILE_URL: Record<MapStyleId, string> = {
+export const TILE_URL: Record<MapStyleId, string> = {
   dark: "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
   light: "https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
   voyager: "https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
   topo: "https://tile.opentopomap.org/{z}/{x}/{y}.png",
+  satellite: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+  streets: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+};
+export const MAXZOOM: Record<MapStyleId, number> = { dark: 20, light: 20, voyager: 20, topo: 17, satellite: 19, streets: 19 };
+export const ATTRIB: Record<MapStyleId, string> = {
+  dark: "© OpenStreetMap · CARTO",
+  light: "© OpenStreetMap · CARTO",
+  voyager: "© OpenStreetMap · CARTO",
+  topo: "© OpenTopoMap (CC-BY-SA)",
+  satellite: "© Esri · Maxar · Earthstar",
+  streets: "© OpenStreetMap",
 };
 
 // Cache rendered map canvases so re-rendering the card for a non-map change
@@ -66,7 +77,6 @@ export async function renderRouteMap(
   if (cached) return cached;
 
   const ml = await import("maplibre-gl");
-  const isTopo = styleId === "topo";
   const segs = segments(points);
   const all = points.map((p) => [p.lng, p.lat] as [number, number]);
 
@@ -93,8 +103,8 @@ export async function renderRouteMap(
           type: "raster",
           tiles: [TILE_URL[styleId]],
           tileSize: 256,
-          maxzoom: isTopo ? 17 : 20,
-          attribution: isTopo ? "© OpenTopoMap (CC-BY-SA)" : "© OpenStreetMap · CARTO",
+          maxzoom: MAXZOOM[styleId],
+          attribution: ATTRIB[styleId],
         },
       },
       layers: [{ id: "carto", type: "raster", source: "carto" }],

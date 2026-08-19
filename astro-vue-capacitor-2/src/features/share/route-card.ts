@@ -739,7 +739,7 @@ async function paintBackground(
     const canvas = await renderRouteMap(points, W, H, bg.style, pal.route, pal.startDot, bg.view);
     if (canvas) {
       ctx.drawImage(canvas, 0, 0, W, H);
-      const dark = bg.style === "dark";
+      const dark = bg.style === "dark" || bg.style === "satellite";
       const ink = dark ? "#f6f6f4" : "#14181a";
       const muted = dark ? "#cbd0cb" : "#454b47";
       return { pal: { ...pal, ink, muted }, skipRoute: true };

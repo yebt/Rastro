@@ -2,7 +2,7 @@
 import { useStore } from "@nanostores/vue";
 import { computed, onMounted, ref, watch } from "vue";
 import { AppButton, AppIcon, Label, Spinner } from "../../shared/ui";
-import { cleanTrack, type MoveActivity } from "../tracking";
+import { cleanTrack, distanceMeters, distanceParts, type MoveActivity, MOVE_LABEL } from "../tracking";
 import { $favorites, addFavorite, removeFavorite } from "./favorites.store";
 import { shareGallery } from "./gallery-store";
 import MapEditor from "./MapEditor.vue";
@@ -197,6 +197,12 @@ const editorView = computed(() =>
 const layout = computed(() => getLayout(theme.value.layoutId));
 const palette = computed(() => getPalette(theme.value.paletteId));
 const editorPoints = computed(() => cleanTrack(props.activity.points));
+// A hint of the card's main stat, overlaid in the editor so you can see where
+// the layout's text will sit while you frame the map.
+const mapCaption = computed(() => {
+  const d = distanceParts(distanceMeters(editorPoints.value));
+  return `${d.value} ${d.unit} · ${MOVE_LABEL[props.activity.type].toUpperCase()}`;
+});
 
 /** Pick a map style: applies instantly, route auto-fit (centered). Switching
  *  styles keeps any custom framing so it only re-colors, fast. */
@@ -510,6 +516,7 @@ async function onSave(): Promise<void> {
     :route-color="palette.route"
     :start-color="palette.startDot"
     :end-color="palette.endDot"
+    :caption="mapCaption"
     :camera="editorView"
     @done="onMapDone"
     @cancel="editingMap = false"
