@@ -43,12 +43,10 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 		<header class="nav">
 			<div class="wrap nav-in">
 				<a class="brand" href="#top" aria-label="Rastro">
-					<svg class="glyph" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
-						<rect width="32" height="32" rx="7" fill="#4ce08c"></rect>
-						<g fill="none" stroke="#0a0c0d" stroke-width="4.7" stroke-linecap="round" stroke-linejoin="miter" transform="skewX(-8) translate(2.2 0)">
-							<path d="M11 25.2 L11 6.8 L19.2 6.8 L23.4 11 L23.4 12.8 L19.2 17 L11 17"></path>
-							<path d="M15 17 L23.4 25.2"></path>
-						</g>
+					<svg class="glyph" viewBox="0 0 48 48" width="30" height="30" aria-hidden="true">
+						<rect width="48" height="48" rx="11" fill="#0a0c0d"></rect>
+						<path d="M15 41 C 13 33 13 24 14 18 C 15 11 21 8 27 9 C 33 10 34 17 30 21 C 26 24 20 23 17 23 C 24 28 30 34 34 41" fill="none" stroke="#4ce08c" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path>
+						<circle cx="15" cy="41" r="3.2" fill="#eef1ee"></circle>
 					</svg>
 					<span class="brand-name">Rastro</span>
 				</a>
@@ -280,30 +278,63 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 					</header>
 					<div class="share-grid">
 						<div class="share-cards" data-reveal>
-							<figure class="scard scard-map">
+							<!-- left context card -->
+							<figure class="scard scard-side scard-left scard-map">
 								<div class="scard-map-bg">
 									<svg viewBox="0 0 240 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-										<g class="scard-contours">
-											<path d="M-20 80 C 60 40 140 120 260 70"></path>
-											<path d="M-20 150 C 60 110 140 190 260 140"></path>
-											<path d="M-20 230 C 60 190 140 270 260 220"></path>
-										</g>
-										<path d="M40 280 C 70 250 60 180 110 168 C 160 156 150 100 200 70" fill="none" stroke="#4ce08c" stroke-width="4" stroke-linecap="round"></path>
-										<circle cx="40" cy="280" r="6" fill="#eef1ee"></circle>
-										<circle cx="200" cy="70" r="6" fill="none" stroke="#4ce08c" stroke-width="3"></circle>
+										<g class="scard-contours"><path d="M-20 90 C 60 50 140 130 260 80"></path><path d="M-20 170 C 60 130 140 210 260 160"></path><path d="M-20 250 C 60 210 140 290 260 240"></path></g>
+										<path d="M44 276 C 74 246 64 176 112 164 C 158 152 150 104 196 78" fill="none" stroke="#4ce08c" stroke-width="4" stroke-linecap="round"></path>
+										<circle cx="44" cy="276" r="6" fill="#eef1ee"></circle>
 									</svg>
 								</div>
-								<figcaption>
-									<span class="cap" data-i18n="share.card.route">{t('share.card.route')}</span>
-									<div class="scard-row"><b class="mono">7.42 km</b><b class="mono">5'18"/km</b></div>
-								</figcaption>
+								<figcaption><span class="cap" data-i18n="share.card.night">{t('share.card.night')}</span><div class="scard-row"><b class="mono">5.9 km</b><b class="mono">6'02"/km</b></div></figcaption>
 							</figure>
-							<figure class="scard scard-photo">
+
+							<!-- center: rotating deck (only this card cycles) -->
+							<div class="scard-hero">
+								<div class="deck" id="shareDeck" role="group" aria-label={t('share.card.cycle')} data-i18n-label="share.card.cycle">
+									<figure class="dcard is-active dc-map">
+										<div class="scard-map-bg">
+											<svg viewBox="0 0 240 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+												<g class="scard-contours"><path d="M-20 80 C 60 40 140 120 260 70"></path><path d="M-20 150 C 60 110 140 190 260 140"></path><path d="M-20 230 C 60 190 140 270 260 220"></path></g>
+												<path d="M40 280 C 70 250 60 180 110 168 C 160 156 150 100 200 70" fill="none" stroke="#4ce08c" stroke-width="4.5" stroke-linecap="round"></path>
+												<circle cx="40" cy="280" r="6.5" fill="#eef1ee"></circle>
+												<circle cx="200" cy="70" r="6.5" fill="none" stroke="#4ce08c" stroke-width="3"></circle>
+											</svg>
+										</div>
+										<figcaption><span class="cap" data-i18n="share.card.route">{t('share.card.route')}</span><div class="scard-row"><b class="mono">7.42 km</b><b class="mono">5'18"/km</b></div></figcaption>
+									</figure>
+
+									<figure class="dcard dc-photo">
+										<div class="dc-photo-bg"></div>
+										<svg class="dc-ridge" viewBox="0 0 240 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M0 214 L52 176 L96 202 L150 150 L196 186 L240 158 L240 320 L0 320 Z" fill="#0a0c0d" fill-opacity="0.55"></path></svg>
+										<svg class="dc-route" viewBox="0 0 240 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M36 286 C 72 262 66 214 108 202 C 150 190 150 150 194 122" fill="none" stroke="#4ce08c" stroke-width="4" stroke-linecap="round"></path><circle cx="36" cy="286" r="6" fill="#eef1ee"></circle></svg>
+										<figcaption><span class="cap" data-i18n="share.card.dawn">{t('share.card.dawn')}</span><div class="scard-row"><b class="mono">8.1 km</b><b class="mono">42:18</b></div></figcaption>
+									</figure>
+
+									<figure class="dcard dc-duo">
+										<div class="dc-duo-bg"></div>
+										<svg class="dc-ridge" viewBox="0 0 240 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M0 232 L60 196 L110 224 L168 168 L240 206 L240 320 L0 320 Z" fill="#0a0c0d" fill-opacity="0.4"></path></svg>
+										<figcaption class="dc-big"><b class="mono">12.8</b><span class="cap">km · vuelta larga</span></figcaption>
+									</figure>
+
+									<figure class="dcard dc-topo">
+										<svg class="dc-topo-bg" viewBox="0 0 240 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+											<g class="dc-topo-lines"><path d="M-20 120 C 70 70 150 150 260 90"></path><path d="M-20 150 C 70 105 150 180 260 120"></path><path d="M-20 185 C 70 140 150 210 260 150"></path><path d="M-20 225 C 70 180 150 250 260 190"></path><path d="M-20 270 C 70 225 150 295 260 235"></path></g>
+											<path d="M48 278 C 80 244 70 190 116 176 C 160 163 156 116 198 92" fill="none" stroke="#4ce08c" stroke-width="4.5" stroke-linecap="round"></path>
+											<circle cx="48" cy="278" r="6" fill="#eef1ee"></circle>
+										</svg>
+										<figcaption><span class="cap" data-i18n="share.card.mountain">{t('share.card.mountain')}</span><div class="scard-row"><b class="mono">+214 m</b><b class="mono">6.4 km</b></div></figcaption>
+									</figure>
+								</div>
+								<div class="deck-dots" aria-hidden="true"><span class="on"></span><span></span><span></span><span></span></div>
+							</div>
+
+							<!-- right context card -->
+							<figure class="scard scard-side scard-right scard-photo">
 								<div class="scard-photo-bg"></div>
-								<figcaption class="scard-photo-cap">
-									<b class="mono">42:18</b>
-									<span class="cap">MOV · 12 MAY</span>
-								</figcaption>
+								<svg class="dc-route" viewBox="0 0 240 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M40 282 C 74 258 68 212 110 200 C 152 188 152 150 196 126" fill="none" stroke="#4ce08c" stroke-width="3.5" stroke-linecap="round"></path><circle cx="40" cy="282" r="5" fill="#eef1ee"></circle></svg>
+								<figcaption class="scard-photo-cap"><b class="mono">42:18</b><span class="cap">MOV · 12 MAY</span></figcaption>
 							</figure>
 						</div>
 
@@ -387,12 +418,10 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			<!-- DOWNLOAD -->
 			<section class="closer">
 				<div class="wrap closer-in" data-reveal>
-					<svg class="closer-glyph" viewBox="0 0 32 32" width="58" height="58" aria-hidden="true">
-						<rect width="32" height="32" rx="7" fill="#4ce08c"></rect>
-						<g fill="none" stroke="#0a0c0d" stroke-width="4.7" stroke-linecap="round" stroke-linejoin="miter" transform="skewX(-8) translate(2.2 0)">
-							<path d="M11 25.2 L11 6.8 L19.2 6.8 L23.4 11 L23.4 12.8 L19.2 17 L11 17"></path>
-							<path d="M15 17 L23.4 25.2"></path>
-						</g>
+					<svg class="closer-glyph" viewBox="0 0 48 48" width="58" height="58" aria-hidden="true">
+						<rect width="48" height="48" rx="11" fill="#0a0c0d"></rect>
+						<path d="M15 41 C 13 33 13 24 14 18 C 15 11 21 8 27 9 C 33 10 34 17 30 21 C 26 24 20 23 17 23 C 24 28 30 34 34 41" fill="none" stroke="#4ce08c" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path>
+						<circle cx="15" cy="41" r="3.2" fill="#eef1ee"></circle>
 					</svg>
 					<h2 data-i18n="dl.title">{t('dl.title')}</h2>
 					<p class="lead" data-i18n="dl.sub">{t('dl.sub')}</p>
@@ -413,12 +442,10 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 		<footer class="foot">
 			<div class="wrap foot-in">
 				<div class="foot-brand">
-					<svg class="glyph" viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
-						<rect width="32" height="32" rx="7" fill="#4ce08c"></rect>
-						<g fill="none" stroke="#0a0c0d" stroke-width="4.7" stroke-linecap="round" stroke-linejoin="miter" transform="skewX(-8) translate(2.2 0)">
-							<path d="M11 25.2 L11 6.8 L19.2 6.8 L23.4 11 L23.4 12.8 L19.2 17 L11 17"></path>
-							<path d="M15 17 L23.4 25.2"></path>
-						</g>
+					<svg class="glyph" viewBox="0 0 48 48" width="26" height="26" aria-hidden="true">
+						<rect width="48" height="48" rx="11" fill="#0a0c0d"></rect>
+						<path d="M15 41 C 13 33 13 24 14 18 C 15 11 21 8 27 9 C 33 10 34 17 30 21 C 26 24 20 23 17 23 C 24 28 30 34 34 41" fill="none" stroke="#4ce08c" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path>
+						<circle cx="15" cy="41" r="3.2" fill="#eef1ee"></circle>
 					</svg>
 					<div>
 						<b>Rastro</b>
@@ -494,6 +521,27 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 					sweep();
 					// Last resort: nothing stays invisible past this point, ever.
 					setTimeout(function () { reveals.forEach(reveal); }, 2200);
+				}
+
+				// Share deck — only the central card rotates through its designs.
+				const deck = document.getElementById('shareDeck');
+				if (deck && !reduce) {
+					const cards = Array.prototype.slice.call(deck.querySelectorAll('.dcard'));
+					const dots = Array.prototype.slice.call(document.querySelectorAll('.deck-dots span'));
+					let idx = 0, timer = null;
+					function show(next) {
+						cards[idx].classList.remove('is-active');
+						if (dots[idx]) dots[idx].classList.remove('on');
+						idx = (next + cards.length) % cards.length;
+						cards[idx].classList.add('is-active');
+						if (dots[idx]) dots[idx].classList.add('on');
+					}
+					function start() { timer = window.setInterval(function () { show(idx + 1); }, 3200); }
+					function stop() { if (timer) { clearInterval(timer); timer = null; } }
+					start();
+					// Pause while hovered so a reader can dwell on one design.
+					deck.addEventListener('mouseenter', stop);
+					deck.addEventListener('mouseleave', start);
 				}
 			})();
 		</script>
@@ -738,7 +786,7 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 
 			/* Share */
 			.share-grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: clamp(28px, 5vw, 64px); align-items: center; }
-			.share-cards { display: flex; gap: var(--sp-4); justify-content: center; }
+			.share-cards { display: flex; align-items: center; justify-content: center; }
 			.scard {
 				margin: 0;
 				width: 200px;
@@ -753,21 +801,54 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			.scard-map-bg { position: absolute; inset: 0; }
 			.scard-map-bg svg { width: 100%; height: 100%; }
 			.scard-contours path { fill: none; stroke: color-mix(in srgb, var(--accent) 22%, transparent); stroke-width: 1; }
-			.scard figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: var(--sp-4); background: linear-gradient(0deg, rgba(0, 0, 0, 0.6), transparent); }
+			.scard figcaption, .dcard figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: var(--sp-4); background: linear-gradient(0deg, rgba(0, 0, 0, 0.62), transparent); z-index: 2; }
 			.scard-row { display: flex; justify-content: space-between; margin-top: 6px; font-size: 13px; color: var(--ink); }
-			.scard-photo { transform: rotate(4deg) translateY(8px); }
-			.scard-photo-bg {
+
+			/* side context cards tuck behind the hero */
+			.scard-side { width: 166px; opacity: 0.9; z-index: 1; }
+			.scard-left { transform: rotate(-5deg) translateX(26px); }
+			.scard-right { transform: rotate(5deg) translateX(-26px); }
+
+			/* center hero — the only card that cycles */
+			.scard-hero { width: 218px; aspect-ratio: 3 / 4; position: relative; z-index: 3; }
+			.deck { position: relative; width: 100%; height: 100%; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--line-2); box-shadow: var(--shadow-lg); background: #0a0c0d; }
+			.dcard { position: absolute; inset: 0; margin: 0; border-radius: inherit; overflow: hidden; opacity: 0; transform: translateY(10px) scale(0.985); transition: opacity 0.8s ease, transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
+			.dcard.is-active { opacity: 1; transform: none; }
+			.deck-dots { display: flex; gap: 6px; justify-content: center; margin-top: 14px; }
+			.deck-dots span { width: 7px; height: 7px; border-radius: 999px; background: var(--line-2); transition: background 0.4s ease, transform 0.4s ease; }
+			.deck-dots span.on { background: var(--accent); transform: scale(1.3); }
+
+			/* photo scene — an authored sunrise, not an empty gradient */
+			.scard-photo, .dc-photo { background: #0a0c0d; }
+			.scard-photo-bg, .dc-photo-bg {
 				position: absolute; inset: 0;
 				background:
-					radial-gradient(80% 60% at 30% 20%, #3a2a1e, transparent 60%),
-					linear-gradient(150deg, #52381f 0%, #241a12 60%, #0a0c0d 100%);
+					radial-gradient(85% 55% at 68% 12%, #ffd8a0 0%, #f0913f 16%, transparent 52%),
+					linear-gradient(180deg, #2b3b57 0%, #7a5138 46%, #2a1c12 78%, #0a0c0d 100%);
 			}
-			.scard-photo-bg::after {
+			.scard-photo-bg::after, .dc-photo-bg::after {
 				content: ''; position: absolute; inset: 0;
-				background: linear-gradient(0deg, rgba(0,0,0,0.55), rgba(0,0,0,0.15));
+				background: linear-gradient(0deg, rgba(0,0,0,0.6), rgba(0,0,0,0.05));
 			}
 			.scard-photo-cap { display: flex; flex-direction: column; gap: 2px; }
-			.scard-photo-cap b { font-size: 26px; color: #fff; }
+			.scard-photo-cap b, .dc-big b { font-size: 26px; color: #fff; }
+			.dc-ridge, .dc-route, .dc-topo-bg { position: absolute; inset: 0; width: 100%; height: 100%; }
+			.dc-route path { filter: drop-shadow(0 0 3px color-mix(in srgb, var(--accent) 60%, transparent)); }
+
+			/* duotone effect card */
+			.dc-duo-bg {
+				position: absolute; inset: 0;
+				background:
+					radial-gradient(80% 60% at 26% 14%, #8b52ff 0%, transparent 55%),
+					linear-gradient(150deg, #3a1d6b 0%, #10203a 52%, #0a2a1c 100%);
+			}
+			.dc-big { display: flex; flex-direction: column; gap: 2px; }
+			.dc-big b { font-size: 46px; line-height: 1; }
+
+			/* topographic card */
+			.dc-topo { background: linear-gradient(180deg, #0d1512 0%, #0a0c0d 100%); }
+			.dc-topo-lines path { fill: none; stroke: color-mix(in srgb, var(--accent) 30%, transparent); stroke-width: 1.2; }
+
 			.share-feats { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-4); }
 			.share-feats li { display: flex; align-items: center; gap: var(--sp-3); font-size: 16.5px; }
 			.ico-sm { width: 26px; height: 26px; color: var(--ink); flex: none; }
@@ -854,6 +935,7 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			@media (prefers-reduced-motion: reduce) {
 				.js [data-reveal] { opacity: 1; transform: none; transition: none; }
 				.route-line { stroke-dashoffset: 0 !important; animation: none !important; }
+				.dcard { transition: none; }
 			}
 
 			/* ---------- Responsive ---------- */
@@ -872,8 +954,8 @@ const t = (k: string): string => STRINGS[k]?.es ?? k;
 			}
 			@media (max-width: 620px) {
 				.statcluster { grid-template-columns: repeat(2, 1fr); }
-				.share-cards { gap: var(--sp-2); }
-				.scard { width: 168px; }
+				.scard-side { display: none; }
+				.scard-hero { width: min(74vw, 240px); }
 				.hud-cell b { font-size: 18px; }
 			}
 		</style>

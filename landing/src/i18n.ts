@@ -87,6 +87,10 @@ export const STRINGS: Record<string, Record<Lang, string>> = {
 	'share.f3': { es: 'Capa topográfica', en: 'Topographic layer' },
 	'share.f4': { es: 'Efectos y layouts', en: 'Effects and layouts' },
 	'share.card.route': { es: 'Sendero del río', en: 'Riverside trail' },
+	'share.card.dawn': { es: 'Amanecer largo', en: 'Long dawn' },
+	'share.card.mountain': { es: 'Ruta de montaña', en: 'Mountain route' },
+	'share.card.night': { es: 'Vuelta nocturna', en: 'Night loop' },
+	'share.card.cycle': { es: 'Diseños para compartir', en: 'Share designs' },
 
 	// Privacy
 	'priv.title1': { es: 'Tus datos', en: 'Your data' },

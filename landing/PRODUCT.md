@@ -29,7 +29,7 @@ Outdoors, mid-effort, phone in hand or pocket; then later, on the couch, reviewi
 ## Brand commitments (the established world — inherit, don't replace)
 - **Palette:** near-black ground `#0a0c0d`, surface `#14181a`, ink `#eef1ee`, muted `#838c86`, single accent green `#4ce08c` (light-theme accent `#0e7a45`).
 - **Type:** Barlow Condensed for display, a mono (Space Mono / Roboto Mono) for numerals & measurements, Roboto for text.
-- **Mark:** a bold, filled accent-green rounded tile with an angular, slightly dynamic "R" cut out in negative space (near-black showing through). Sporty and high-contrast; reads at favicon scale.
+- **Mark:** a flowing accent-green GPS-route line that traces an "R" — one continuous rounded stroke (thick, organic, like the app's own trace) with a solid ink start-dot at the foot, on a rounded near-black tile. Reads as a route, resolves as an R.
 - **Character:** an instrument, not a hype app. Measurement-grade, quiet, monochrome + one signal color.
 
 ## This surface
