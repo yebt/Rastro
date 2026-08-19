@@ -52,7 +52,10 @@ function signature(t: ShareTheme): string {
   let b: string = bg?.kind ?? "solid";
   if (bg?.kind === "gradient") b += `:${bg.from}:${bg.to}:${bg.angle}`;
   else if (bg?.kind === "photo") b += `:${bg.adjust}:${bg.src.length}:${bg.src.slice(-24)}`;
-  else if (bg?.kind === "map") b += `:${bg.style}:${bg.src.length}:${bg.src.slice(-24)}`;
+  else if (bg?.kind === "map") {
+    const v = bg.view;
+    b += `:${bg.style}:${v ? `${v.zoom.toFixed(2)},${v.bearing.toFixed(0)},${v.pitch.toFixed(0)},${v.center[0].toFixed(4)},${v.center[1].toFixed(4)}` : "fit"}`;
+  }
   return [
     t.layoutId,
     t.paletteId,
@@ -186,23 +189,35 @@ function currentMapStyle(): MapStyleId | null {
   const bg = theme.value.background;
   return bg?.kind === "map" ? bg.style : null;
 }
-const editorCamera = computed(() =>
-  theme.value.background?.kind === "map" ? theme.value.background.camera : null,
+const editorView = computed(() =>
+  theme.value.background?.kind === "map" ? (theme.value.background.view ?? null) : null,
 );
 const layout = computed(() => getLayout(theme.value.layoutId));
 const palette = computed(() => getPalette(theme.value.paletteId));
 const editorPoints = computed(() => cleanTrack(props.activity.points));
 
+/** Pick a map style: applies instantly, route auto-fit (centered). Switching
+ *  styles keeps any custom framing so it only re-colors, fast. */
+function setMapStyle(style: MapStyleId): void {
+  const cur = theme.value.background;
+  const view = cur?.kind === "map" ? cur.view : undefined;
+  theme.value = { ...theme.value, background: { kind: "map", style, view } };
+}
 function openMapEditor(style: MapStyleId): void {
   editingStyle.value = style;
   editingMap.value = true;
 }
-function onMapDone(payload: { src: string; camera: MapCamera }): void {
+function onMapDone(payload: { view: MapCamera }): void {
   theme.value = {
     ...theme.value,
-    background: { kind: "map", style: editingStyle.value, src: payload.src, camera: payload.camera },
+    background: { kind: "map", style: editingStyle.value, view: payload.view },
   };
   editingMap.value = false;
+}
+/** Re-center: drop the custom framing, back to auto-fit. */
+function recenterMap(): void {
+  const cur = theme.value.background;
+  if (cur?.kind === "map") theme.value = { ...theme.value, background: { kind: "map", style: cur.style } };
 }
 
 // ---- Effects ----
@@ -428,15 +443,18 @@ async function onSave(): Promise<void> {
             type="button"
             class="chip"
             :class="{ on: currentMapStyle() === m.id }"
-            @click="openMapEditor(m.id)"
+            @click="setMapStyle(m.id)"
           >
             {{ m.label }}
           </button>
           <button v-if="isMap" type="button" class="chip on-accent" @click="openMapEditor(currentMapStyle()!)">
             Ajustar encuadre
           </button>
+          <button v-if="isMap && editorView" type="button" class="chip" @click="recenterMap">
+            Centrar ruta
+          </button>
         </div>
-        <p class="hint">El mapa se encuadra a mano (mover, zoom, rotar, inclinar). Usa datos en línea.</p>
+        <p class="hint">La ruta queda centrada automáticamente. "Ajustar encuadre" permite inclinar, rotar y acercar. Usa datos en línea.</p>
       </div>
 
       <!-- Efectos -->
@@ -486,7 +504,7 @@ async function onSave(): Promise<void> {
     :route-color="palette.route"
     :start-color="palette.startDot"
     :end-color="palette.endDot"
-    :camera="editorCamera"
+    :camera="editorView"
     @done="onMapDone"
     @cancel="editingMap = false"
   />

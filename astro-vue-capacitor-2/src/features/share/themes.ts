@@ -44,13 +44,13 @@ export type ShareBackground =
       adjust: "auto" | "manual";
     }
   | {
-      /** Real streets, framed interactively (drag / zoom / rotate / tilt) in the
-       *  map editor. `src` is the captured snapshot with the route baked in;
-       *  `camera` lets the editor reopen on the same framing. */
+      /** Real streets. The route is rendered on demand and AUTO-FIT (centered)
+       *  by default, so switching styles re-renders fast with the track centered.
+       *  `view` is an optional custom framing from the editor (tilt / rotate /
+       *  zoom); absent means fit-to-route. */
       kind: "map";
       style: MapStyleId;
-      src: string;
-      camera: MapCamera;
+      view?: MapCamera;
     };
 
 export interface MapCamera {

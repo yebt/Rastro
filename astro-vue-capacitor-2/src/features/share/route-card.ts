@@ -29,6 +29,7 @@ import {
   type SharePalette,
   type ShareTheme,
 } from "./themes";
+import { renderRouteMap } from "./route-map";
 
 interface Rect {
   x: number;
@@ -706,6 +707,7 @@ async function paintBackground(
   bg: ShareBackground,
   pal: SharePalette,
   blurRadius: number,
+  points: TrackPoint[],
 ): Promise<Painted> {
   if (bg.kind === "gradient") {
     const rad = (bg.angle * Math.PI) / 180;
@@ -731,20 +733,21 @@ async function paintBackground(
     }
   }
   if (bg.kind === "map") {
-    // The snapshot (route already baked in) was captured in the interactive
-    // editor; just draw it and skip the flat route.
-    try {
-      const img = await loadImage(bg.src);
-      drawCover(ctx, img, W, H);
+    // Render the route on a real map on demand: AUTO-FIT (centered) unless a
+    // custom `view` was set in the editor. The route is drawn by the map, so the
+    // flat vector route is skipped.
+    const canvas = await renderRouteMap(points, W, H, bg.style, pal.route, pal.startDot, bg.view);
+    if (canvas) {
+      ctx.drawImage(canvas, 0, 0, W, H);
       const dark = bg.style === "dark";
       const ink = dark ? "#f6f6f4" : "#14181a";
       const muted = dark ? "#cbd0cb" : "#454b47";
       return { pal: { ...pal, ink, muted }, skipRoute: true };
-    } catch {
-      ctx.fillStyle = pal.bg;
-      ctx.fillRect(0, 0, W, H);
-      return { pal, skipRoute: false };
     }
+    // Offline / WebGL blocked → fall back to the flat route on a solid ground.
+    ctx.fillStyle = pal.bg;
+    ctx.fillRect(0, 0, W, H);
+    return { pal, skipRoute: false };
   }
   ctx.fillStyle = pal.bg;
   ctx.fillRect(0, 0, W, H);
@@ -841,7 +844,7 @@ export async function renderRouteCard(
   // 1. Background (blur is a photo-time filter; map bakes in the route).
   const blurFx = effects.find((e) => e.kind === "blur");
   const blurRadius = blurFx?.kind === "blur" ? blurFx.radius : 0;
-  const painted = await paintBackground(ctx, W, H, background, pal0, blurRadius);
+  const painted = await paintBackground(ctx, W, H, background, pal0, blurRadius, clean);
   const ovr = theme.override;
   const pal =
     ovr?.route || ovr?.ink
