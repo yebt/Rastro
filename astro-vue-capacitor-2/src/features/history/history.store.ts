@@ -13,7 +13,10 @@ export const $activities = atom<Activity[]>([]);
 export const $loaded = atom<boolean>(false);
 
 export async function loadActivities(): Promise<void> {
-  $activities.set(await activityRepository().list());
+  // Hide in-progress drafts (autosaved, endedAt null) from history — they belong
+  // to the recovery flow, not the finished-activity list.
+  const all = await activityRepository().list();
+  $activities.set(all.filter((a) => a.endedAt !== null));
   $loaded.set(true);
 }
 

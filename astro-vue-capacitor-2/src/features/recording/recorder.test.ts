@@ -144,14 +144,91 @@ describe("recorder", () => {
     expect(done?.pauses).toBe(2);
   });
 
-  it("discard drops the session without saving", async () => {
+  it("discard drops the session and deletes its autosaved draft", async () => {
     await rec.start("jog");
     geo.emit(sample(1000));
     const act = rec.$activity.get()!;
+    expect(await repo.get(act.id)).not.toBeNull(); // autosaved on the first fix
 
     await rec.discard();
     expect(rec.$status.get()).toBe("idle");
     expect(rec.$activity.get()).toBeNull();
     expect(await repo.get(act.id)).toBeNull();
+  });
+
+  it("autosaves the in-progress session on the first fix (endedAt still null)", async () => {
+    await rec.start("run");
+    geo.emit(sample(1000));
+    const draft = (await repo.get(rec.$activity.get()!.id)) as MoveActivity;
+    expect(draft).not.toBeNull();
+    expect(draft.endedAt).toBeNull();
+    expect(draft.points).toHaveLength(1);
+  });
+
+  it("throttles autosave, then persists again past the interval", async () => {
+    clock = 0;
+    rec = createRecorder({ geo, repo, pedometer: ped, now: () => clock, autosaveMs: 5000 });
+    await rec.start("run");
+    geo.emit(sample(0)); // first fix → saved immediately
+    const id = rec.$activity.get()!.id;
+
+    clock = 1000;
+    geo.emit(sample(1000, 1)); // within the throttle window → not persisted yet
+    expect(((await repo.get(id)) as MoveActivity).points).toHaveLength(1);
+
+    clock = 6000;
+    geo.emit(sample(6000, 2)); // past the interval → persisted with all points
+    expect(((await repo.get(id)) as MoveActivity).points).toHaveLength(3);
+  });
+
+  it("finish replaces the in-progress draft with the finished record (same id)", async () => {
+    clock = 0;
+    await rec.start("run");
+    geo.emit(sample(1000));
+    const id = rec.$activity.get()!.id;
+    expect(((await repo.get(id)) as MoveActivity).endedAt).toBeNull(); // draft
+
+    clock = 6000;
+    await rec.finish();
+    const saved = (await repo.get(id)) as MoveActivity;
+    expect(saved.endedAt).toBe(6000); // same record, now finalized
+  });
+
+  it("restore re-opens a saved draft and keeps recording", async () => {
+    // A draft as it would be read back after a crash: points, endedAt null.
+    clock = 0;
+    await rec.start("jog");
+    geo.emit(sample(1000)); // saved immediately (first fix)
+    clock = 6000;
+    geo.emit(sample(2000, 1)); // past the throttle → draft now has both points
+    const draft = (await repo.get(rec.$activity.get()!.id)) as MoveActivity;
+    expect(draft.points).toHaveLength(2);
+    await rec.discard(); // simulate app restart: recorder idle, draft gone from state
+
+    const fresh = createRecorder({ geo, repo, pedometer: ped, now: () => clock });
+    await fresh.restore(draft);
+    expect(fresh.$status.get()).toBe("recording");
+    expect(fresh.$activity.get()?.id).toBe(draft.id);
+    expect(fresh.$activity.get()?.points).toHaveLength(2);
+
+    geo.emit(sample(3000, 2)); // keeps appending on top of the recovered points
+    expect(fresh.$activity.get()?.points).toHaveLength(3);
+    clock = 7000; // so finish()'s end instant is past the last fix
+    const done = await fresh.finish();
+    expect(done?.id).toBe(draft.id);
+    expect((done as MoveActivity).points).toHaveLength(3);
+  });
+
+  it("flush persists the current in-progress session on demand", async () => {
+    clock = 0;
+    rec = createRecorder({ geo, repo, pedometer: ped, now: () => clock, autosaveMs: 999_999 });
+    await rec.start("walk");
+    geo.emit(sample(0));
+    geo.emit(sample(1000, 1)); // throttled away by the huge interval
+    const id = rec.$activity.get()!.id;
+    expect(((await repo.get(id)) as MoveActivity).points).toHaveLength(1);
+
+    await rec.flush();
+    expect(((await repo.get(id)) as MoveActivity).points).toHaveLength(2);
   });
 });

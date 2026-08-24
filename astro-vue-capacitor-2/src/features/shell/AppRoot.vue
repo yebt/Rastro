@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { useStore } from "@nanostores/vue";
 import { computed, onBeforeUnmount, onMounted, watch } from "vue";
+import { App } from "@capacitor/app";
 import { requestPendingPermissions } from "../permissions/permissions";
-import { recorder } from "../recording";
+import { checkForDraft, recorder } from "../recording";
+import RecoverySheet from "../recording/RecoverySheet.vue";
 import ActivityDetailHost from "../history/ActivityDetailHost.vue";
 import { openActivity } from "../history/detail.store";
 import { applyAccent } from "../settings/accent.store";
@@ -33,6 +35,7 @@ const recording = computed(() => recStatus.value === "recording" || recStatus.va
 const activeLabel = computed(() => TABS.find((t) => t.id === active.value)?.label ?? "");
 
 let disposeBack: (() => void) | null = null;
+let disposePause: (() => void) | null = null;
 const osScheme = globalThis.matchMedia?.("(prefers-color-scheme: dark)");
 // In 'auto' the CSS re-themes on its own, but the theme-color meta needs a nudge.
 const onSchemeChange = () => applyTheme();
@@ -50,7 +53,18 @@ onMounted(() => {
   disposeBack = registerBackButton();
   // First run asks inside the setup; once it's done the setup never shows again,
   // so ask here on entry for anything still undecided (v1 behaviour).
-  if (setupDone.value) void requestPendingPermissions();
+  if (setupDone.value) {
+    void requestPendingPermissions();
+    // Recover an autosaved session the app was killed in the middle of.
+    void checkForDraft();
+  }
+  // Flush the in-progress session to disk when the app is backgrounded — the most
+  // likely moment for the OS to kill it — so the draft is as fresh as possible.
+  void App.addListener("pause", () => void recorder.flush())
+    .then((handle) => {
+      disposePause = () => void handle.remove();
+    })
+    .catch(() => {});
 });
 
 // On finish, jump straight to the saved activity's detail and reset the
@@ -65,6 +79,7 @@ watch(recStatus, (s) => {
 
 onBeforeUnmount(() => {
   disposeBack?.();
+  disposePause?.();
   osScheme?.removeEventListener("change", onSchemeChange);
 });
 </script>
@@ -84,6 +99,7 @@ onBeforeUnmount(() => {
     </div>
     <ActivityDetailHost />
     <LiveMove v-if="recording" />
+    <RecoverySheet />
   </template>
 </template>
 

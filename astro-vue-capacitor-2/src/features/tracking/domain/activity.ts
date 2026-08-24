@@ -87,6 +87,27 @@ export function startMove(type: MoveType, startedAt: number): MoveActivity {
   };
 }
 
+/** True while an activity is still in progress (never finished/saved as final). */
+export function isInProgress(a: Activity): boolean {
+  return a.endedAt === null;
+}
+
+/**
+ * Close out an in-progress move WITHOUT the live recorder — used to "save as is"
+ * a session recovered from autosave after the app was killed mid-recording.
+ * The end is stamped at the last captured fix (that's when tracking really
+ * stopped, possibly long ago), and moving time is derived from the point span.
+ * An honest best-effort close: we can't recover the exact paused gaps, so an
+ * already-set `movingMs` is kept and never overwritten.
+ */
+export function finalizeInProgress(a: MoveActivity, now: number): MoveActivity {
+  const pts = a.points;
+  const last = pts.at(-1);
+  const endedAt = last ? last.t : now;
+  const span = pts.length > 1 ? last!.t - pts[0]!.t : 0;
+  return { ...a, endedAt, movingMs: a.movingMs ?? span };
+}
+
 /** Start a fresh, in-progress exercise activity (no sets yet). */
 export function startExercise(exercise: string, startedAt: number): ExerciseActivity {
   return {

@@ -13,7 +13,7 @@ export type {
   RoutineActivity,
   RoutineEntry,
 } from "./domain/activity";
-export { newId, startExercise, startMove } from "./domain/activity";
+export { finalizeInProgress, isInProgress, newId, startExercise, startMove } from "./domain/activity";
 export {
   DEFAULT_EXERCISES,
   type ExerciseDef,

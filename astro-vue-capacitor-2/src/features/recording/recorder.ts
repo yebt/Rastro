@@ -17,7 +17,7 @@ import { atom, type ReadableAtom } from "nanostores";
 import type { GeoError, Geolocation, GeoWatch } from "../geolocation";
 import type { Pedometer } from "../motion";
 import type { ActivityRepository } from "../tracking";
-import { type MoveActivity, type MoveType, startMove, toTrackPoint } from "../tracking";
+import { type MoveActivity, type MoveType, startMove, toTrackPoint, type TrackPoint } from "../tracking";
 
 export type RecordingStatus = "idle" | "recording" | "paused" | "finished";
 
@@ -28,6 +28,12 @@ export interface RecorderDeps {
   pedometer: Pedometer;
   /** Injected clock — Date.now in production, controllable in tests. */
   now: () => number;
+  /**
+   * Throttle for autosaving the in-progress session to the repo (ms). The first
+   * point is always saved immediately; after that, saves are spaced by this, so a
+   * crash loses at most ~this much of the tail — never the whole session. Default 5s.
+   */
+  autosaveMs?: number;
 }
 
 export interface Recorder {
@@ -51,8 +57,16 @@ export interface Recorder {
   resume(): Promise<void>;
   /** Stop, stamp the end time, and persist. Returns the saved activity. */
   finish(): Promise<MoveActivity | null>;
-  /** Stop and drop the session without saving. */
+  /** Stop and drop the session, deleting its autosaved draft. */
   discard(): Promise<void>;
+  /**
+   * Re-open an autosaved, still-in-progress session (recovered after the app was
+   * killed) and keep recording. Points are preserved; elapsed time continues
+   * from the captured span (exact paused gaps can't be recovered).
+   */
+  restore(activity: MoveActivity): Promise<void>;
+  /** Force-persist the current in-progress session now (e.g. app going to background). */
+  flush(): Promise<void>;
 }
 
 export function createRecorder(deps: RecorderDeps): Recorder {
@@ -68,6 +82,28 @@ export function createRecorder(deps: RecorderDeps): Recorder {
   // Set when finishing was requested, so finish() stamps that instant, not the
   // (possibly later) moment the user confirms.
   let finishAt: number | null = null;
+  const autosaveMs = deps.autosaveMs ?? 5000;
+  // Wall-clock (injected) of the last autosave, to throttle disk writes.
+  let lastSavedAt = 0;
+
+  /** Persist the in-progress session, throttled — but always on its first point,
+   *  so even a short session that produced one fix survives a crash. */
+  function autosave(act: MoveActivity): void {
+    const at = deps.now();
+    if (act.points.length <= 1 || at - lastSavedAt >= autosaveMs) {
+      lastSavedAt = at;
+      void deps.repo.save(act);
+    }
+  }
+
+  /** Append a fix and autosave. Shared by the live watch and the start seed. */
+  function appendPoint(point: TrackPoint): void {
+    const act = $activity.get();
+    if (!act) return;
+    const next: MoveActivity = { ...act, points: [...act.points, point] };
+    $activity.set(next);
+    autosave(next);
+  }
 
   async function startWatch(): Promise<void> {
     watch = await deps.geo.watch(
@@ -76,8 +112,7 @@ export function createRecorder(deps: RecorderDeps): Recorder {
         if (!act || $status.get() !== "recording") return;
         // Stamp the live cumulative step count so stride/cadence can be derived
         // over time, not just as a session total.
-        const point = { ...toTrackPoint(sample), st: deps.pedometer.$steps.get() };
-        $activity.set({ ...act, points: [...act.points, point] });
+        appendPoint({ ...toTrackPoint(sample), st: deps.pedometer.$steps.get() });
       },
       (error) => $error.set(error),
     );
@@ -106,6 +141,7 @@ export function createRecorder(deps: RecorderDeps): Recorder {
       movingSince = at;
       pauseCount = 0;
       finishAt = null;
+      lastSavedAt = at;
       $error.set(null);
       $activity.set(startMove(type, at));
       $status.set("recording");
@@ -117,7 +153,7 @@ export function createRecorder(deps: RecorderDeps): Recorder {
         .then((sample) => {
           const a = $activity.get();
           if (a && $status.get() === "recording" && a.points.length === 0) {
-            $activity.set({ ...a, points: [{ ...toTrackPoint(sample), st: deps.pedometer.$steps.get() }] });
+            appendPoint({ ...toTrackPoint(sample), st: deps.pedometer.$steps.get() });
           }
         })
         .catch(() => {});
@@ -135,6 +171,12 @@ export function createRecorder(deps: RecorderDeps): Recorder {
       $status.set("paused");
       deps.pedometer.pause();
       await stopWatch();
+      // A pause is a natural checkpoint — persist the draft immediately.
+      const act = $activity.get();
+      if (act) {
+        lastSavedAt = deps.now();
+        await deps.repo.save(act);
+      }
     },
 
     requestFinish() {
@@ -187,15 +229,49 @@ export function createRecorder(deps: RecorderDeps): Recorder {
     },
 
     async discard() {
+      // finish() sets "finished" and has already saved the real record — never
+      // delete that. Only an in-progress draft (endedAt null) gets removed here.
+      const act = $activity.get();
+      const wasFinished = $status.get() === "finished";
       await stopWatch();
       await deps.pedometer.stop();
+      if (act && !wasFinished && act.endedAt === null) {
+        await deps.repo.remove(act.id);
+      }
       accumulatedMs = 0;
       movingSince = null;
       pauseCount = 0;
       finishAt = null;
+      lastSavedAt = 0;
       $activity.set(null);
       $error.set(null);
       $status.set("idle");
+    },
+
+    async restore(activity) {
+      if ($status.get() === "recording" || $status.get() === "paused") return;
+      const at = deps.now();
+      const pts = activity.points;
+      // Continue elapsed from the recovered span; exact paused gaps are unknown.
+      accumulatedMs = activity.movingMs ?? (pts.length > 1 ? pts.at(-1)!.t - pts[0]!.t : 0);
+      movingSince = at;
+      pauseCount = activity.pauses ?? 0;
+      finishAt = null;
+      lastSavedAt = at;
+      $error.set(null);
+      $activity.set(activity);
+      $status.set("recording");
+      await deps.pedometer.start();
+      await startWatch();
+    },
+
+    async flush() {
+      const act = $activity.get();
+      const status = $status.get();
+      if (act && act.endedAt === null && (status === "recording" || status === "paused")) {
+        lastSavedAt = deps.now();
+        await deps.repo.save(act);
+      }
     },
   };
 }
