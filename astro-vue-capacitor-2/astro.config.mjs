@@ -26,6 +26,8 @@ function gitVersion() {
   return {
     commit: run("git rev-parse --short HEAD") || "dev",
     build: run("git rev-list --count HEAD") || "0",
+    // Set by the release workflow / scripts/release.sh from the tag (v2.1.0 → 2.1.0).
+    release: process.env.RASTRO_VERSION_NAME ?? "",
   };
 }
 
@@ -126,6 +128,7 @@ export default defineConfig({
     define: {
       __APP_BUILD__: JSON.stringify(git.build),
       __APP_COMMIT__: JSON.stringify(git.commit),
+      __APP_RELEASE_TAG__: JSON.stringify(git.release),
     },
     // Lucide icons compiled to Vue components. All access goes through the
     // AppIcon design-system primitive, never `~icons/*` imports in features.

@@ -13,6 +13,19 @@ def gitVersion = { ->
     }
 }
 def appVersion = gitVersion()
+// A release (CI tag build / scripts/release.sh) pins the human version, e.g. "2.1.0";
+// versionCode stays the commit count so every release installs over the last one.
+def releaseVersion = System.getenv('RASTRO_VERSION_NAME')
+if (releaseVersion) appVersion.name = releaseVersion
+
+// Release signing. CI passes the keystore through env vars (GitHub secrets);
+// locally, an untracked android/keystore.properties works too. Without either,
+// the release build is left unsigned (Gradle still builds it, it just won't install).
+def keystoreProps = new Properties()
+def keystorePropsFile = rootProject.file('keystore.properties')
+if (keystorePropsFile.exists()) keystorePropsFile.withInputStream { keystoreProps.load(it) }
+def signingValue = { String env, String prop -> System.getenv(env) ?: keystoreProps.getProperty(prop) }
+def releaseStoreFile = signingValue('RASTRO_KEYSTORE_FILE', 'storeFile')
 
 android {
     namespace = "com.rastro.app"
@@ -30,8 +43,19 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (releaseStoreFile) {
+            release {
+                storeFile = rootProject.file(releaseStoreFile)
+                storePassword = signingValue('RASTRO_KEYSTORE_PASSWORD', 'storePassword')
+                keyAlias = signingValue('RASTRO_KEY_ALIAS', 'keyAlias')
+                keyPassword = signingValue('RASTRO_KEY_PASSWORD', 'keyPassword')
+            }
+        }
+    }
     buildTypes {
         release {
+            if (releaseStoreFile) signingConfig = signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
