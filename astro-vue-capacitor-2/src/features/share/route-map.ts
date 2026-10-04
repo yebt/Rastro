@@ -1,6 +1,6 @@
 /**
- * Route-on-real-map renderer for the "Mapa" share backgrounds. Renders a CARTO /
- * OpenTopoMap raster basemap + the route into an OFF-SCREEN, non-interactive map
+ * Route-on-real-map renderer for the "Mapa" share backgrounds. Renders an Esri /
+ * OpenTopoMap / OSM raster basemap + the route into an OFF-SCREEN, non-interactive map
  * and captures the canvas. The route is ALWAYS auto-fit (centered) unless an
  * explicit camera `view` is given, so switching styles just re-renders fast with
  * the track still centered — the interactive editor only tweaks the framing.
@@ -12,19 +12,23 @@
 import type { TrackPoint } from "../tracking";
 import type { MapCamera, MapStyleId } from "./themes";
 
+// CARTO's basemaps now answer keyless requests with "API KEY REQUIRED" watermark
+// tiles, so the road styles use Esri's keyless services instead (same host as
+// the satellite layer). The gray canvases only go to z16 — MapLibre overzooms.
+const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services";
 export const TILE_URL: Record<MapStyleId, string> = {
-  dark: "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-  light: "https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-  voyager: "https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png",
+  dark: `${ESRI}/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}`,
+  light: `${ESRI}/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}`,
+  voyager: `${ESRI}/World_Street_Map/MapServer/tile/{z}/{y}/{x}`,
   topo: "https://tile.opentopomap.org/{z}/{x}/{y}.png",
-  satellite: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+  satellite: `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`,
   streets: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
 };
-export const MAXZOOM: Record<MapStyleId, number> = { dark: 20, light: 20, voyager: 20, topo: 17, satellite: 19, streets: 19 };
+export const MAXZOOM: Record<MapStyleId, number> = { dark: 16, light: 16, voyager: 19, topo: 17, satellite: 19, streets: 19 };
 export const ATTRIB: Record<MapStyleId, string> = {
-  dark: "© OpenStreetMap · CARTO",
-  light: "© OpenStreetMap · CARTO",
-  voyager: "© OpenStreetMap · CARTO",
+  dark: "© Esri · HERE · Garmin · OpenStreetMap",
+  light: "© Esri · HERE · Garmin · OpenStreetMap",
+  voyager: "© Esri · HERE · Garmin · OpenStreetMap",
   topo: "© OpenTopoMap (CC-BY-SA)",
   satellite: "© Esri · Maxar · Earthstar",
   streets: "© OpenStreetMap",
