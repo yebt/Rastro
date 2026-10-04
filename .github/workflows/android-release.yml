@@ -1,0 +1,154 @@
+# Builds the Rastro Android APK.
+#
+# - Push a tag `vX.Y.Z` (scripts/release.sh does it) → signed release APK attached
+#   to a GitHub Release, with notes generated from the commits since the last tag.
+# - "Run workflow" by hand → APK (debug or release) as a downloadable artifact.
+#
+# Release signing needs these repository secrets (see astro-vue-capacitor-2/docs/releases.md):
+#   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+name: Android APK
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: "Tipo de APK"
+        type: choice
+        options: [debug, release]
+        default: debug
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: astro-vue-capacitor-2
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BUILD_TYPE: ${{ github.event_name == 'push' && 'release' || inputs.build_type }}
+      # Only a pushed tag publishes a Release; a manual run on a tag just builds.
+      IS_TAG: ${{ github.event_name == 'push' && github.ref_type == 'tag' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history: versionCode is the commit count and release notes walk
+          # back to the previous tag.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: astro-vue-capacitor-2/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Resolve version
+        run: |
+          if [ "$IS_TAG" = "true" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+            if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$'; then
+              echo "::error::El tag '$GITHUB_REF_NAME' no es vX.Y.Z"; exit 1
+            fi
+            echo "RASTRO_VERSION_NAME=$VERSION" >> "$GITHUB_ENV"
+            echo "APK_NAME=rastro-v$VERSION.apk" >> "$GITHUB_ENV"
+          else
+            echo "APK_NAME=rastro-$(git rev-parse --short HEAD)-$BUILD_TYPE.apk" >> "$GITHUB_ENV"
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Build web assets
+        run: npm run build
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Load signing keystore
+        if: env.BUILD_TYPE == 'release'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::Falta el secret ANDROID_KEYSTORE_BASE64 — ver docs/releases.md"; exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "RASTRO_KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+
+      - name: Build APK
+        env:
+          RASTRO_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          RASTRO_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          RASTRO_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ "$BUILD_TYPE" = "release" ]; then TASK=assembleRelease; else TASK=assembleDebug; fi
+          ./android/gradlew -p android "$TASK" --no-daemon
+          APK=$(find "android/app/build/outputs/apk/$BUILD_TYPE" -name '*.apk' | head -n1)
+          [ -n "$APK" ] || { echo "::error::No se generó el APK"; exit 1; }
+          mkdir -p out
+          cp "$APK" "out/$APK_NAME"
+
+      - name: Verify signature
+        run: |
+          APKSIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -n1)apksigner
+          "$APKSIGNER" verify --print-certs "out/$APK_NAME"
+          (cd out && sha256sum "$APK_NAME" > "$APK_NAME.sha256")
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APK_NAME }}
+          path: |
+            astro-vue-capacitor-2/out/${{ env.APK_NAME }}
+            astro-vue-capacitor-2/out/${{ env.APK_NAME }}.sha256
+          if-no-files-found: error
+
+      - name: Release notes
+        if: env.IS_TAG == 'true'
+        run: |
+          PREV=$(git describe --tags --abbrev=0 --match 'v*' "$GITHUB_REF_NAME^" 2>/dev/null || true)
+          RANGE="${PREV:+$PREV..}$GITHUB_REF_NAME"
+          section() { # $1 title, $2 commit-type regex
+            local lines
+            lines=$(git log --no-merges --format='%s' "$RANGE" | grep -E "^($2)(\(.+\))?!?: " | sed -E 's/^[a-z]+(\(([^)]+)\))?!?: /- **\2** /; s/- \*\*\*\* /- /' || true)
+            if [ -n "$lines" ]; then printf '### %s\n%s\n\n' "$1" "$lines"; fi
+          }
+          {
+            section "Novedades" "feat"
+            section "Arreglos" "fix"
+            section "Rendimiento" "perf"
+            section "Otros" "refactor|chore|docs|style|build|ci|test"
+            if [ -n "$PREV" ]; then echo "**Cambios:** https://github.com/$GITHUB_REPOSITORY/compare/$PREV...$GITHUB_REF_NAME"; fi
+            echo
+            echo "SHA-256: \`$(cut -d' ' -f1 "out/$APK_NAME.sha256")\`"
+          } > out/NOTES.md
+          cat out/NOTES.md
+
+      - uses: softprops/action-gh-release@v2
+        if: env.IS_TAG == 'true'
+        with:
+          name: Rastro ${{ github.ref_name }}
+          body_path: astro-vue-capacitor-2/out/NOTES.md
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: |
+            astro-vue-capacitor-2/out/${{ env.APK_NAME }}
+            astro-vue-capacitor-2/out/${{ env.APK_NAME }}.sha256

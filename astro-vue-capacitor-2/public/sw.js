@@ -1,5 +1,5 @@
 /**
- * Tile cache service worker. Caches CARTO basemap tiles (cache-first) so maps —
+ * Tile cache service worker. Caches basemap tiles (cache-first) so maps —
  * the activity-detail RouteMap and the share map — load instantly on repeat
  * views instead of re-downloading. Caches ONLY tiles, never the app shell, so
  * there's no stale-app risk.
@@ -8,14 +8,22 @@
  * subdomains, not this worker — tiles now use the canonical host.)
  */
 
-const TILE_CACHE = "rastro-tiles-v2";
+// v3: v2 holds CARTO "API KEY REQUIRED" watermark tiles — dropped on activate.
+const TILE_CACHE = "rastro-tiles-v3";
 const MAX_ENTRIES = 800;
 
 self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+self.addEventListener("activate", (event) =>
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith("rastro-tiles-") && k !== TILE_CACHE).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim()),
+  ),
+);
 
 function isTile(url) {
-  return /(^|\.)cartocdn\.com$/.test(url.hostname) || /(^|\.)opentopomap\.org$/.test(url.hostname);
+  return /(^|\.)arcgisonline\.com$/.test(url.hostname) || /(^|\.)opentopomap\.org$/.test(url.hostname);
 }
 
 async function trim(cache) {

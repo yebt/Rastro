@@ -18,6 +18,8 @@
     "cap:live": "CAP_LIVE=1 cap run android",
     "apk:debug": "astro build && cap sync android && ./android/gradlew -p android assembleDebug && echo 'APK -> android/app/build/outputs/apk/debug/app-debug.apk'",
     "apk:release": "astro build && cap sync android && ./android/gradlew -p android assembleRelease && echo 'APK -> android/app/build/outputs/apk/release/'",
+    "release": "bash scripts/release.sh",
+    "keystore": "bash scripts/make-keystore.sh",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",

@@ -44,7 +44,7 @@ onMounted(() => {
   applyTheme();
   applyAccent();
   osScheme?.addEventListener("change", onSchemeChange);
-  // Cache CARTO tiles so maps load instantly on repeat views (the canonical host
+  // Cache basemap tiles so maps load instantly on repeat views (the canonical host
   // works now, so the worker no longer breaks loading). Drop the old v1 cache.
   if ("serviceWorker" in navigator) {
     void navigator.serviceWorker.register("/sw.js").catch(() => {});

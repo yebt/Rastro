@@ -6,7 +6,7 @@ import { routeSegments } from "../domain/segments";
 import type { TrackPoint } from "../domain/track-point";
 
 /**
- * Route on a street basemap. The track (local data) always renders; the CARTO
+ * Route on a street basemap. The track (local data) always renders; the Esri
  * tiles are an online layer that falls back to the dark background offline. No
  * default marker images — vector circle markers avoid the bundler asset problem.
  */
@@ -21,8 +21,9 @@ function isDark(): boolean {
   return globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches ?? true;
 }
 const dark = isDark();
-// Basemap follows the app theme; canonical CARTO host (no {s} subdomains).
-const TILES = `https://basemaps.cartocdn.com/${dark ? "dark_all" : "light_all"}/{z}/{x}/{y}{r}.png`;
+// Basemap follows the app theme. Esri's keyless gray canvases (CARTO now serves
+// "API KEY REQUIRED" tiles without a key); native up to z16, upscaled beyond.
+const TILES = `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${dark ? "Dark" : "Light"}_Gray_Base/MapServer/tile/{z}/{y}/{x}`;
 // A casing under the route so it reads clearly over any basemap.
 const casingColor = dark ? "#0a0c0d" : "#ffffff";
 
@@ -107,7 +108,7 @@ onMounted(() => {
     zoomAnimation: false,
     fadeAnimation: false,
   }).setView([0, 0], 2);
-  L.tileLayer(TILES, { maxZoom: 20, detectRetina: true }).addTo(map);
+  L.tileLayer(TILES, { maxZoom: 20, maxNativeZoom: 16 }).addTo(map);
 
   // A tap on the map (not a drag/pinch) is a toggle signal for the caller.
   map.on("click", () => emit("tap"));
