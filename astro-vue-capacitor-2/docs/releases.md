@@ -5,7 +5,8 @@ El APK se arma en GitHub Actions (`.github/workflows/android-release.yml`, en la
 | Cómo | Qué sale |
 | --- | --- |
 | `npm run release -- minor` (empuja el tag `vX.Y.Z`) | APK **firmado** publicado en *GitHub → Releases*, con notas armadas desde los commits |
-| *Actions → Android APK → Run workflow* | APK debug o release como *artifact* descargable (no publica Release) |
+| *Actions → Android APK → Run workflow* con **versión** (`patch`, `minor`, `major` o `X.Y.Z`) | Lo mismo: crea el tag y publica el Release, sin terminal |
+| *Actions → Android APK → Run workflow* con la versión **vacía** | APK debug o release como *artifact* descargable (no publica Release) |
 | `npm run apk:debug` / `apk:release` | Build local (requiere Android SDK) |
 
 ## Una sola vez: la clave de firma

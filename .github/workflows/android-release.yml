@@ -2,7 +2,10 @@
 #
 # - Push a tag `vX.Y.Z` (scripts/release.sh does it) → signed release APK attached
 #   to a GitHub Release, with notes generated from the commits since the last tag.
-# - "Run workflow" by hand → APK (debug or release) as a downloadable artifact.
+# - "Run workflow" by hand with a version (patch | minor | major | X.Y.Z) → same
+#   release, the workflow creates the tag itself — no terminal needed.
+# - "Run workflow" with the version empty → APK (debug or release) as a
+#   downloadable artifact, nothing published.
 #
 # Release signing needs these repository secrets (see astro-vue-capacitor-2/docs/releases.md):
 #   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
@@ -13,8 +16,12 @@ on:
     tags: ["v*"]
   workflow_dispatch:
     inputs:
+      version:
+        description: "Publicar release: patch | minor | major | X.Y.Z (vacío = solo build)"
+        type: string
+        default: ""
       build_type:
-        description: "Tipo de APK"
+        description: "Tipo de APK (si no se publica)"
         type: choice
         options: [debug, release]
         default: debug
@@ -35,37 +42,56 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      BUILD_TYPE: ${{ github.event_name == 'push' && 'release' || inputs.build_type }}
-      # Only a pushed tag publishes a Release; a manual run on a tag just builds.
-      IS_TAG: ${{ github.event_name == 'push' && github.ref_type == 'tag' }}
+      # Publish on a pushed tag, or on a manual run that names a version.
+      IS_TAG: ${{ (github.event_name == 'push' && github.ref_type == 'tag') || (inputs.version || '') != '' }}
+      BUILD_TYPE: ${{ ((github.event_name == 'push' && github.ref_type == 'tag') || (inputs.version || '') != '') && 'release' || inputs.build_type }}
+      VERSION_INPUT: ${{ inputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # Full history: versionCode is the commit count and release notes walk
           # back to the previous tag.
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: astro-vue-capacitor-2/package-lock.json
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
           cache: gradle
 
-      - uses: android-actions/setup-android@v3
+      # No setup-android: the runner image ships the SDK (ANDROID_HOME) with its
+      # licenses accepted, and Gradle fetches any missing platform/build-tools.
 
       - name: Resolve version
         run: |
           if [ "$IS_TAG" = "true" ]; then
-            VERSION="${GITHUB_REF_NAME#v}"
-            if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$'; then
-              echo "::error::El tag '$GITHUB_REF_NAME' no es vX.Y.Z"; exit 1
+            if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+              VERSION="${GITHUB_REF_NAME#v}"
+            else
+              # Same bump rules as scripts/release.sh (before any tag: from 2.0.0).
+              LAST=$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || echo v2.0.0)
+              IFS=. read -r MAJ MIN PAT <<<"${LAST#v}"; PAT="${PAT%%-*}"
+              case "$VERSION_INPUT" in
+                patch) VERSION="$MAJ.$MIN.$((PAT + 1))" ;;
+                minor) VERSION="$MAJ.$((MIN + 1)).0" ;;
+                major) VERSION="$((MAJ + 1)).0.0" ;;
+                *) VERSION="${VERSION_INPUT#v}" ;;
+              esac
+              if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+                echo "::error::El tag v$VERSION ya existe"; exit 1
+              fi
             fi
+            if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$'; then
+              echo "::error::'$VERSION' no es X.Y.Z"; exit 1
+            fi
+            echo "Versión: $VERSION"
+            echo "RELEASE_TAG=v$VERSION" >> "$GITHUB_ENV"
             echo "RASTRO_VERSION_NAME=$VERSION" >> "$GITHUB_ENV"
             echo "APK_NAME=rastro-v$VERSION.apk" >> "$GITHUB_ENV"
           else
@@ -125,8 +151,9 @@ jobs:
       - name: Release notes
         if: env.IS_TAG == 'true'
         run: |
-          PREV=$(git describe --tags --abbrev=0 --match 'v*' "$GITHUB_REF_NAME^" 2>/dev/null || true)
-          RANGE="${PREV:+$PREV..}$GITHUB_REF_NAME"
+          # HEAD is the release commit (the tag may not exist yet on a manual run).
+          PREV=$(git describe --tags --abbrev=0 --match 'v[0-9]*' HEAD^ 2>/dev/null || true)
+          RANGE="${PREV:+$PREV..}HEAD"
           section() { # $1 title, $2 commit-type regex
             local lines
             lines=$(git log --no-merges --format='%s' "$RANGE" | grep -E "^($2)(\(.+\))?!?: " | sed -E 's/^[a-z]+(\(([^)]+)\))?!?: /- **\2** /; s/- \*\*\*\* /- /' || true)
@@ -137,7 +164,7 @@ jobs:
             section "Arreglos" "fix"
             section "Rendimiento" "perf"
             section "Otros" "refactor|chore|docs|style|build|ci|test"
-            if [ -n "$PREV" ]; then echo "**Cambios:** https://github.com/$GITHUB_REPOSITORY/compare/$PREV...$GITHUB_REF_NAME"; fi
+            if [ -n "$PREV" ]; then echo "**Cambios:** https://github.com/$GITHUB_REPOSITORY/compare/$PREV...$RELEASE_TAG"; fi
             echo
             echo "SHA-256: \`$(cut -d' ' -f1 "out/$APK_NAME.sha256")\`"
           } > out/NOTES.md
@@ -146,9 +173,12 @@ jobs:
       - uses: softprops/action-gh-release@v2
         if: env.IS_TAG == 'true'
         with:
-          name: Rastro ${{ github.ref_name }}
+          # On a manual run this also creates the tag at the built commit.
+          tag_name: ${{ env.RELEASE_TAG }}
+          target_commitish: ${{ github.sha }}
+          name: Rastro ${{ env.RELEASE_TAG }}
           body_path: astro-vue-capacitor-2/out/NOTES.md
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: ${{ contains(env.RELEASE_TAG, '-') }}
           files: |
             astro-vue-capacitor-2/out/${{ env.APK_NAME }}
             astro-vue-capacitor-2/out/${{ env.APK_NAME }}.sha256
