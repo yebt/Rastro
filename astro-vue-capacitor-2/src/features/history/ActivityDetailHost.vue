@@ -22,8 +22,16 @@ onMounted(() => {
 const activity = computed(() => activities.value.find((a) => a.id === openId.value) ?? null);
 
 // A just-finished activity may not be in the store yet — reload to resolve it.
-watch(openId, (id) => {
-  if (id && !activities.value.some((a) => a.id === id)) void loadActivities();
+// If it's still missing after the reload (deleted, or a stale id), close rather
+// than leave an empty overlay covering the app.
+watch(openId, async (id) => {
+  if (!id || activities.value.some((a) => a.id === id)) return;
+  await loadActivities();
+  if ($openActivityId.get() === id && !$activities.get().some((a) => a.id === id)) closeActivity();
+});
+// The record that was open vanished from the list (e.g. deleted) → close.
+watch(activity, (a, prev) => {
+  if (!a && prev && prev.id === openId.value) closeActivity();
 });
 
 useBackHandler(
