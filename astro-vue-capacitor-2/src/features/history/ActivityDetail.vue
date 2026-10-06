@@ -155,8 +155,12 @@ async function onExportGpx(): Promise<void> {
 }
 
 async function onDelete(): Promise<void> {
-  await deleteActivity(props.activity.id);
+  // Close BEFORE deleting: once the record leaves the store this component is
+  // unmounted, and Vue drops emits from an unmounted instance — the detail
+  // overlay would then stay open over a blank screen.
+  const id = props.activity.id;
   emit("back");
+  await deleteActivity(id);
 }
 </script>
 
