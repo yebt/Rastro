@@ -1,4 +1,4 @@
-# TEMPORARY (run 5) — runs the debug APK on an Android emulator and probes the vector
+# TEMPORARY (run 6) — runs the debug APK on an Android emulator and probes the vector
 # basemap inside the app's real WebView (errors + screenshot).
 name: Emulator probe
 on:
@@ -32,7 +32,7 @@ jobs:
       - name: Probe script
         run: |
           cp android/app/build/outputs/apk/debug/app-debug.apk app.apk
-          ML=$(cd dist && ls _astro/maplibre-gl.*.js)
+          ML=$(cd dist && ls -S _astro/maplibre-gl.*.js | head -1)
           echo "ML=/$ML" >> "$GITHUB_ENV"
           cat > probe.mjs <<'JS'
           // Raw CDP over WebSocket (Playwright can't attach to an Android WebView).
