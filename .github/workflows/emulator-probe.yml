@@ -58,6 +58,11 @@ jobs:
             return r.result?.result?.value;
           };
           const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+          // 0) Skip the first-run setup and let the app create its own DB (schema + indexes).
+          console.log("SETUP", await ev(`(() => { localStorage.setItem("rastro.setupDone", "1"); return "ok"; })()`));
+          await send("Page.reload");
+          await sleep(8000);
+          await send("Runtime.enable");
           // 1) Seed a finished jog (a ~1 km loop in Bogotá) straight into the app's IndexedDB.
           console.log("SEED", await ev(`(async () => {
             const t0 = Date.now() - 3600e3; const pts = [];
