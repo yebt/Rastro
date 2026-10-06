@@ -80,7 +80,7 @@ function onHexBlur(): void {
   <div class="picker">
     <div
       class="area"
-      :style="{ background: hueColor }"
+      :style="{ backgroundColor: hueColor }"
       role="slider"
       aria-label="Saturación y brillo"
       @pointerdown.prevent="onArea"

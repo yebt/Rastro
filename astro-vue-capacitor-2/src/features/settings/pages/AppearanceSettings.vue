@@ -115,12 +115,12 @@ const BASEMAP_OPTIONS: { value: BasemapProvider; label: string }[] = [
 }
 .swatches {
   display: flex;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
   flex-wrap: wrap;
 }
 .swatch {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   border-radius: var(--r-md);
   border: 2px solid var(--line);
   display: grid;
