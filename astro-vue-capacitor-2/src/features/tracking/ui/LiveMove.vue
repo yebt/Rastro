@@ -17,7 +17,7 @@ import RouteMap from "./RouteMap.vue";
  * toggleable blur panel (hide it for a compact time+distance readout and a clear
  * view of the map), and pause/finish pinned to the bottom — no scrolling.
  */
-const { status, activity, error, steps, cadence, elapsedMs, requestFinish, cancelFinish, pause, resume, finish, discard } =
+const { status, activity, error, saveError, steps, cadence, elapsedMs, requestFinish, cancelFinish, pause, resume, finish, discard } =
   useRecorder();
 
 const backArmed = useStore($backArmed);
@@ -172,6 +172,7 @@ watch(finishRequested, (requested) => {
       </transition>
 
       <p v-if="error" class="err">GPS: {{ error.message }}</p>
+      <p v-if="saveError" class="err">No se pudo guardar el progreso ({{ saveError }}). Sigue grabando; se reintenta solo.</p>
 
       <transition name="fade">
         <div v-if="backArmed" class="hint">Tocá atrás otra vez para finalizar</div>

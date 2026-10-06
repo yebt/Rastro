@@ -13,6 +13,7 @@ export function useRecorder() {
   const status = useStore(recorder.$status);
   const activity = useStore(recorder.$activity);
   const error = useStore(recorder.$error);
+  const saveError = useStore(recorder.$saveError);
   const steps = useStore(pedometer().$steps);
   const cadence = useStore(pedometer().$cadence);
   const elapsedMs = ref(recorder.elapsedMs());
@@ -46,6 +47,7 @@ export function useRecorder() {
     status,
     activity,
     error,
+    saveError,
     steps,
     cadence,
     elapsedMs,
