@@ -52,35 +52,41 @@ jobs:
           });
           const send = (method, params = {}) => new Promise((r) => { const i = ++id; pending.set(i, r); ws.send(JSON.stringify({ id: i, method, params })); });
           await send("Runtime.enable");
-          const code = `(async () => {
-            const log = [];
-            const style = "https://tiles.openfreemap.org/styles/positron";
-            for (const u of [style, location.origin + "/maplibre/maplibre-gl-worker.mjs", location.origin + "/maplibre/maplibre-gl-shared.mjs"]) {
-              try { const r = await fetch(u); log.push("fetch " + u + " -> " + r.status + " " + r.headers.get("content-type")); }
-              catch (e) { log.push("fetch " + u + " -> FAIL " + e); }
-            }
-            log.push("sw controller: " + !!(navigator.serviceWorker && navigator.serviceWorker.controller));
-            try {
-              const w = new Worker(location.origin + "/maplibre/maplibre-gl-worker.mjs", { type: "module" });
-              await new Promise((res) => { w.onerror = (e) => { log.push("worker onerror: " + (e.message || "?")); res(); }; setTimeout(() => { log.push("worker: no error after 3s"); res(); }, 3000); });
-              w.terminate();
-            } catch (e) { log.push("worker ctor threw: " + e); }
-            const ml = await import("${process.env.ML}");
-            ml.setWorkerUrl(location.origin + "/maplibre/maplibre-gl-worker.mjs");
-            const div = document.createElement("div");
-            div.style.cssText = "position:fixed;inset:0;z-index:99999;background:#fff";
-            document.body.appendChild(div);
-            const map = new ml.Map({ container: div, style, center: [-74.076, 4.638], zoom: 15, attributionControl: false });
-            map.on("error", (e) => log.push("map error: " + ((e.error && e.error.message) || "?")));
-            await new Promise((res) => { map.once("load", () => { log.push("map load"); res(); }); setTimeout(() => { log.push("map: no load in 25s"); res(); }, 25000); });
-            await new Promise((res) => { map.once("idle", () => { log.push("map idle"); res(); }); setTimeout(res, 15000); });
-            return log;
-          })()`;
-          const res = await send("Runtime.evaluate", { expression: code, awaitPromise: true, returnByValue: true, timeout: 90000 });
-          if (res.result?.exceptionDetails) console.log("EVAL EXCEPTION", JSON.stringify(res.result.exceptionDetails).slice(0, 800));
-          for (const l of res.result?.result?.value ?? []) console.log("PROBE", l);
-          const shot = await send("Page.captureScreenshot", { format: "png" });
-          if (shot.result?.data) writeFileSync("probe.png", Buffer.from(shot.result.data, "base64"));
+          const ev = async (expr) => {
+            const r = await send("Runtime.evaluate", { expression: expr, awaitPromise: true, returnByValue: true, timeout: 60000 });
+            if (r.result?.exceptionDetails) console.log("EVAL EXCEPTION", JSON.stringify(r.result.exceptionDetails).slice(0, 600));
+            return r.result?.result?.value;
+          };
+          const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+          // 1) Seed a finished jog (a ~1 km loop in Bogotá) straight into the app's IndexedDB.
+          console.log("SEED", await ev(`(async () => {
+            const t0 = Date.now() - 3600e3; const pts = [];
+            for (let i = 0; i <= 120; i++) { const a = (i / 120) * 2 * Math.PI;
+              pts.push({ t: t0 + i * 5000, lat: 4.638 + 0.0015 * Math.sin(a), lng: -74.076 + 0.002 * Math.cos(a), alt: null, acc: 4, altAcc: null, spd: 2.5, st: i * 8 }); }
+            const act = { id: "probe-1", schemaVersion: 1, kind: "move", type: "jog", startedAt: t0, endedAt: t0 + 600e3, points: pts, steps: 960, movingMs: 600e3, pauses: 0 };
+            const db = await new Promise((res, rej) => { const r = indexedDB.open("rastro"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+            await new Promise((res, rej) => { const tx = db.transaction("activities", "readwrite"); tx.objectStore("activities").put(act); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+            db.close(); return "ok, basemap=" + localStorage.getItem("rastro.basemap");
+          })()`));
+          await send("Page.reload");
+          await sleep(8000);
+          await send("Runtime.enable");
+          // 2) Navigate like a user: Info tab → Historial → first activity.
+          const click = (sel, text) => ev(`(() => { const el = [...document.querySelectorAll(${JSON.stringify(sel)})].find((e) => e.textContent.includes(${JSON.stringify(text)})); if (!el) return "missing " + ${JSON.stringify(text)}; (el.closest("button") || el).click(); return "clicked " + ${JSON.stringify(text)}; })()`);
+          console.log("NAV", await click(".tab-label", "Info"));
+          await sleep(1500);
+          console.log("NAV", await click("button, [role=button], .row", "Historial"));
+          await sleep(1500);
+          console.log("NAV", await ev(`(() => { const r = document.querySelector("button.row"); if (!r) return "no rows"; r.click(); return "opened " + r.textContent.trim().slice(0, 40); })()`));
+          await sleep(20000);
+          console.log("STATE", JSON.stringify(await ev(`(() => ({
+            glLayer: !!document.querySelector(".leaflet-gl-layer"),
+            glCanvas: document.querySelectorAll(".leaflet-gl-layer canvas, canvas.maplibregl-canvas").length,
+            rasterTiles: document.querySelectorAll(".leaflet-tile").length,
+            route: document.querySelectorAll("path.leaflet-interactive").length,
+            mapSize: (() => { const m = document.querySelector(".leaflet-container"); return m ? m.clientWidth + "x" + m.clientHeight : null; })(),
+            glSize: (() => { const c = document.querySelector(".leaflet-gl-layer"); return c ? c.style.width + "x" + c.style.height + " " + c.style.transform : null; })(),
+          }))()`)));
           ws.close();
           JS
           cat > emu.sh <<'SH'
@@ -119,4 +125,4 @@ jobs:
           [ -f probe.png ] || exit 0
           mkdir -p ../map-previews && cp probe.png ../map-previews/emulator-probe.png
           cd .. && git config user.name "github-actions[bot]" && git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add map-previews && git commit -m "chore: emulator probe screenshot (temporary)" && git push
+          git add map-previews && git commit -m "chore: emulator probe screenshot (temporary)" && git pull --rebase -q && git push
