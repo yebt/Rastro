@@ -42,6 +42,16 @@ export function setBasemap(provider: BasemapProvider): void {
   }
 }
 
+/**
+ * Why the vector basemap last failed and fell back to raster (null once it
+ * loads fine). Shown under the map setting so a blank map can be diagnosed.
+ */
+export const $basemapError = atom<string | null>(null);
+
+export function reportBasemapError(reason: string | null): void {
+  $basemapError.set(reason);
+}
+
 const OFM = "https://tiles.openfreemap.org/styles";
 /** OpenFreeMap MapLibre style URLs. */
 export const VECTOR_STYLE: Record<BasemapLook, string> = {

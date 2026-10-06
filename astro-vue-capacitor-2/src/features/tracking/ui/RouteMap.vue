@@ -2,7 +2,14 @@
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { onMounted, onUnmounted, ref, watch } from "vue";
-import { $basemap, type BasemapLook, ESRI_MAXZOOM, ESRI_TILES, VECTOR_STYLE } from "../../../shared/basemap";
+import {
+  $basemap,
+  type BasemapLook,
+  ESRI_MAXZOOM,
+  ESRI_TILES,
+  reportBasemapError,
+  VECTOR_STYLE,
+} from "../../../shared/basemap";
 import { loadMaplibre } from "../../../shared/maplibre";
 import { routeSegments } from "../domain/segments";
 import type { TrackPoint } from "../domain/track-point";
@@ -157,13 +164,41 @@ async function addBasemap(m: L.Map): Promise<void> {
         import("maplibre-gl/dist/maplibre-gl.css"),
       ]);
       if (map !== m) return; // unmounted while loading
-      maplibreGL({ style: VECTOR_STYLE[look], attributionControl: false }).addTo(m);
+      const layer = maplibreGL({ style: VECTOR_STYLE[look], attributionControl: false }).addTo(m);
+      watchVectorBasemap(m, layer);
       return;
-    } catch {
+    } catch (e) {
+      reportBasemapError(`init: ${e instanceof Error ? e.message : String(e)}`);
       if (map !== m) return;
     }
   }
   addRasterBasemap(m);
+}
+
+/** How long the vector map gets to paint before we give up on it. */
+const VECTOR_TIMEOUT_MS = 12_000;
+
+/**
+ * A vector map can fail without throwing (worker or style can't load, WebGL
+ * lost): the route would sit on a blank background. If it hasn't painted in
+ * time, swap to the raster tiles; the reason is kept for Ajustes → Apariencia.
+ */
+function watchVectorBasemap(m: L.Map, layer: L.MaplibreGL): void {
+  const gl = layer.getMaplibreMap();
+  let lastError = "";
+  gl.on("error", (e) => {
+    lastError = e.error?.message ?? "error";
+  });
+  const timer = setTimeout(() => {
+    if (map !== m || gl.loaded()) return;
+    reportBasemapError(lastError || "el mapa vectorial no cargó a tiempo");
+    m.removeLayer(layer);
+    addRasterBasemap(m);
+  }, VECTOR_TIMEOUT_MS);
+  gl.once("load", () => {
+    clearTimeout(timer);
+    reportBasemapError(null);
+  });
 }
 
 /** Jump back to the current position (last fix), keeping a usable zoom. */

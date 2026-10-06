@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useStore } from "@nanostores/vue";
-import { $basemap, type BasemapProvider, setBasemap } from "../../../shared/basemap";
+import { $basemap, $basemapError, type BasemapProvider, setBasemap } from "../../../shared/basemap";
 import { AppSubScreen, Label, SegmentedControl } from "../../../shared/ui";
 import { ACCENTS } from "../accent";
 import { $accent, setAccent } from "../accent.store";
@@ -11,6 +11,7 @@ defineEmits<{ back: [] }>();
 const theme = useStore($theme);
 const accent = useStore($accent);
 const basemap = useStore($basemap);
+const basemapError = useStore($basemapError);
 
 const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: "auto", label: "Auto" },
@@ -67,6 +68,9 @@ const BASEMAP_OPTIONS: { value: BasemapProvider; label: string }[] = [
         OpenFreeMap: nítido, con nombres de calles. Esri: más liviano, para teléfonos
         lentos. También cambia los mapas al compartir.
       </p>
+      <p v-if="basemap === 'vector' && basemapError" class="note warn">
+        El mapa vectorial no cargó y se usó Esri. Motivo: {{ basemapError }}
+      </p>
     </div>
   </AppSubScreen>
 </template>
@@ -81,6 +85,9 @@ const BASEMAP_OPTIONS: { value: BasemapProvider; label: string }[] = [
   margin: 0;
   font-size: 12px;
   color: var(--muted);
+}
+.note.warn {
+  color: var(--danger);
 }
 .swatches {
   display: flex;
