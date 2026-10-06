@@ -42,6 +42,8 @@ export interface Recorder {
   readonly $activity: ReadableAtom<MoveActivity | null>;
   /** Last geolocation error, if any (e.g. permission lost mid-run). */
   readonly $error: ReadableAtom<GeoError | null>;
+  /** Set when persisting the session failed (e.g. storage full); null once a save succeeds. */
+  readonly $saveError: ReadableAtom<string | null>;
   /** Milliseconds recorded, excluding paused time. */
   elapsedMs(): number;
   start(type: MoveType): Promise<void>;
@@ -73,6 +75,7 @@ export function createRecorder(deps: RecorderDeps): Recorder {
   const $status = atom<RecordingStatus>("idle");
   const $activity = atom<MoveActivity | null>(null);
   const $error = atom<GeoError | null>(null);
+  const $saveError = atom<string | null>(null);
 
   let watch: GeoWatch | null = null;
   // Elapsed = accumulated (from finished moving spans) + current span if moving.
@@ -86,13 +89,38 @@ export function createRecorder(deps: RecorderDeps): Recorder {
   // Wall-clock (injected) of the last autosave, to throttle disk writes.
   let lastSavedAt = 0;
 
+  /**
+   * The in-progress session as it should be persisted: with the moving time,
+   * pause count and paused state so far, so a recovered draft resumes exactly
+   * (paused gaps aren't counted as moving, a paused session comes back paused).
+   */
+  function draftOf(act: MoveActivity): MoveActivity {
+    const { paused: _paused, ...rest } = act;
+    return {
+      ...rest,
+      movingMs: elapsedMs(),
+      pauses: pauseCount,
+      ...($status.get() === "paused" ? { paused: true } : {}),
+    };
+  }
+
+  /** Save, surfacing failures (quota, IO) instead of swallowing them. */
+  async function persist(act: MoveActivity): Promise<void> {
+    try {
+      await deps.repo.save(act);
+      $saveError.set(null);
+    } catch (e) {
+      $saveError.set(e instanceof Error ? e.message : String(e));
+    }
+  }
+
   /** Persist the in-progress session, throttled — but always on its first point,
    *  so even a short session that produced one fix survives a crash. */
   function autosave(act: MoveActivity): void {
     const at = deps.now();
     if (act.points.length <= 1 || at - lastSavedAt >= autosaveMs) {
       lastSavedAt = at;
-      void deps.repo.save(act);
+      void persist(draftOf(act));
     }
   }
 
@@ -150,6 +178,7 @@ export function createRecorder(deps: RecorderDeps): Recorder {
     $status,
     $activity,
     $error,
+    $saveError,
     elapsedMs,
 
     async start(type) {
@@ -193,7 +222,7 @@ export function createRecorder(deps: RecorderDeps): Recorder {
       const act = $activity.get();
       if (act) {
         lastSavedAt = deps.now();
-        await deps.repo.save(act);
+        await persist(draftOf(act));
       }
     },
 
@@ -229,8 +258,9 @@ export function createRecorder(deps: RecorderDeps): Recorder {
       await stopWatch();
       const steps = await deps.pedometer.stop();
 
-      const act = $activity.get();
-      if (!act) return null;
+      const current = $activity.get();
+      if (!current) return null;
+      const { paused: _paused, ...act } = current; // draft-only flag
       const finished: MoveActivity = {
         ...act,
         points: act.points.filter((p) => p.t <= end),
@@ -270,16 +300,26 @@ export function createRecorder(deps: RecorderDeps): Recorder {
       if ($status.get() === "recording" || $status.get() === "paused") return;
       const at = deps.now();
       const pts = activity.points;
-      // Continue elapsed from the recovered span; exact paused gaps are unknown.
+      // Continue from the moving time the draft recorded (autosaved with it);
+      // older drafts without it fall back to the point span.
       accumulatedMs = activity.movingMs ?? (pts.length > 1 ? pts.at(-1)!.t - pts[0]!.t : 0);
-      movingSince = at;
       pauseCount = activity.pauses ?? 0;
       finishAt = null;
       lastSavedAt = at;
       $error.set(null);
-      $activity.set(activity);
-      $status.set("recording");
+      const { paused, ...rest } = activity;
+      $activity.set(rest);
       await deps.pedometer.start();
+      if (paused) {
+        // It was paused when the app died: come back paused, GPS off, so the
+        // time spent away isn't counted as moving.
+        movingSince = null;
+        deps.pedometer.pause();
+        $status.set("paused");
+        return;
+      }
+      movingSince = at;
+      $status.set("recording");
       await startWatch();
     },
 
@@ -288,7 +328,7 @@ export function createRecorder(deps: RecorderDeps): Recorder {
       const status = $status.get();
       if (act && act.endedAt === null && (status === "recording" || status === "paused")) {
         lastSavedAt = deps.now();
-        await deps.repo.save(act);
+        await persist(draftOf(act));
       }
     },
   };

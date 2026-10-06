@@ -234,6 +234,44 @@ describe("recorder", () => {
     expect((done as MoveActivity).points).toHaveLength(3);
   });
 
+  it("a draft saved while paused carries moving time and resumes paused", async () => {
+    clock = 0;
+    await rec.start("jog");
+    geo.emit(sample(1000));
+    clock = 60_000; // 60 s moving
+    await rec.pause(); // checkpoint save while paused
+    const id = rec.$activity.get()!.id;
+    const draft = (await repo.get(id)) as MoveActivity;
+    expect(draft.movingMs).toBe(60_000);
+    expect(draft.pauses).toBe(1);
+    expect(draft.paused).toBe(true);
+
+    // App killed; reopened 10 minutes later.
+    clock = 660_000;
+    const fresh = createRecorder({ geo, repo, pedometer: ped, now: () => clock });
+    await fresh.restore(draft);
+    expect(fresh.$status.get()).toBe("paused"); // not silently recording
+    expect(fresh.elapsedMs()).toBe(60_000); // the 10 min away is NOT moving time
+    expect(geo.isWatching()).toBe(false);
+    expect(fresh.$activity.get()?.paused).toBeUndefined();
+
+    await fresh.resume();
+    clock = 670_000;
+    const done = (await fresh.finish()) as MoveActivity;
+    expect(done.movingMs).toBe(70_000);
+    expect(done.pauses).toBe(1);
+    expect(done.paused).toBeUndefined(); // draft-only flag never reaches history
+  });
+
+  it("surfaces a failed save instead of swallowing it", async () => {
+    const failing = { ...repo, save: async () => { throw new Error("QuotaExceededError"); } };
+    rec = createRecorder({ geo, repo: failing, pedometer: ped, now: () => clock });
+    await rec.start("walk");
+    geo.emit(sample(1000));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(rec.$saveError.get()).toContain("Quota");
+  });
+
   it("flush persists the current in-progress session on demand", async () => {
     clock = 0;
     rec = createRecorder({ geo, repo, pedometer: ped, now: () => clock, autosaveMs: 999_999 });

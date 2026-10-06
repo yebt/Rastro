@@ -38,6 +38,12 @@ export interface MoveActivity extends BaseActivity {
   movingMs?: number;
   /** How many times the recording was paused; absent on older records. */
   pauses?: number;
+  /**
+   * In-progress drafts only: the session was paused when last autosaved, so a
+   * recovered session resumes paused instead of counting the gap as moving.
+   * Never set on a finished activity.
+   */
+  paused?: boolean;
 }
 
 export interface ExerciseSet {
@@ -105,7 +111,8 @@ export function finalizeInProgress(a: MoveActivity, now: number): MoveActivity {
   const last = pts.at(-1);
   const endedAt = last ? last.t : now;
   const span = pts.length > 1 ? last!.t - pts[0]!.t : 0;
-  return { ...a, endedAt, movingMs: a.movingMs ?? span };
+  const { paused: _paused, ...rest } = a;
+  return { ...rest, endedAt, movingMs: a.movingMs ?? span };
 }
 
 /** Start a fresh, in-progress exercise activity (no sets yet). */

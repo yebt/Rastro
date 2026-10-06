@@ -8,8 +8,9 @@
  * subdomains, not this worker — tiles now use the canonical host.)
  */
 
-// v3: v2 holds CARTO "API KEY REQUIRED" watermark tiles — dropped on activate.
-const TILE_CACHE = "rastro-tiles-v3";
+// v4: v3 may hold opaque tiles that count ~7 MB each against the storage quota;
+// v2 holds CARTO "API KEY REQUIRED" tiles. Older caches are dropped on activate.
+const TILE_CACHE = "rastro-tiles-v4";
 const MAX_ENTRIES = 800;
 
 self.addEventListener("install", () => self.skipWaiting());
@@ -43,8 +44,12 @@ async function cacheFirst(request) {
   if (hit) return hit;
   try {
     const res = await fetch(request);
-    // Tiles are loaded no-cors (opaque, status 0) — cache those too.
-    if (res && (res.ok || res.type === "opaque")) {
+    // Only cache real (CORS) responses. Opaque no-cors responses (e.g. Leaflet
+    // raster <img> tiles) are padded to ~7 MB EACH in Chrome's quota accounting
+    // — 800 of them could exhaust the origin quota that IndexedDB (your
+    // activities and the in-progress autosave) shares. They still display, just
+    // uncached. MapLibre fetches with CORS, so vector tiles keep caching.
+    if (res && res.ok && res.type !== "opaque") {
       cache.put(request, res.clone()).catch(() => {});
       void trim(cache);
     }
