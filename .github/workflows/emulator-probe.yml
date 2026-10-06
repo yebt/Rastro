@@ -83,7 +83,13 @@ jobs:
           console.log("NAV", await click("button, [role=button], .row", "Historial"));
           await sleep(1500);
           console.log("NAV", await ev(`(() => { const r = document.querySelector("button.row"); if (!r) return "no rows"; r.click(); return "opened " + r.textContent.trim().slice(0, 40); })()`));
-          await sleep(20000);
+          for (const t of [2, 5, 10, 15, 20]) {
+            await sleep(t === 2 ? 2000 : t === 5 ? 3000 : 5000);
+            const alive = await Promise.race([ev("1+1"), sleep(4000).then(() => "TIMEOUT")]);
+            console.log("ALIVE@" + t + "s", alive);
+            if (alive === "TIMEOUT") break;
+          }
+          ws.addEventListener("close", () => console.log("WS CLOSED"));
           console.log("STATE", JSON.stringify(await ev(`(() => ({
             glLayer: !!document.querySelector(".leaflet-gl-layer"),
             glCanvas: document.querySelectorAll(".leaflet-gl-layer canvas, canvas.maplibregl-canvas").length,
@@ -107,7 +113,8 @@ jobs:
           curl -s http://127.0.0.1:9222/json/version || true
           adb shell dumpsys package com.google.android.webview | grep versionName | head -2
           timeout 180 node probe.mjs || echo "probe failed"
-          adb logcat -d | grep -iE "chromium|console|maplibre|Capacitor" | tail -60
+          echo "=== app process after probe:"; adb shell pidof com.rastro.app || echo "APP DEAD"
+          adb logcat -d | grep -iE "fatal|crash|render|gpu|gles|died|AndroidRuntime|libc|tombstone|oom|lowmemory|Killing|signal|abort|webgl|context lost" | grep -v "Handling local" | tail -80
           SH
           chmod +x emu.sh
       - name: Enable KVM
