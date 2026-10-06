@@ -9,24 +9,43 @@
  */
 
 import { atom } from "nanostores";
-import { type AccentId, DEFAULT_ACCENT, getAccent } from "./accent";
+import { normalizeHex } from "../../shared/color";
+import { type AccentChoice, type AccentDef, DEFAULT_ACCENT, deriveAccent, getAccent } from "./accent";
 
 const KEY = "rastro.accent";
+const CUSTOM_KEY = "rastro.accentCustom";
 const STYLE_ID = "rastro-accent";
+const DEFAULT_CUSTOM = "#12a150";
 
-function read(): AccentId {
+function read(): AccentChoice {
   try {
     const v = globalThis.localStorage?.getItem(KEY);
-    return v && getAccent(v).id === v ? (v as AccentId) : DEFAULT_ACCENT;
+    if (v === "custom") return "custom";
+    return v && getAccent(v).id === v ? (v as AccentChoice) : DEFAULT_ACCENT;
   } catch {
     return DEFAULT_ACCENT;
   }
 }
 
-export const $accent = atom<AccentId>(read());
+function readCustom(): string {
+  try {
+    return normalizeHex(globalThis.localStorage?.getItem(CUSTOM_KEY) ?? "") ?? DEFAULT_CUSTOM;
+  } catch {
+    return DEFAULT_CUSTOM;
+  }
+}
 
-function css(id: AccentId): string {
-  const a = getAccent(id);
+export const $accent = atom<AccentChoice>(read());
+/** The free color behind the "custom" accent (the raw pick, before contrast tuning). */
+export const $accentCustom = atom<string>(readCustom());
+
+/** The accent definition currently in effect (preset, or derived from the custom pick). */
+export function resolveAccent(id: AccentChoice = $accent.get()): AccentDef {
+  return id === "custom" ? deriveAccent($accentCustom.get()) : getAccent(id);
+}
+
+function css(id: AccentChoice): string {
+  const a = resolveAccent(id);
   const light = `--accent:${a.light.accent};--accent-ink:${a.light.ink};`;
   const dark = `--accent:${a.dark.accent};--accent-ink:${a.dark.ink};`;
   return [
@@ -37,7 +56,7 @@ function css(id: AccentId): string {
   ].join("");
 }
 
-export function applyAccent(id: AccentId = $accent.get()): void {
+export function applyAccent(id: AccentChoice = $accent.get()): void {
   const doc = globalThis.document;
   if (!doc) return;
   let style = doc.getElementById(STYLE_ID) as HTMLStyleElement | null;
@@ -49,7 +68,20 @@ export function applyAccent(id: AccentId = $accent.get()): void {
   style.textContent = css(id);
 }
 
-export function setAccent(id: AccentId): void {
+/** Use a free color as the accent (contrast-tuned per theme by deriveAccent). */
+export function setCustomAccent(hex: string): void {
+  const n = normalizeHex(hex);
+  if (!n) return;
+  $accentCustom.set(n);
+  try {
+    globalThis.localStorage?.setItem(CUSTOM_KEY, n);
+  } catch {
+    // ignore — private mode / SSR
+  }
+  setAccent("custom");
+}
+
+export function setAccent(id: AccentChoice): void {
   $accent.set(id);
   applyAccent(id);
   try {

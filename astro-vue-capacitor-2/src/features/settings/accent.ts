@@ -5,7 +5,11 @@
  * switching accent can never make a button label unreadable.
  */
 
+import { adjustForContrast } from "../../shared/color";
+
 export type AccentId = "verde" | "naranja" | "violeta" | "azul" | "rosa" | "mono";
+/** A preset, or "custom" — a free color picked by the user (see deriveAccent). */
+export type AccentChoice = AccentId | "custom";
 
 export interface AccentVariant {
   accent: string;
@@ -13,7 +17,7 @@ export interface AccentVariant {
 }
 
 export interface AccentDef {
-  id: AccentId;
+  id: AccentChoice;
   label: string;
   light: AccentVariant;
   dark: AccentVariant;
@@ -32,4 +36,22 @@ export const DEFAULT_ACCENT: AccentId = "verde";
 
 export function getAccent(id: string): AccentDef {
   return ACCENTS.find((a) => a.id === id) ?? ACCENTS[0]!;
+}
+
+const LIGHT_INK = "#ffffff";
+const DARK_INK = "#0a0c0d";
+
+/**
+ * Turn any picked color into a light/dark accent pair with the same contrast
+ * guarantee as the presets: the hue and saturation are kept, and only the
+ * lightness moves — darker under white ink for the light theme, lighter over
+ * dark ink for the dark theme — until the label on it reads clearly.
+ */
+export function deriveAccent(hex: string): AccentDef {
+  return {
+    id: "custom",
+    label: "Personalizado",
+    light: { accent: adjustForContrast(hex, LIGHT_INK, 4.5, "darker"), ink: LIGHT_INK },
+    dark: { accent: adjustForContrast(hex, DARK_INK, 6, "lighter"), ink: DARK_INK },
+  };
 }

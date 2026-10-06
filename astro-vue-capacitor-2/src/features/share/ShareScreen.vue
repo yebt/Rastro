@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useStore } from "@nanostores/vue";
 import { computed, onMounted, ref, watch } from "vue";
-import { AppButton, AppIcon, Label, Spinner } from "../../shared/ui";
+import { AppButton, AppIcon, ColorSheet, Label, Spinner } from "../../shared/ui";
 import { cleanTrack, distanceMeters, distanceParts, type MoveActivity, MOVE_LABEL } from "../tracking";
 import { $favorites, addFavorite, removeFavorite } from "./favorites.store";
 import { shareGallery } from "./gallery-store";
@@ -126,6 +126,9 @@ function clearOverride(): void {
   theme.value = { ...theme.value, override: undefined };
 }
 const hasOverride = computed(() => !!theme.value.override?.route);
+const routeSheetOpen = ref(false);
+// Suggested colors in the picker: the photo's dominant colors, then each palette's route color.
+const routePresets = computed(() => [...new Set([...photoPalette.value, ...SHARE_PALETTES.map((p) => p.route)])]);
 
 // Dominant colors pulled from the photo, offered as route-color choices.
 const photoPalette = ref<string[]>([]);
@@ -376,9 +379,13 @@ async function onSave(): Promise<void> {
 
         <Label>Color de ruta</Label>
         <div class="rowline">
-          <label class="colorpick" :style="{ background: routeColor }">
-            <input type="color" :value="routeColor" @input="setRouteColor(($event.target as HTMLInputElement).value)" />
-          </label>
+          <button
+            type="button"
+            class="colorpick"
+            :style="{ background: routeColor }"
+            aria-label="Elegir color de ruta"
+            @click="routeSheetOpen = true"
+          ></button>
           <span class="hex">{{ routeColor }}</span>
           <button v-if="hasOverride" type="button" class="chip" @click="clearOverride">Usar paleta</button>
         </div>
@@ -520,6 +527,14 @@ async function onSave(): Promise<void> {
     :camera="editorView"
     @done="onMapDone"
     @cancel="editingMap = false"
+  />
+  <ColorSheet
+    :open="routeSheetOpen"
+    :model-value="routeColor"
+    title="Color de ruta"
+    :presets="routePresets"
+    @update:model-value="setRouteColor"
+    @close="routeSheetOpen = false"
   />
 </template>
 
@@ -725,12 +740,7 @@ async function onSave(): Promise<void> {
   overflow: hidden;
   flex: none;
 }
-.colorpick input {
-  position: absolute;
-  inset: -4px;
-  width: calc(100% + 8px);
-  height: calc(100% + 8px);
-  opacity: 0;
+.colorpick {
   cursor: pointer;
 }
 .hex {
