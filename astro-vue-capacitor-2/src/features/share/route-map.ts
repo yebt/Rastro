@@ -1,6 +1,6 @@
 /**
- * Route-on-real-map renderer for the "Mapa" share backgrounds. Renders an Esri /
- * OpenTopoMap / OSM raster basemap + the route into an OFF-SCREEN, non-interactive map
+ * Route-on-real-map renderer for the "Mapa" share backgrounds. Renders the
+ * basemap (OpenFreeMap vector or Esri / OpenTopoMap / OSM raster) + the route into an OFF-SCREEN, non-interactive map
  * and captures the canvas. The route is ALWAYS auto-fit (centered) unless an
  * explicit camera `view` is given, so switching styles just re-renders fast with
  * the track still centered — the interactive editor only tweaks the framing.
@@ -9,30 +9,46 @@
  * stays out of the base bundle and the worker is wired correctly for Vite.
  */
 
+import type { StyleSpecification } from "maplibre-gl";
+import {
+  $basemap,
+  type BasemapLook,
+  ESRI_ATTRIB,
+  ESRI_MAXZOOM,
+  ESRI_TILES,
+  VECTOR_STYLE,
+} from "../../shared/basemap";
 import type { TrackPoint } from "../tracking";
 import type { MapCamera, MapStyleId } from "./themes";
 
-// CARTO's basemaps now answer keyless requests with "API KEY REQUIRED" watermark
-// tiles, so the road styles use Esri's keyless services instead (same host as
-// the satellite layer). The gray canvases only go to z16 — MapLibre overzooms.
+// The road styles follow the basemap setting (OpenFreeMap vector by default, Esri
+// raster as the fallback); topo/satellite/streets are fixed raster sources.
+const ROAD_LOOK: Partial<Record<MapStyleId, BasemapLook>> = { dark: "dark", light: "light", voyager: "color" };
 const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services";
-export const TILE_URL: Record<MapStyleId, string> = {
-  dark: `${ESRI}/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}`,
-  light: `${ESRI}/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}`,
-  voyager: `${ESRI}/World_Street_Map/MapServer/tile/{z}/{y}/{x}`,
-  topo: "https://tile.opentopomap.org/{z}/{x}/{y}.png",
-  satellite: `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`,
-  streets: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+const RASTER: Record<"topo" | "satellite" | "streets", { url: string; maxzoom: number; attrib: string }> = {
+  topo: { url: "https://tile.opentopomap.org/{z}/{x}/{y}.png", maxzoom: 17, attrib: "© OpenTopoMap (CC-BY-SA)" },
+  satellite: { url: `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`, maxzoom: 19, attrib: "© Esri · Maxar · Earthstar" },
+  streets: { url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png", maxzoom: 19, attrib: "© OpenStreetMap" },
 };
-export const MAXZOOM: Record<MapStyleId, number> = { dark: 16, light: 16, voyager: 19, topo: 17, satellite: 19, streets: 19 };
-export const ATTRIB: Record<MapStyleId, string> = {
-  dark: "© Esri · HERE · Garmin · OpenStreetMap",
-  light: "© Esri · HERE · Garmin · OpenStreetMap",
-  voyager: "© Esri · HERE · Garmin · OpenStreetMap",
-  topo: "© OpenTopoMap (CC-BY-SA)",
-  satellite: "© Esri · Maxar · Earthstar",
-  streets: "© OpenStreetMap",
-};
+
+function rasterStyle(url: string, maxzoom: number, attribution: string): StyleSpecification {
+  return {
+    version: 8,
+    sources: { basemap: { type: "raster", tiles: [url], tileSize: 256, maxzoom, attribution } },
+    layers: [{ id: "basemap", type: "raster", source: "basemap" }],
+  };
+}
+
+/** The MapLibre style for a share map style: a vector style URL or a raster spec. */
+export function mapStyleFor(styleId: MapStyleId): StyleSpecification | string {
+  const look = ROAD_LOOK[styleId];
+  if (look) {
+    if ($basemap.get() === "vector") return VECTOR_STYLE[look];
+    return rasterStyle(ESRI_TILES[look], ESRI_MAXZOOM[look], ESRI_ATTRIB);
+  }
+  const r = RASTER[styleId as keyof typeof RASTER];
+  return rasterStyle(r.url, r.maxzoom, r.attrib);
+}
 
 // Cache rendered map canvases so re-rendering the card for a non-map change
 // (text color, effect, layout) reuses the map instead of re-fetching tiles.
@@ -41,7 +57,7 @@ const CACHE_MAX = 4;
 
 function cacheKey(w: number, h: number, style: MapStyleId, color: string, view?: MapCamera | null): string {
   const v = view ? `${view.zoom.toFixed(2)},${view.bearing.toFixed(0)},${view.pitch.toFixed(0)},${view.center[0].toFixed(4)},${view.center[1].toFixed(4)}` : "fit";
-  return `${w}x${h}|${style}|${color}|${v}`;
+  return `${w}x${h}|${style}|${$basemap.get()}|${color}|${v}`;
 }
 
 /** Break the track into segments at pauses (big time gaps) so the line doesn't
@@ -100,19 +116,7 @@ export async function renderRouteMap(
     // is already crisp, and it renders/captures ~7× fewer pixels — this is why
     // the v1 map felt faster (it also pinned pixelRatio: 1).
     pixelRatio: 1,
-    style: {
-      version: 8,
-      sources: {
-        carto: {
-          type: "raster",
-          tiles: [TILE_URL[styleId]],
-          tileSize: 256,
-          maxzoom: MAXZOOM[styleId],
-          attribution: ATTRIB[styleId],
-        },
-      },
-      layers: [{ id: "carto", type: "raster", source: "carto" }],
-    },
+    style: mapStyleFor(styleId),
   });
 
   const cleanup = (): void => {

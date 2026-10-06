@@ -4,10 +4,11 @@ import { computed, ref, watch } from "vue";
 import { AppButton, AppIcon, SegmentedControl } from "../../../shared/ui";
 import { $backArmed, $finishRequested, clearFinishRequest, useRecorder } from "../../recording";
 import { applyFilter, TRACK_FILTERS } from "../domain/filters";
-import { avgPaceSecPerKm, avgSpeedMps, distanceMeters } from "../domain/metrics";
+import { distanceMeters } from "../domain/metrics";
 import type { TrackPoint } from "../domain/track-point";
 import { $trackFilter, setTrackFilter } from "../track-filter.store";
-import { distanceParts, formatDuration, formatPace, formatSpeed } from "./format";
+import { $liveMetrics, computeMetric, LIVE_METRICS, type LiveMetricId, resetLiveMetrics, setLiveMetric } from "../live-metrics";
+import { distanceParts, formatDuration } from "./format";
 import { MOVE_LABEL } from "./labels";
 import RouteMap from "./RouteMap.vue";
 
@@ -49,8 +50,23 @@ const liveCadence = computed(() => frozen.value?.cadence ?? cadence.value);
 
 const clean = computed(() => applyFilter(trackFilter.value, points.value));
 const distance = computed(() => distanceParts(distanceMeters(clean.value)));
-const pace = computed(() => formatPace(avgPaceSecPerKm(clean.value)));
-const speed = computed(() => formatSpeed(avgSpeedMps(clean.value)));
+
+// The six stat slots are user-configurable: tap one to pick what it shows.
+const liveMetrics = useStore($liveMetrics);
+const tiles = computed(() => {
+  const ctx = { points: clean.value, rawCount: points.value.length, steps: liveSteps.value, cadence: liveCadence.value };
+  return liveMetrics.value.map((id) => ({ id, ...computeMetric(id, ctx) }));
+});
+/** Slot whose metric is being picked, or null when the picker is closed. */
+const pickingSlot = ref<number | null>(null);
+function pickMetric(id: LiveMetricId): void {
+  if (pickingSlot.value !== null) setLiveMetric(pickingSlot.value, id);
+  pickingSlot.value = null;
+}
+function resetMetrics(): void {
+  resetLiveMetrics();
+  pickingSlot.value = null;
+}
 
 const showStats = ref(true);
 const confirming = ref(false);
@@ -136,14 +152,16 @@ watch(finishRequested, (requested) => {
       <transition name="rise">
         <div v-if="showStats" class="stats">
           <div class="grid">
-            <div class="tile">
-              <b>{{ distance.value }}</b><small>{{ distance.unit }}</small>
-            </div>
-            <div class="tile"><b>{{ pace }}</b><small>/km</small></div>
-            <div class="tile"><b>{{ speed }}</b><small>km/h</small></div>
-            <div class="tile"><b>{{ liveSteps }}</b><small>pasos</small></div>
-            <div class="tile"><b>{{ liveCadence }}</b><small>p/min</small></div>
-            <div class="tile"><b>{{ points.length }}</b><small>puntos</small></div>
+            <button
+              v-for="(t, i) in tiles"
+              :key="i"
+              type="button"
+              class="tile"
+              :aria-label="`Cambiar métrica: ${t.unit}`"
+              @click="pickingSlot = i"
+            >
+              <b>{{ t.value }}</b><small>{{ t.unit }}</small>
+            </button>
           </div>
           <SegmentedControl
             :options="filterOptions"
@@ -170,6 +188,27 @@ watch(finishRequested, (requested) => {
           <AppButton size="lg" block variant="danger" icon="stop" @press="openFinishConfirm">
             Finalizar
           </AppButton>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="pickingSlot !== null" class="sheet-backdrop" @click.self="pickingSlot = null">
+      <div class="sheet" role="dialog" aria-label="Elegir métrica">
+        <div class="sheet-title">Mostrar en esta casilla</div>
+        <div class="metric-list">
+          <button
+            v-for="m in LIVE_METRICS"
+            :key="m.id"
+            type="button"
+            class="metric-opt"
+            :class="{ on: liveMetrics[pickingSlot] === m.id }"
+            @click="pickMetric(m.id)"
+          >
+            {{ m.label }}
+          </button>
+        </div>
+        <div class="sheet-actions">
+          <AppButton size="lg" block variant="ghost" @press="resetMetrics">Restablecer todas</AppButton>
         </div>
       </div>
     </div>
@@ -333,6 +372,14 @@ watch(finishRequested, (requested) => {
   gap: var(--sp-2);
 }
 .tile {
+  /* A button (tap to change the metric) styled as a plain stat. */
+  appearance: none;
+  border: none;
+  background: none;
+  color: inherit;
+  padding: var(--sp-1) 0;
+  border-radius: var(--r-md);
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -423,6 +470,32 @@ watch(finishRequested, (requested) => {
   font-size: 13px;
   color: var(--muted);
   line-height: 1.5;
+}
+.tile:active {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+.metric-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+  margin: var(--sp-4) 0;
+}
+.metric-opt {
+  min-height: 44px;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.metric-opt.on {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
 }
 .sheet-actions {
   display: flex;

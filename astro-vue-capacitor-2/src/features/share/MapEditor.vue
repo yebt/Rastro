@@ -4,7 +4,7 @@ import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { AppButton, Spinner } from "../../shared/ui";
 import type { TrackPoint } from "../tracking";
 import type { MapCamera, MapStyleId } from "./themes";
-import { ATTRIB, MAXZOOM, TILE_URL } from "./route-map";
+import { mapStyleFor } from "./route-map";
 
 /**
  * Interactive map framing for a share card. A real, on-screen MapLibre map (so
@@ -36,20 +36,8 @@ let ml: typeof import("maplibre-gl") | null = null;
 let map: import("maplibre-gl").Map | null = null;
 let coords: [number, number][] = [];
 
-function buildStyle(styleId: MapStyleId): import("maplibre-gl").StyleSpecification {
-  return {
-    version: 8,
-    sources: {
-      carto: {
-        type: "raster",
-        tiles: [TILE_URL[styleId]],
-        tileSize: 256,
-        maxzoom: MAXZOOM[styleId],
-        attribution: ATTRIB[styleId],
-      },
-    },
-    layers: [{ id: "carto", type: "raster", source: "carto" }],
-  };
+function buildStyle(styleId: MapStyleId): import("maplibre-gl").StyleSpecification | string {
+  return mapStyleFor(styleId);
 }
 
 /** (Re)add the route + markers on top of the current basemap. setStyle wipes
@@ -256,7 +244,9 @@ watch(
   (style) => {
     if (!map) return;
     loading.value = true;
-    map.setStyle(buildStyle(style));
+    // diff:false — swapping between a vector style URL and a raster spec has no
+    // meaningful diff, and a failed diff would leave the old basemap up.
+    map.setStyle(buildStyle(style), { diff: false });
     const onStyle = (): void => {
       if (!map || !map.isStyleLoaded()) return;
       map.off("styledata", onStyle);

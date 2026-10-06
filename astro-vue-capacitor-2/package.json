@@ -40,6 +40,7 @@
     "@capacitor/motion": "^8.0.1",
     "@capacitor/share": "^8.0.1",
     "@capgo/capacitor-pedometer": "^8.0.38",
+    "@maplibre/maplibre-gl-leaflet": "^0.1.4",
     "@nanostores/vue": "^1.1.0",
     "astro": "^7.2.4",
     "capacitor-native-settings": "^8.1.0",

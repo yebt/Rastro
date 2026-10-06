@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useStore } from "@nanostores/vue";
+import { $basemap, type BasemapProvider, setBasemap } from "../../../shared/basemap";
 import { AppSubScreen, Label, SegmentedControl } from "../../../shared/ui";
 import { ACCENTS } from "../accent";
 import { $accent, setAccent } from "../accent.store";
@@ -9,11 +10,17 @@ defineEmits<{ back: [] }>();
 
 const theme = useStore($theme);
 const accent = useStore($accent);
+const basemap = useStore($basemap);
 
 const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: "auto", label: "Auto" },
   { value: "light", label: "Claro" },
   { value: "dark", label: "Oscuro" },
+];
+
+const BASEMAP_OPTIONS: { value: BasemapProvider; label: string }[] = [
+  { value: "vector", label: "OpenFreeMap" },
+  { value: "esri", label: "Esri" },
 ];
 </script>
 
@@ -47,6 +54,19 @@ const THEME_OPTIONS: { value: Theme; label: string }[] = [
         </button>
       </div>
       <p class="note">Contraste garantizado en claro y oscuro.</p>
+    </div>
+
+    <div class="block">
+      <Label>Mapa</Label>
+      <SegmentedControl
+        :options="BASEMAP_OPTIONS"
+        :model-value="basemap"
+        @update:model-value="setBasemap"
+      />
+      <p class="note">
+        OpenFreeMap: nítido, con nombres de calles. Esri: más liviano, para teléfonos
+        lentos. También cambia los mapas al compartir.
+      </p>
     </div>
   </AppSubScreen>
 </template>
