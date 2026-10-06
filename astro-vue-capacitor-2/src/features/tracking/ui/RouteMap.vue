@@ -3,6 +3,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { onMounted, onUnmounted, ref, watch } from "vue";
 import { $basemap, type BasemapLook, ESRI_MAXZOOM, ESRI_TILES, VECTOR_STYLE } from "../../../shared/basemap";
+import { loadMaplibre } from "../../../shared/maplibre";
 import { routeSegments } from "../domain/segments";
 import type { TrackPoint } from "../domain/track-point";
 
@@ -148,6 +149,9 @@ function addRasterBasemap(m: L.Map): void {
 async function addBasemap(m: L.Map): Promise<void> {
   if ($basemap.get() === "vector") {
     try {
+      // Load MapLibre through the shared loader first so its worker URL is set
+      // before the plugin creates the GL map.
+      await loadMaplibre();
       const [{ maplibreGL }] = await Promise.all([
         import("@maplibre/maplibre-gl-leaflet"),
         import("maplibre-gl/dist/maplibre-gl.css"),

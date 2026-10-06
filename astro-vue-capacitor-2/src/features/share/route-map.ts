@@ -18,6 +18,7 @@ import {
   ESRI_TILES,
   VECTOR_STYLE,
 } from "../../shared/basemap";
+import { loadMaplibre } from "../../shared/maplibre";
 import type { TrackPoint } from "../tracking";
 import type { MapCamera, MapStyleId } from "./themes";
 
@@ -96,7 +97,7 @@ export async function renderRouteMap(
   const cached = mapCache.get(ckey);
   if (cached) return cached;
 
-  const ml = await import("maplibre-gl");
+  const ml = await loadMaplibre();
   const segs = segments(points);
   const all = points.map((p) => [p.lng, p.lat] as [number, number]);
 
