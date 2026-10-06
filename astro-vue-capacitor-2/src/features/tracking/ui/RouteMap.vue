@@ -2,12 +2,14 @@
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { onMounted, onUnmounted, ref, watch } from "vue";
+import { $basemap, type BasemapLook, ESRI_MAXZOOM, ESRI_TILES, VECTOR_STYLE } from "../../../shared/basemap";
 import { routeSegments } from "../domain/segments";
 import type { TrackPoint } from "../domain/track-point";
 
 /**
- * Route on a street basemap. The track (local data) always renders; the Esri
- * tiles are an online layer that falls back to the dark background offline. No
+ * Route on a street basemap. The track (local data) always renders; the basemap
+ * is an online layer (OpenFreeMap vector via MapLibre, or Esri raster — per the
+ * Apariencia setting) that falls back to the plain background offline. No
  * default marker images — vector circle markers avoid the bundler asset problem.
  */
 const props = defineProps<{ points: TrackPoint[]; fill?: boolean }>();
@@ -21,9 +23,8 @@ function isDark(): boolean {
   return globalThis.matchMedia?.("(prefers-color-scheme: dark)").matches ?? true;
 }
 const dark = isDark();
-// Basemap follows the app theme. Esri's keyless gray canvases (CARTO now serves
-// "API KEY REQUIRED" tiles without a key); native up to z16, upscaled beyond.
-const TILES = `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${dark ? "Dark" : "Light"}_Gray_Base/MapServer/tile/{z}/{y}/{x}`;
+// Basemap follows the app theme.
+const look: BasemapLook = dark ? "dark" : "light";
 // A casing under the route so it reads clearly over any basemap.
 const casingColor = dark ? "#0a0c0d" : "#ffffff";
 
@@ -108,7 +109,7 @@ onMounted(() => {
     zoomAnimation: false,
     fadeAnimation: false,
   }).setView([0, 0], 2);
-  L.tileLayer(TILES, { maxZoom: 20, maxNativeZoom: 16 }).addTo(map);
+  void addBasemap(map);
 
   // A tap on the map (not a drag/pinch) is a toggle signal for the caller.
   map.on("click", () => emit("tap"));
@@ -133,6 +134,33 @@ onMounted(() => {
   resizeObs = new ResizeObserver(() => map?.invalidateSize());
   resizeObs.observe(host.value!);
 });
+
+/** Esri raster tiles: no WebGL needed, but only native up to z16 (upscaled beyond). */
+function addRasterBasemap(m: L.Map): void {
+  L.tileLayer(ESRI_TILES[look], { maxZoom: 20, maxNativeZoom: ESRI_MAXZOOM[look] }).addTo(m);
+}
+
+/**
+ * Vector basemap (sharp at any zoom/density, with street names) as a Leaflet
+ * layer, so the route/marker logic above stays plain Leaflet. MapLibre is loaded
+ * lazily; if it or WebGL fails, fall back to the raster tiles.
+ */
+async function addBasemap(m: L.Map): Promise<void> {
+  if ($basemap.get() === "vector") {
+    try {
+      const [{ maplibreGL }] = await Promise.all([
+        import("@maplibre/maplibre-gl-leaflet"),
+        import("maplibre-gl/dist/maplibre-gl.css"),
+      ]);
+      if (map !== m) return; // unmounted while loading
+      maplibreGL({ style: VECTOR_STYLE[look], attributionControl: false }).addTo(m);
+      return;
+    } catch {
+      if (map !== m) return;
+    }
+  }
+  addRasterBasemap(m);
+}
 
 /** Jump back to the current position (last fix), keeping a usable zoom. */
 function recenter(): void {

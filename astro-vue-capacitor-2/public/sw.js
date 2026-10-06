@@ -23,6 +23,11 @@ self.addEventListener("activate", (event) =>
 );
 
 function isTile(url) {
+  if (url.hostname === "tiles.openfreemap.org") {
+    // Vector tiles, glyphs and sprites are immutable per URL; the style JSON and
+    // TileJSON are not (they point at the current tile build), so never pin those.
+    return !url.pathname.startsWith("/styles/") && url.pathname !== "/planet";
+  }
   return /(^|\.)arcgisonline\.com$/.test(url.hostname) || /(^|\.)opentopomap\.org$/.test(url.hostname);
 }
 
