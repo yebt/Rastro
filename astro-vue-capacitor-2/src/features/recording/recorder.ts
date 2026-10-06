@@ -17,7 +17,7 @@ import { atom, type ReadableAtom } from "nanostores";
 import type { GeoError, Geolocation, GeoWatch } from "../geolocation";
 import type { Pedometer } from "../motion";
 import type { ActivityRepository } from "../tracking";
-import { type MoveActivity, type MoveType, startMove, toTrackPoint, type TrackPoint } from "../tracking";
+import { insertionIndex, type MoveActivity, type MoveType, startMove, toTrackPoint, type TrackPoint } from "../tracking";
 
 export type RecordingStatus = "idle" | "recording" | "paused" | "finished";
 
@@ -96,11 +96,29 @@ export function createRecorder(deps: RecorderDeps): Recorder {
     }
   }
 
-  /** Append a fix and autosave. Shared by the live watch and the start seed. */
+  /**
+   * Add a fix in TIME order and autosave. Shared by the live watch and the start
+   * seed. The GPS plugin can flush a backlog of fixes buffered while the app was
+   * in the background, interleaved with live ones; appending in arrival order
+   * drew straight chords across the route. A late fix is inserted where it
+   * belongs, and takes the step stamp of the fix before it (the live count was
+   * read at arrival, not when the fix was taken).
+   */
   function appendPoint(point: TrackPoint): void {
     const act = $activity.get();
     if (!act) return;
-    const next: MoveActivity = { ...act, points: [...act.points, point] };
+    const pts = act.points;
+    const last = pts.at(-1);
+    let points: TrackPoint[];
+    if (!last || point.t > last.t) {
+      points = [...pts, point];
+    } else {
+      const at = insertionIndex(pts, point.t);
+      if (pts[at - 1]?.t === point.t) return; // same instant already recorded
+      const late: TrackPoint = { ...point, st: pts[at - 1]?.st ?? pts[at]?.st };
+      points = [...pts.slice(0, at), late, ...pts.slice(at)];
+    }
+    const next: MoveActivity = { ...act, points };
     $activity.set(next);
     autosave(next);
   }

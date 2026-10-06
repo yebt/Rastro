@@ -46,6 +46,21 @@ describe("recorder", () => {
     expect(rec.$activity.get()?.points).toHaveLength(2);
   });
 
+  it("inserts a late (backlogged) fix in time order, not at the end", async () => {
+    await rec.start("jog");
+    ped.emit(100);
+    geo.emit(sample(1000, 0));
+    geo.emit(sample(2000, 1));
+    ped.emit(900); // app was backgrounded; steps moved on
+    geo.emit(sample(9000, 3)); // live fix after returning
+    geo.emit(sample(3000, 2)); // backlog flushed late
+    geo.emit(sample(3000, 2)); // duplicate delivery → ignored
+    const pts = rec.$activity.get()!.points;
+    expect(pts.map((p) => p.t)).toEqual([1000, 2000, 3000, 9000]);
+    // The late fix takes the step stamp of the fix before it, not the live count.
+    expect(pts[2]!.st).toBe(pts[1]!.st);
+  });
+
   it("stops sampling while paused and resumes after", async () => {
     await rec.start("walk");
     geo.emit(sample(1000));

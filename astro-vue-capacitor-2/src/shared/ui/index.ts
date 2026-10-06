@@ -8,6 +8,8 @@ export { default as AppIcon } from "./AppIcon.vue";
 export { default as AppScreen } from "./AppScreen.vue";
 export { default as AppSubScreen } from "./AppSubScreen.vue";
 export { default as Card } from "./Card.vue";
+export { default as ColorPicker } from "./ColorPicker.vue";
+export { default as ColorSheet } from "./ColorSheet.vue";
 export { default as Field } from "./Field.vue";
 export { default as Label } from "./Label.vue";
 export { default as Logo } from "./Logo.vue";
