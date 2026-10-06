@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import "maplibre-gl/dist/maplibre-gl.css";
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { loadMaplibre } from "../../shared/maplibre";
 import { AppButton, Spinner } from "../../shared/ui";
 import type { TrackPoint } from "../tracking";
 import type { MapCamera, MapStyleId } from "./themes";
@@ -133,7 +134,7 @@ function onResize(): void {
 
 onMounted(async () => {
   sizeBox();
-  ml = await import("maplibre-gl");
+  ml = await loadMaplibre();
   coords = props.points.map((p) => [p.lng, p.lat] as [number, number]);
 
   map = new ml.Map({

@@ -1,6 +1,10 @@
 // @ts-check
 import { execSync } from "node:child_process";
+import { copyFileSync, mkdirSync, readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import os from "node:os";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import vue from "@astrojs/vue";
 import basicSsl from "@vitejs/plugin-basic-ssl";
 import { defineConfig, fontProviders } from "astro/config";
@@ -70,11 +74,43 @@ function mobileQr() {
   };
 }
 
+/**
+ * MapLibre 6 loads its worker at runtime from `maplibre-gl-worker.mjs` (which
+ * imports `./maplibre-gl-shared.mjs`) next to its own module URL. Vite bundles
+ * the main module but never emits those two files, so in a build the worker
+ * 404s and vector maps stay blank. Serve them at /maplibre/ (dev) and copy them
+ * into the build output; src/shared/maplibre.ts points setWorkerUrl() there.
+ */
+function maplibreWorker() {
+  const dist = path.dirname(createRequire(import.meta.url).resolve("maplibre-gl/package.json")) + "/dist";
+  const files = ["maplibre-gl-worker.mjs", "maplibre-gl-shared.mjs"];
+  return {
+    name: "rastro-maplibre-worker",
+    hooks: {
+      /** @param {{ server: import('vite').ViteDevServer }} ctx */
+      "astro:server:setup": ({ server }) => {
+        server.middlewares.use("/maplibre/", (req, res, next) => {
+          const name = (req.url ?? "").slice(1).split("?")[0] ?? "";
+          if (!files.includes(name)) return next();
+          res.setHeader("Content-Type", "text/javascript");
+          res.end(readFileSync(path.join(dist, name)));
+        });
+      },
+      /** @param {{ dir: URL }} ctx */
+      "astro:build:done": ({ dir }) => {
+        const out = path.join(fileURLToPath(dir), "maplibre");
+        mkdirSync(out, { recursive: true });
+        for (const f of files) copyFileSync(path.join(dist, f), path.join(out, f));
+      },
+    },
+  };
+}
+
 // https://astro.build/config
 export default defineConfig({
   server: lan ? { host: true } : {},
 
-  integrations: [vue(), ...(mobile ? [mobileQr()] : [])],
+  integrations: [vue(), maplibreWorker(), ...(mobile ? [mobileQr()] : [])],
 
   // Self-hosted fonts via fontsource (offline-first, no CDN at runtime). Files
   // are downloaded at build time and served locally; tokens.css maps them.
