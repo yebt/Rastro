@@ -1,4 +1,4 @@
-# TEMPORARY — runs the debug APK on an Android emulator and probes the vector
+# TEMPORARY (run 5) — runs the debug APK on an Android emulator and probes the vector
 # basemap inside the app's real WebView (errors + screenshot).
 name: Emulator probe
 on:
